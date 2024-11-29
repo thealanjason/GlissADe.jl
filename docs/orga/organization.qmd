@@ -1,0 +1,35 @@
+---
+title: "Organization"
+---
+## Dates
+
+- Kick-Off Meeting: 13.05.2024.
+- Presentation date: tbd.
+- Deadline report: tbd.
+
+## Grading
+The total grade of the project takes the following things into consideration. 
+
+- Report (40%)
+    - Concise 
+    - Narrative
+    - Correctness
+    - Readability
+    - Graphics
+    - References
+    
+- Code (40%)
+    - Correctness
+    - Quality
+    - Documentation
+
+- Presentation (10%)
+    - Concise Talk
+    - Readability
+    - Layout and Graphics
+
+- Project Management (10%)
+    - Meeting deadlines
+    - Meeting workplan
+    - General communication
+

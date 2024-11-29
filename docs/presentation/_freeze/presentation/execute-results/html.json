@@ -1,0 +1,11 @@
+{
+  "hash": "878feb4142df36878bf2271e93349519",
+  "result": {
+    "engine": "julia",
+    "markdown": "---\ntitle: \"Differentiable Free Surface Flow Solver\"\nsubtitle: \" \"\nauthor: \"\"\nfig-cap-location: margin\nengine: julia\n\nformat:\n  revealjs: \n    theme: [format.scss]\nexecute:\n  eval: true\n  freeze: true\nbibliography: references.bib\n---\n\n## Background \n\n<img  style=\"float: left;\" width=\"70%\" height = \"80%\" src=\"./images/wolfsgrube.png\">\n\n$$\n \\scriptsize \\frac{\\partial h}{\\partial t} + \\nabla \\cdot (h\\bar{u}) = 0 \\; (1)\n$$\n$$\n\\scriptsize \\frac{\\partial h\\bar{u}}{\\partial t} + \\xi\\;\\nabla_s\\cdot (h\\bar{u}\\bar{u}) = \n$$\n\n$$\n\\scriptsize -\\frac{1}{\\rho}\\tau_b + h\\textbf{g}_s -\\frac{\\alpha}{\\rho}\\;\\nabla_s (hp_b) \\; (2)\n$$\n\n$$\n\\scriptsize \\xi\\;\\nabla_n\\cdot(h\\bar{u}\\bar{u}) = h\\textbf{g}_n \n$$\n\n$$\n\\scriptsize  - \\frac{\\alpha}{\\rho}\\nabla_n(hp_b) - \\frac{1}{\\rho}\\;\\textbf{n}_b\\;p_b \\; (3)\n$$\n\n## Solution  \n<img  style=\"float: left;\" width=\"500\" height = \"500\" src=\"./images/solverstruct.png\">\n\n$$\n\\small \\textbf{What makes a program differentiable?}\n$$\n\n&nbsp; - Continuous Flow of Execution &nbsp; <br>\n&nbsp; - No Type Mutations &nbsp; \n\n$$\n\\small \\text{Modern AD allows for user-defined rules!}  \n$$\n\n\n## What can be done?\n![](./images/sensi.png)\n\n## Other Applications \n\n- Data Driven Modelling of Avalanches\n- It is an inhouse code!  \n\n### Possible Extensions \n\n- Allow for non-planar discretization to handle sharp curvatures \n- Port the solver to a more general equation \n\n$$\n\\frac{\\partial Q}{\\partial t} + M_f\\;\\nabla\\cdot f(Q) + M_g\\nabla\\;g(Q) = S(Q)\n$$\n\n::: {.column width=\"75%\"}\n*   Conservative Flux: $f(Q)$K \n*   Gradient Sources: $g(Q)$\n* Constant Sources: $S(Q)$\n* Parameters: $M_f\\;,\\; M_g$\n:::\n\n",
+    "supporting": [
+      "presentation_files"
+    ],
+    "filters": []
+  }
+}

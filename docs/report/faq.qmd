@@ -1,0 +1,5 @@
+# FAQs
+*All your questions answered, hopefully!*
+
+### Why Julia? What's so special about it? 
+Julia is a language in its early phases. It has been around for almost 10 years which might seem a lot but it's still a baby in the universe of programming languages. Julia offers top-of-the-class performance and memory-safe implementations offered by languages such as Rust, C++ while having easy to learn syntax as Python. This makes implementing stuff faster and easier to debug. 

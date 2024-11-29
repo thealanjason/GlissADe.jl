@@ -1,0 +1,9 @@
+.CondaPkg
+.vscode
+/.quarto/
+_output-public
+_output-private
+_output-presentation
+stored
+solution
+docs/progress/progress.qmd

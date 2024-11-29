@@ -1,0 +1,17 @@
+/*-- scss:defaults --*/
+
+// fonts
+$presentation-font-size-root: 30px !default;
+// colors
+
+// headings
+
+/*-- scss:rules --*/
+
+.math.inline {
+  font-size: 100%  !important;
+}
+
+.math.display .MathJax {
+  font-size: 100%  !important;
+}

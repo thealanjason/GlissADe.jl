@@ -1,0 +1,43 @@
+project:
+  output-dir: _output-private
+engine: julia
+
+website:
+  navbar:
+    left:
+      - text: "Organization"
+        file: docs/orga/organization.qmd
+      - text: "Documentation"
+        file: docs/report/00_intro.qmd
+      - text: "Presentation"
+        file: _output-presentation/presentation.html
+      - text: "Wiki"
+        file: docs/wiki/index.qmd
+      - text: "Public Website"
+        file: _output-public/index.html
+  sidebar: 
+    - id: documentation
+      title: "Documentation"
+      contents:
+        - docs/report/00_intro.qmd
+        - docs/report/implementation/implementation.qmd
+        - docs/report/tutorial/tutorial.qmd
+        - docs/report/API/API.qmd
+        - docs/report/30_appendix.qmd
+        - docs/report/40_references.qmd
+    - id: organization
+      title: "Organization"
+      contents:
+        - docs/orga/organization.qmd
+        - docs/orga/milestones.qmd
+        - docs/orga/tasklist.qmd
+        - docs/orga/meeting1.qmd
+    - id: wiki
+      title: "Wiki"
+      contents:
+        - docs/wiki/index.qmd
+    
+
+
+
+

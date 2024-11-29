@@ -1,0 +1,11 @@
+{
+  "hash": "ffc31611a24b1c5f66618468c6fa1089",
+  "result": {
+    "engine": "julia",
+    "markdown": "---\ntitle: \"Milestone 1\"\nengine: julia\n\nexecute:\n  freeze: auto\n---\n\n\nPlot function pair (x(u), y(u)). \nSee @fig-parametric for an example.\n\n::: {#fig-parametric .cell execution_count=1}\n``` {.julia .cell-code}\nprintln(\"Hello, world\")\n```\n\n::: {.cell-output .cell-output-stdout}\n```\nHello, world\n```\n:::\n:::\n\n\n\n## test\n\n{{< include test.qmd  >}}\n\n",
+    "supporting": [
+      "10_milestone1_files"
+    ],
+    "filters": []
+  }
+}

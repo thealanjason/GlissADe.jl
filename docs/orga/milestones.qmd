@@ -1,0 +1,23 @@
+## Workplan
+
+- Study the Finite Area Method and VoronoiFVM for Surface PDEs 
+
+- Develop  & Implement pre- and post-processing tools for the FA Solver
+
+- Develop & Implement a basic differentiable numerical solver for PDE with DifferentialEquations.jl
+
+- Develop theory for spatial discretization of FA Method to interface with DifferentialEquations.jl
+
+- Implement spatial discretization for FA Method while maintaining differntiability
+  
+- Develop software package along with tests and documentation
+
+- Conduct two test case studies and validate the implementation of the solver
+
+- Comprehensively document the research findings
+
+
+
+
+
+
