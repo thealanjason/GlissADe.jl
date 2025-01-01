@@ -2,12 +2,12 @@ module FASolverAvalanche
 
 using Parameters # For creating structs with default values
 
-## GLOBAL TYPES FOR VARIABLES ALLOWED ## 
+# For convinience. These types will be used throughout.
 global const FLOAT_TYPE = Ref{DataType}(Float64)
 global const INT_TYPE = Ref{DataType}(Int64)
 global const g = [0.0,0.0,-9.81]
 
-# # Dependencies 
+# Dependencies 
 import LinearAlgebra.mul! 
 import LinearAlgebra.I as identity
 import LinearAlgebra: norm2   
