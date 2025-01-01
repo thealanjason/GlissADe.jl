@@ -17,8 +17,11 @@ import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
 import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value 
 
-# ## FILES FROM THIS LIBRARY ## 
-include("./module/additionals.jl") # Commonly used macro
+## UTILS MODULE ## 
+include("./module/utils/maybe_threads.jl") # Defines commonly used macros 
+include("./module/utils/convertToMatrix.jl") # Defines commonly used macros 
+##################
+
 include("./module/cache.jl") # Cache structure for interpolations 
 include("./module/init.jl") # Initializing Library
 include("./module/parser.jl") # For Parsing input files 

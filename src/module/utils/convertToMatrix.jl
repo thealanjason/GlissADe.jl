@@ -1,26 +1,6 @@
-# Custom Macro for conditional multi-threading and converting Vector{Vector{}} to Matrix{} 
+# Defines a convinience function for converting vector[vector] -> matrix 
 
 export convertToMatrix
-
-"""
-    maybe_threads(flag::Bool, expr)
-Execute a for-loop with threads only if `flag==true`
-## Example Usage 
-```julia-repl
-julia> @maybe_threads (1==2) for i in 1:10
-        println("I love Julia!")
-       end 
-```
-"""
-macro maybe_threads(flag, expr)
-    quote 
-        if !$(flag)
-            Threads.@threads $expr
-        else 
-            $expr 
-        end 
-    end |> esc 
-end
 
 """
     convertToMatrix(a)
