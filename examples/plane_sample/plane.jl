@@ -27,7 +27,7 @@ Cells = FAS.preprocess(points, faces, Float64, comp_neighbours=true) # Precomput
 ## WARNING. only a simple compatbility check is performed to ensure that the stored neighbour file is for the current mesh.
 ## Use comp_neighbours=false, only if the file is correct. 
 
-# Check Sparsity pattern of implicit matrix (after reordering) #
+# Check Sparsity pattern of implicit matrix (after reordering) [Can use spy(A)]#
 neighbours = [Cell.neighbours for Cell in Cells]
 A = FAS.adjMatrix(neighbours)
 ##

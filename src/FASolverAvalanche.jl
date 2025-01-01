@@ -17,14 +17,17 @@ import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
 import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value 
 
-## UTILS MODULE ## 
-include("./module/utils/maybe_threads.jl") # Defines commonly used macros 
-include("./module/utils/convertToMatrix.jl") # Defines commonly used macros 
-##################
+## UTILS SUBMODULE ## 
+include("./module/utils/utils.jl")
+#####################
+
+## PARSER SUBMODULE ##
+include("./module/parser/parser.jl") 
+######################
+
 
 include("./module/cache.jl") # Cache structure for interpolations 
-include("./module/init.jl") # Initializing Library
-include("./module/parser.jl") # For Parsing input files 
+include("./module/init.jl") # Initializing Library 
 include("./module/geometry.jl") # For precomputing mesh geometry (doesn't require interpolations)
 include("./module/mesh.jl") # Mesh Computations (area, quality, etc.)
 include("./module/reordering.jl") # Reordering of the mesh 
