@@ -1,4 +1,9 @@
-# Some Commonly Used Internal Functions which do not deserve seperate files. 
+#=
+Type-checking functions for internal use. 
+
+Last Updated On: 11th January, 2025 20:34 UTC+5:30
+=# 
+
 
 """
             is_valid_integer(s)

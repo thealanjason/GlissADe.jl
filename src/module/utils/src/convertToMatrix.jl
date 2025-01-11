@@ -1,4 +1,8 @@
-# Defines a convinience function for converting vector[vector] -> matrix 
+#=
+A convinience function to convert an object in Vector{Vector{T}} representation to Matrix{T} representation.
+
+Last Updated On: 11th January, 2025 20:33 UTC+5:30
+=#
 
 export convertToMatrix
 

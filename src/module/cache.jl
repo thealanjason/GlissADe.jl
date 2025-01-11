@@ -1,4 +1,9 @@
-# Defines a cache structure for performing in-place edge interpolation on each thread. 
+#=
+The CACHE submodule defines a custom "Cache" struct for performing in-place edge interpolation for a multi-threaded
+program. This structure is pre-allocated based on NUM_THREADS and assigned based on "dynamic-allocation" of threads. 
+
+Last Updated On: 11th January, 2025 20:48 UTC+5:30
+=#
 
 """
                 Cache{T,S,W} 

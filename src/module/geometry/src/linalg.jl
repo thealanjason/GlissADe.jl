@@ -1,7 +1,11 @@
-# Linear Algebra files redefined for 3D vectors bypassing bounds-checking for speeding up computations.
-# Should not be used by end-user. 
+#=
+Custom Linear-Algebra functions redefined for 3D vectors to bypass bounds-checking as present in Julia's 
+inbuilt library: LinearAlgebra.jl. This functions are not meant to be used by the end-user.
 
-export magnitude, normalize, normalize!, cross, dot, normalize_cross, normal_centroid
+Last Updated On: 11th January, 2025 20:43 UTC+5:30
+=#
+
+export magnitude, normalize, normalize!, cross, dot, normalize_cross, normal_centroid, center, normals
 
 """
     magnitude(x::Vector{W}) where W<:Real
@@ -85,42 +89,4 @@ Returns the normal to the plane containing 3D vectors `v1`, `v2` and `v3` center
     edge1 = normalize(v1 - v2) 
     edge2 = normalize(v3 - v2)
     return normalize_cross(edge1, edge2)
-end
-
-"""
-    center(points::Vector{Vector{W}}, face::Vector{S}) where {W<:Real, S<:Integer}
-Computes the centroid (arithmetic mean) given the vertices and connectivity of a face. 
-See also: [`normal_centroid`](@ref), [`normals`](@ref)
-`INTERNAL`
-
-## Arguments 
-- points - Coordinates of all vertices of a mesh 
-- face - Connectivity of a "face"
-"""
-@inline function center(points, face)
-    @inbounds l = one(eltype(points[1]))/length(face)
-    return sum(points[face].*l)
-end
-
-"""
-    normals(points::Vector{Vector{W}}, faces::Vector{Vector{S}}) where {W<:Real, S<:Integer}
-Returns the face centroid and the surface normal at face centroid. 
-See also: [`normal_centroid`](@ref), [`center`](@ref)
-`INTERNAL`
-
-## Arguments
-- points - Coordinates of the vertices of a mesh 
-- faces - Connecitivity list of the vertices of a mesh 
-"""
-function normals(points, faces)
-    global threads, stats
-    T = eltype(points) # Should be Vector{FLOAT} or Vector{Dual}
-    normals_centers = Vector{Vector{T}}(undef, length(faces))
-    stats && println("Calculating normals...")
-    @inbounds @maybe_threads Threads.nthreads==1 || !threads for i in eachindex(faces)
-            center_i = center(points, faces[i])
-            normal = normal_centroid(points[faces[i][1]], center_i, points[faces[i][2]])
-            normals_centers[i] = [center_i, normal]
-    end
-    return normals_centers
 end

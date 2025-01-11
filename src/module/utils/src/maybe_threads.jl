@@ -1,4 +1,8 @@
-# Defines a custom macro for conditional multi-threading using Julia's default multi-threading macros.
+#=
+A convinience macro to switch multi-thread for-loops based on some condition.
+
+Last Updated On: 11th January, 2025 20:31 UTC+5:30
+=# 
 
 """
     maybe_threads(flag::Bool, expr)

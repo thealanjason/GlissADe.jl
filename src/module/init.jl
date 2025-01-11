@@ -1,4 +1,9 @@
-# Contains library initialization logic and user interfaces 
+#=
+Functions exposed to the user to interact with the library, define the computational flow, 
+and solution process control. 
+
+Last Updated On: 11th January, 2025 20:49 UTC+5:30
+=#
 
 export Process, init, Solution
 
@@ -32,7 +37,7 @@ end
 Initialize the library and start PyPlot backend if `process.plots=true`
 
 ## Arguments
-- process::Process - `Process` object containing computation choices. See [`Process`](@ref)
+- process::Process - `Process` object containing computation choices.
 """
 function init(process::Process) 
     if(process.plots)

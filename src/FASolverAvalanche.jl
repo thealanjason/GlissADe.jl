@@ -29,9 +29,14 @@ include("./module/parser/parser.jl")
 include("./module/geometry/geometry.jl")
 ######################
 
+## CACHE SUBMODULE ##
+include("./module/cache.jl") 
+######################
 
-include("./module/cache.jl") # Cache structure for interpolations 
-include("./module/init.jl") # Initializing Library 
+## INIT SUBMODULE ##
+include("./module/init.jl") 
+######################
+
 include("./module/mesh.jl") # Mesh Computations (area, quality, etc.)
 include("./module/reordering.jl") # Reordering of the mesh 
 include("./module/precomputations.jl") # Pre-processing and structuring mesh 
