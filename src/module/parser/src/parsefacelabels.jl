@@ -5,7 +5,6 @@ export parsefacelabels
 """
     parsefacelabels(location_faceLabels::String, correction_factor)
 Parse indices of the faces forming the terrain in a text file with OpenFoam format and stores it in `INT_TYPE`
-See also: [`parsepoints`](@ref), [`parsefaces`](@ref), [`parsemesh`](@ref)
 
 ## Arguments 
 - location_faceLabels::String
