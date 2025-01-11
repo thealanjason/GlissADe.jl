@@ -51,7 +51,7 @@ include("./module/precomputations.jl")
 ######################
 
 ## INTERPOLATORS SUBMODULE ## 
-include("./module/interpolators.jl") 
+include("./module/interpolators/interpolators.jl") 
 ######################
 
 ## QUALITY SUBMODULE ##

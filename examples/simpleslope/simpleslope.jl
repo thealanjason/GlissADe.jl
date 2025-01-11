@@ -60,7 +60,7 @@ solution = FAS.Solution(
     points = points,  # Vertices of the mesh
     faces = faces # Connectivity list of the mesh 
 )
-solver = FAS.Solver(solution) # Construct Solver object 
-time_steps, sol= FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=0.9) # SIMULATE!
+solver = FAS.Solver(solution) # Construct Solver object (0.9)
+time_steps, sol= FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=1.8) # SIMULATE!
 FAS.writeToVTK(solution.location, sol, points, faces) # Write the solution to VTK. Smoothens the intermediates to get accurate solutions. 
 FAS.resetCells(Cells) # Reset all cells to 0 thickness and velocity. 
