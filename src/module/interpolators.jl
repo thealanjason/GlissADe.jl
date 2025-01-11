@@ -1,12 +1,18 @@
-# Interpolation functions: Upwind, Linear, Gamma and gradients: Cell-based greeen gauss 
-# Gamma scheme not used because of "unfixable" bugs. 
+#=
+The INTERPOLATORS submodule is responsible for providing "interpolation" techniques which can be used for computing
+edge values. The submodule relies on the CACHE submodule to load / store information about the fields of a face and 
+its neighbour
 
-# functions marked "INTERNAL" are not intended to be used by the user. 
+The available interpolation functions: Upwind, Linear, Gamma and Face-based green gauss computation scheme. 
+Gamma scheme is not in use currently because of some bugs.
+
+Last Updated On: 11th January, 2025 21:21 UTC+5:30 
+=#
+
 
 """
     getIds!(ids, Cells, Cell_idx, edge_idx)
 Returns the index of the cells sharing the edge given by Cells[i].edge[edge_idx]
-`INTERNAL`
 ## Arguments
 - ids - Arrays providing storage for 2 integers of type `INT_TYPE`
 - Cells::Vector{Cell{T,S,W}} - Given by [`preprocess`](@ref)
@@ -22,7 +28,6 @@ end
 """
     linearInterpolate!(out, params, vars)
 Computes and stores `params[1]*vars[1]+params[2]*vars[2]` in `out`. 
-`INTERNAL`
 """
 @inline function linearInterpolate!(out, params, vars) 
     if eltype(out) <: Vector
@@ -39,8 +44,6 @@ end
 """
     centralInterpolateParams!(params, Cells, Cell_idx, edge_idx, ids)
 Computes the parameters for central interpolation between edges. 
-See also: [`upwindParams!`](@ref)
-`INTERNAL`
 ## Arguments 
 - params - storage for two values of type `FLOAT_TYPE` or `Dual`
 - Cells::Vector{Cell{T,S,W}} - Given by [`preprocess`](@ref)
@@ -64,7 +67,6 @@ end
 """
     centralInterpolate!(Cells, Cell_idx, edge_idx, cache; IDS_PRECOMPUTED, PARAMS_PRECOMPUTED, scalar)
 Performs central interpolation on variables stored in `cache.vars_vec` if `scalar=false` or `cache.vars_sca` if `scalar=true`
-`INTERNAL`
 ## Arguments 
 - Cells::Vector{Cell{T,S,W}} - Given by [`preprocess`](@ref)
 - Cell_idx - Index of Current Face 
@@ -88,8 +90,6 @@ end
 """
     upwindParams!(params, flux_edge)
 Compute Upwind Interpolation parameters based on flux at edge. 
-See also: [`centralInterpolateParams!`](@ref)
-`INTERNAL`
 """
 @inline function upwindParams!(params, flux_edge) 
     @inbounds params[1] = (sign(flux_edge) >= zero(params[1])) ? one(params[1]) : zero(params[1])
@@ -100,7 +100,6 @@ end
 """
     upwindInterpolate!(cache, flux_edge; PARAMS_PRECOMPUTED, scalar)
 Perform upwind interpolation using `cache.vars_vec` if `scalar=false` and `cache.vars_sca` if `scalar=true`
-`INTERNAL`
 
 ## Arguments
 - cache::Cache{T,S,W} - Cache for edge interpolation
@@ -121,7 +120,6 @@ end
 """
     GreenGaussGradient!(cache, Cells, idx, var, vars)
 Compute the gradient using cell-based green gauss gradient scheme. 
-`INTERNAL`
 """
 function GreenGaussGradient!(cache, Cells, idx, var, vars) 
     @unpack ids, vars_sca, vars_vec, sca_e, vec_e, grad_sca, grad_vec = cache 
@@ -176,7 +174,6 @@ end
 """
     gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
 Compute the parameters for the gamma interpolation scheme. 
-`INTERNAL`
 """
 function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
     @unpack ids, params_gamma, params_central, grad_sca, grad_vec = cache 
@@ -227,7 +224,6 @@ end
 """
     gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5, IDS_PRECOMPUTED=false)
 Perform gamma interpolation on the var given by `var` and the total array `vars`.
-`INTERNAL`
 """
 function gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5, IDS_PRECOMPUTED=false)
     @unpack ids, params_gamma, vars_sca, vars_vec, sca_e, vec_e = cache 

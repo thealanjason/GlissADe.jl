@@ -2,7 +2,7 @@
 
 #=
 Geometry Precompute functions responsible for computing face areas, surface normals, local coordinates, 
-edge normals, edge lengths, edge binormals, face centroids and neighbours. Multi-threaded wherever 
+edge normals, edge lengths, edge binormals, and face centroids. Multi-threaded wherever 
 possible. 
 
 Last Updated On: 11th January, 2025 20:45 UTC+5:30

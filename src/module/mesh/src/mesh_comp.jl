@@ -1,57 +1,16 @@
-# Contains custom struct for storing geometrical information and some utility functions 
+#=
+Functions computing neighbours of a face, mesh bounds and the average spacing between faces. 
+Multi-threaded wherever possible. 
 
-# functions marked "INTERNAL" are not intended to be used by the user. 
+Last Updated On: 11th January, 2025 20:57 UTC+5:30
+=#
 
-export meshbounds, Cell, computeneighbours, computeMeanDelta
-
-# Structure of Cell 
-
-"""
-    mutable struct Cell{T,S,W} <: Abstract Cell 
-Structure used for storing geometrical data. 
-
-## DataTypes
-- T - Type for numbers for geometrical data. Should be `Dual` when differentiating with geometry. 
-- S - Type for integers. Defaults to `INT_TYPE`
-- W - Type for numbers for state variables. Should be `Dual` when differentiation is performed. 
-
-## Fields 
-- idx::S - Face Index 
-- center::Vector{T} - Coordinates of face centroid 
-- vertices::Vector{Vector{T}} - Coordinates of the vertices forming the face. 
-- edge_centers::Vector{Vector{T}} - Coordinates of edge centers of all edges of a face 
-- edge_lengths::Vector{T} - Edge lengths of all edges of a face 
-- normal::Vector{T} - Surface normal at the centroid of a face 
-- area::T - Area of a face 
-- edge_binormals::Vector{Vector{T}} - Binormals orthogonal to edges and pointing outwards for each edge of a face 
-- transform::Vector{Matrix{T}} - Direction Cosine Matrix for transforming variable of current face for each edge. 
-- transform2::Vector{Matrix{T}} - Direction Cosine Matrix for transforming variable of neighbouring face for each edge. 
-- neighbours::Vector{S} - List of neighbouring faces. 
-- h::W - Thickness at this cell 
-- vel::Vector{W} - Velocity (in global coords) in this cell 
-- pb::W - Basal Pressure at this cell 
-"""
-@with_kw mutable struct Cell{T, S, W} <: AbstractCell 
-    idx::S # index of the cell 
-    center ::Vector{T} # coords of the centroid of the cell 
-    vertices::Vector{Vector{T}} # coords of the vertices of the cell -> A View of the global points array
-    edge_centers::Vector{Vector{T}} # coords of all the edge centers
-    edge_lengths::Vector{T} # Edge lengths of all edges of the cell 
-    normal::Vector{T} # Surface Normal 
-    area::T # Area of the cell
-    edge_binormals::Vector{Vector{T}} # Edge Binormals [Central interpolation hardcoded]
-    transform::Vector{Matrix{T}}
-    transform2::Vector{Matrix{T}}
-    neighbours::Vector{S} # Neighbours of the current cell
-    h::W # Thickness 
-    vel::Vector{W} # Velocity
-    pb::W # Basal Pressure
-end
+export meshbounds, computeneighbours, computeMeanDelta
 
 """
     computeneighbours(l, faces)
 Computes the neighbours of all faces in the mesh. This algorithm has a time complexity of ``O(PE)`` where 
-``P, E`` are the total number of points and edges in the mesh respectively. `INTERNAL`
+``P, E`` are the total number of points and edges in the mesh respectively.
     
 - l = ``P``, Total number of points in the mesh
 - faces - Vector containing information of all the faces in the mesh
@@ -155,8 +114,7 @@ end
 ## Compute Average Spacing between cells ## 
 
 """
-`INTERNAL`
-Multithreading auxillary.
+Multithreading auxillary for computeMeanDelta
 """
 function sum_meandelta(Cells, chunk) 
     T = eltype(Cells[1].center)
@@ -172,8 +130,7 @@ function sum_meandelta(Cells, chunk)
 end
 
 """
-`INTERNAL`
-Multithreading auxillary
+Multithreading auxillary for computeMeanDelta
 """
 function sum_edges(Cells, chunk)
     global INT_TYPE 
@@ -195,7 +152,7 @@ Computes mean spacing between face centroids. Uses multiple threads if `threads=
 function computeMeanDelta(Cells) 
     global threads, INT_TYPE
     T = eltype(Cells[1].center) 
-    if threads 
+    if threads && (Threads.nthreads() != 1)
         chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         tasks = map(chunks) do chunk
                     Threads.@spawn sum_meandelta(Cells, chunk)

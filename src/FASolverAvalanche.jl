@@ -16,6 +16,7 @@ import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factoriz
 import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
 import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value 
+import JLD2:load_object, save_object 
 
 ## UTILS SUBMODULE ## 
 include("./module/utils/utils.jl")
@@ -37,11 +38,26 @@ include("./module/cache.jl")
 include("./module/init.jl") 
 ######################
 
-include("./module/mesh.jl") # Mesh Computations (area, quality, etc.)
-include("./module/reordering.jl") # Reordering of the mesh 
-include("./module/precomputations.jl") # Pre-processing and structuring mesh 
-include("./module/interpolators.jl") # Interpolators for solving at edge problems
-include("./module/quality.jl") # Non-orthogonal quality estimation
+## MESH SUBMODULE ##
+include("./module/mesh/mesh.jl")
+######################
+
+## REORDERING SUBMODULE ##
+include("./module/reordering.jl")
+######################
+
+## PRECOMPUTATIONS SUBMODULE ##
+include("./module/precomputations.jl") 
+######################
+
+## INTERPOLATORS SUBMODULE ## 
+include("./module/interpolators.jl") 
+######################
+
+## QUALITY SUBMODULE ##
+include("./module/quality.jl")
+######################
+
 include("./module/initialConditions.jl") # Initialize the discretized system
 include("./module/solver.jl") # Solution of the Savage Hutter Model 
 include("./module/vizualization.jl") # Saving the file to disk

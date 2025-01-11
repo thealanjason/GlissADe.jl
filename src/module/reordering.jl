@@ -1,4 +1,9 @@
-# Logic for Reverse Cuthill Mckee (RCM) reordering 
+#=
+Performs Reverse Cuthill Mckee (RCM) reordering to improve cache-access times and increase "band" of the 
+resulting Finite-Volume Sparse Matrix.
+
+Last Updated On: 11th January, 2025 21:02 UTC+5:30
+=#
 
 """
     adjgraph(A; sortbydeg)

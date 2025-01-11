@@ -1,11 +1,17 @@
 # For estimating mesh quality (non-orthogonal cells)
 
+#=
+QUALITY submodule is resposible for estimating the mesh-quality, i.e. the non-orthogonality of the mesh.
+The highest possible quality is 1.0 and lowest is -1.0 at each face. 
+
+Last Updated On: 11th January, 2025 21:17 UTC+5:30
+=#
+
 """
     MeshQuality(Cells; threads=true)
-Compute the orthogonal quality of the mesh. Uses multiple threads if `threads` is set to `true`. 
-`MIGHT BE BUGGY`
+Compute the orthogonal quality of the mesh. 
 """
-function MeshQuality(Cells; threads=true) 
+function MeshQuality(Cells) 
     global threads 
     πᵢ = (1/π)
     T = eltype(Cells[1].center)
@@ -28,5 +34,5 @@ function MeshQuality(Cells; threads=true)
             end
         end
     end
-    return quality 
+    return quality
 end

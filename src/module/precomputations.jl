@@ -1,4 +1,9 @@
-import JLD2:load_object, save_object 
+#=
+The PRECOMPUTATIONS submodule is resposible for the logic of parsing the mesh, precomputing 
+local geometrical information of the mesh, and reordering the mesh into a "cache-access" friendly numbering.
+
+Last Updated On: 11th January, 2025 21:05 UTC+5:30
+=#
 
 """
     parsemesh(location_points::String, location_faces::String, location_faceLabels::String)
