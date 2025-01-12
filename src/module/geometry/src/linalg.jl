@@ -90,3 +90,18 @@ Returns the normal to the plane containing 3D vectors `v1`, `v2` and `v3` center
     edge2 = normalize(v3 - v2)
     return normalize_cross(edge1, edge2)
 end
+
+"""
+    computeSurfaceGrad!(Iₛ, nₚ)
+Updates the matrix Iₛ inplace using the surface normal nₚ. 
+"""
+function computeSurfaceGrad!(Iₛ, nₚ) 
+    for i in 1:3 
+        for j in 1:3 
+            @inbounds Iₛ[i,j] = -nₚ[i]*nₚ[j]
+            if(i == j)
+                Iₛ[i,j] += one(eltype(nₚ))
+            end
+        end
+    end
+end 

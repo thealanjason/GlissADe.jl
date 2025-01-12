@@ -65,3 +65,18 @@ function computePressureResidual(Cells,h,pb,vel,caches; threads=true)
     end
     return sqrt(res) 
 end
+
+""" 
+    scalingFactor(solver, p)
+Returns the scaling factor for scaling the pressure equation residual. `INTERNAL`
+"""
+function scalingFactor(solver, p)
+    global rho 
+    W = eltype(p)
+    factor = zero(W)
+    rho_inv = 1.0/rho 
+    for i in eachindex(solver.Cells)
+        factor = max(factor, rho_inv*p[i]*solver.Cells[i].area)
+    end
+    return factor
+end

@@ -61,3 +61,46 @@ Compute the arithmetic mean of vector `u`
     end
     return sum
 end
+
+"""
+Update function to store the solution after a time-step.
+"""
+@inline function updateSol!(sol, iter, Cells)
+    global threads
+    @inbounds @maybe_threads Threads.nthreads()==1 || !threads for i in eachindex(Cells)
+        sol[iter][5*i-4] = Cells[i].h 
+        sol[iter][5*i-3:5*i-1] = Cells[i].vel 
+        sol[iter][5*i] = Cells[i].pb 
+    end 
+end
+
+"""
+Repack the computed values and partial derivatives for solution of a linear system.
+"""
+function repack(x::Vector{D}, dx) where D 
+    chunksize = length(x[1].partials)
+    @maybe_threads Threads.nthreads()==1 || !threads for i in eachindex(x)
+        p = tuple() 
+        for N in 1:chunksize 
+            p = (p..., dx[N][i])
+        end
+        x[i] = D(x[i].value, Partials(p))
+    end
+end
+
+"""
+Save the solution at prescribed timesteps.
+"""
+function saveAt(timesteps, sol, tspan, dt)
+    global INT_TYPE 
+    W = eltype(sol[1]) 
+    total_steps = INT_TYPE[](ceil((tspan[2]-tspan[1])/dt))
+    Interpolator = linear_interpolation(timesteps, sol)
+    t = collect(range(tspan[1], tspan[2], total_steps))
+    sol1 = [zeros(W, length(sol[1])) for _ in 1:total_steps]
+    for i in 1:total_steps
+        sol_t = Interpolator(t[i])
+        sol1[i] .= sol_t 
+    end
+    return t, sol1
+end

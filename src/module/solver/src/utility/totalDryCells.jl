@@ -33,7 +33,7 @@ function totalDryCells(solver)
     else 
         n_dry = zero(INT_TYPE[]) 
         @inbounds for i in eachindex(Cells) 
-            s += (Cells[i].h <= h_min) ? 1 : 0 
+            n_dry += (Cells[i].h <= solver.h_min) ? 1 : 0 
         end 
     end
     return n_dry 
