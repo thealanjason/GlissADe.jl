@@ -31,11 +31,11 @@ include("./module/geometry/geometry.jl")
 ######################
 
 ## CACHE SUBMODULE ##
-include("./module/cache.jl") 
+include("./module/cache/cache.jl") 
 ######################
 
 ## INIT SUBMODULE ##
-include("./module/init.jl") 
+include("./module/init/init.jl") 
 ######################
 
 ## MESH SUBMODULE ##
@@ -43,22 +43,31 @@ include("./module/mesh/mesh.jl")
 ######################
 
 ## REORDERING SUBMODULE ##
-include("./module/reordering.jl")
+include("./module/reordering/reordering.jl")
 ######################
 
 ## PRECOMPUTATIONS SUBMODULE ##
-include("./module/precomputations.jl") 
-######################
+include("./module/precomputations/precomputations.jl") 
+###################### 
 
 ## INTERPOLATORS SUBMODULE ## 
 include("./module/interpolators/interpolators.jl") 
 ######################
 
 ## QUALITY SUBMODULE ##
-include("./module/quality.jl")
+include("./module/quality/quality.jl")
 ######################
 
-include("./module/initialConditions.jl") # Initialize the discretized system
-include("./module/solver.jl") # Solution of the Savage Hutter Model 
+## INITIALCONDITIONS SUBMODULE ##
+include("./module/initialConditions/initialConditions.jl") # Initialize the discretized system
+######################
+
+## SOLVER SUBMODULE ##
+include("./module/solver/solver.jl") # Solution of the Savage Hutter Model 
+######################
+
+## VISUALIZATION SUBMODULE ##
 include("./module/vizualization.jl") # Saving the file to disk
+######################
+
 end

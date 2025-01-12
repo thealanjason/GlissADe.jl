@@ -48,11 +48,11 @@ solution = FAS.Solution(
     alpha_p = 0.5, # Under relaxation for pressure. 
     alpha_u = 0.5,  # Under relaxation for velocity
     alpha_h = 0.5,  # Under relaxation for thickness.
-    p_MAX_RESIDUAL = 1e-4, # Maximum allowed residual for pressure constraint. 
+    p_MAX_RESIDUAL = 1e-5, # Maximum allowed residual for pressure constraint. 
     h_MAX_RESIDUAL = 5e-1, # Maximum allowed residual for thickness equation. 
     u_MAX_RESIDUAL = 5e-1, # Maximum allowed residual for momentum equation. 
-    MAX_ITERS = 150, # Maximum Iterations per timestep. 
-    MIN_ITERS = 100, # Minimum iterations per timestep. 
+    MAX_ITERS = 250, # Maximum Iterations per timestep. 
+    MIN_ITERS = 200, # Minimum iterations per timestep. 
     h_clip = 0.0, # Clip the thickness to 0 if h < h_clip
     h_min = 1e-3, # Minimum height to be considered wet. 
     Cells = Cells, # Precomputed geometry and initial conditions
@@ -61,6 +61,6 @@ solution = FAS.Solution(
     faces = faces # Connectivity list of the mesh 
 )
 solver = FAS.Solver(solution) # Construct Solver object (0.9)
-time_steps, sol= FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=1.8) # SIMULATE!
+time_steps, sol= FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=0.9) # SIMULATE!
 FAS.writeToVTK(solution.location, sol, points, faces) # Write the solution to VTK. Smoothens the intermediates to get accurate solutions. 
 FAS.resetCells(Cells) # Reset all cells to 0 thickness and velocity. 

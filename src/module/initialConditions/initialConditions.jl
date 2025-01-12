@@ -1,8 +1,13 @@
-# Contains Functions for release area set-up 
+#=
+The INITIALCONDITIONS submodule is responsible for setting up the initial release area using a regular (n-) polygon.
+
+The Polygon is generated inside a given rectangle bounded by x = [x_min, x_max] and y = [y_min, y_max].
+
+Last Updated On: 12th January, 2025 09:33 UTC+5:30
+=#
 
 export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon
-
-# functions marked "INTERNAL" are not intended to be used by the user. 
+ 
 
 # Better than angle summation and almost 60 times faster than angle summation
 # Test Membership of a point and a bounding polygon [Macmartin Test]
