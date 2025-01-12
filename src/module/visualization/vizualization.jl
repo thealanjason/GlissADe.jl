@@ -1,4 +1,9 @@
-# Save to disk logic. 
+#=
+The VISUALIZATION submodule is responsible for the logic required to save "solution" data to disk in 
+VTU files (.vtu) to be rendered by ParaView. 
+
+Last Updated On: 12th January, 2025 11:35 UTC+5:30 
+=#
 
 using WriteVTK
 

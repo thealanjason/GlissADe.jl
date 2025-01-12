@@ -59,7 +59,7 @@ include("./module/quality/quality.jl")
 ######################
 
 ## INITIALCONDITIONS SUBMODULE ##
-include("./module/initialConditions/initialConditions.jl") # Initialize the discretized system
+include("./module/initialConditions/initialConditions.jl") 
 ######################
 
 ## SOLVER SUBMODULE ##
@@ -67,7 +67,7 @@ include("./module/solver/solver.jl") # Solution of the Savage Hutter Model
 ######################
 
 ## VISUALIZATION SUBMODULE ##
-include("./module/vizualization.jl") # Saving the file to disk
+include("./module/visualization/vizualization.jl") # Saving the file to disk
 ######################
 
 end
