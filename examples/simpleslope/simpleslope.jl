@@ -35,7 +35,6 @@ Cells = FAS.preprocess(points, faces, Float64, comp_neighbours=true) # Precomput
 # Define the region in which a regular polygon is to be found: [xMin, xMax, yMin, yMax]. 
 # npoints are the number of edges in the polygon.
 polygon = FAS.findRegularPolygon([5.0, 10.0, -6.0,6.0], npoints=6) # Example Release conditions. 
-
 cells_inside = FAS.cellsInsideBoundingPolygon(polygon, Cells) # Find the faces lying inside the region defined. 
 
 # Using rho = 1500.0 
