@@ -30,7 +30,7 @@ Cells = FAS.preprocess(points, faces, Float64, comp_neighbours=true) # Precomput
 ##
 
 # Set up release area 
-# FAS.meshbounds(Cells) # Find the span of the mesh. 
+# FAS.meshbounds(Cells) # Find the span of the mesh
 
 # Define the region in which a regular polygon is to be found: [xMin, xMax, yMin, yMax]. 
 # npoints are the number of edges in the polygon.
