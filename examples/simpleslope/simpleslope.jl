@@ -12,7 +12,8 @@ import FASolverAvalanche as FAS
 process = FAS.Process(
             threads = true, 
             stats = true,
-            plots = false,  
+            plots = false,
+            implicit = true,  
             INT_TYPE = Int64
 )
 FAS.init(process) # Initialize the library 
@@ -24,12 +25,12 @@ Cells = FAS.preprocess(points, faces, Float64, comp_neighbours=true) # Precomput
 # If comp_neighbours=true, neighbours will be recomputed even if already stored. 
 
 # Check Sparsity pattern of implicit matrix (after reordering) #
-neighbours = [Cell.neighbours for Cell in Cells]
-A = FAS.adjMatrix(neighbours)
+# neighbours = [Cell.neighbours for Cell in Cells]
+# A = FAS.adjMatrix(neighbours) # Use spy(A) or similar functions to see reordered sparse matrix. 
 ##
 
 # Set up release area 
-FAS.meshbounds(Cells) # Find the span of the mesh. 
+# FAS.meshbounds(Cells) # Find the span of the mesh. 
 
 # Define the region in which a regular polygon is to be found: [xMin, xMax, yMin, yMax]. 
 # npoints are the number of edges in the polygon.
@@ -61,6 +62,6 @@ solution = FAS.Solution(
     faces = faces # Connectivity list of the mesh 
 )
 solver = FAS.Solver(solution) # Construct Solver object (0.9)
-time_steps, sol= FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=0.9) # SIMULATE!
+time_steps, sol = FAS.solve(solver, (0.0,30.0),saveat=0.2,Cₘ=4.5, rtol = 1e-4) # SIMULATE!
 FAS.writeToVTK(solution.location, sol, points, faces) # Write the solution to VTK. Smoothens the intermediates to get accurate solutions. 
 FAS.resetCells(Cells) # Reset all cells to 0 thickness and velocity. 

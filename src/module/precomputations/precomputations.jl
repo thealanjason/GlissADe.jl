@@ -27,7 +27,7 @@ function parsemesh(location_points::String, location_faces::String, location_fac
     unique!(surface_points_idx) # Remove repeated indcies
     sort!(surface_points_idx) # Sort the indices, prepare for remapping 
     
-    # Remapping
+    # Remapping of surface points in 1:N
     global_surface_idx_map = Dict(surface_points_idx .=> 1:length(surface_points_idx)) # New Index ReMap
     surface_aligned_faces_remapped = Vector{Vector{INT_TYPE[]}}(undef, length(surface_aligned_faces))
     @inbounds surface_points = mesh_points[surface_points_idx]

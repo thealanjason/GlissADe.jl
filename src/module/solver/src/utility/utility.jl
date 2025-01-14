@@ -46,18 +46,18 @@ Compute the arithmetic mean of vector `u`
 @inline function computeAverage(u) 
     global threads
     W = eltype(u)
-    l = one(W)/length(u)
+    l = one(W)/length(u) # Precompute inverse for some speedup 
     sum = zero(W) 
-    if threads 
+    if (Threads.nthreads() == 1) || !threads 
+        @inbounds for i in eachindex(u)
+            sum += u[i]*l 
+        end 
+    else 
         chunks = Iterators.partition(eachindex(u), div(length(u), Threads.nthreads()))
         tasks = map(chunks) do chunk
                     Threads.@spawn computeChunkAverage(u, chunk, l)
                 end 
         sum = mapreduce(fetch, +, tasks,init=zero(eltype(u)))
-    else 
-        @inbounds for i in eachindex(u)
-            sum += u[i]*l 
-        end 
     end
     return sum
 end

@@ -59,17 +59,11 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     global threads,g
     Cells = solver.Cells
     W = typeof(Cells[1].h)
-    if threads 
-        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-                    Threads.@spawn compute_chunk_edge_velocity(solver, caches, chunk)
-                end 
-        cₑ = maximum(fetch.(tasks))
-    else
+    if (Threads.nthreads() == 1) || !threads
         cₑ = zero(W)
         cache = take!(caches)
         for i in eachindex(Cells) 
-            checkDry(solver, ids, i) && continue # Skip Dry Cells   
+            checkDry(solver, cache.ids, i) && continue # Skip Dry Cells   
             @inbounds for j in eachindex(Cells[i].neighbours)
             
                 mₑ = Cells[i].edge_binormals[j] 
@@ -100,6 +94,12 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
             end
         end
         put!(caches, cache)
+    else 
+        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        tasks = map(chunks) do chunk
+                    Threads.@spawn compute_chunk_edge_velocity(solver, caches, chunk)
+                end 
+        cₑ = maximum(fetch.(tasks))
     end    
     dt = (Cₘ * Δₑ / cₑ)*0.4 # Some Factor to reduce the maximum time-step. 
     return dt

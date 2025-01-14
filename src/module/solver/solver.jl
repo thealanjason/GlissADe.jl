@@ -32,15 +32,15 @@ include("./src/linear_system/solveLinearSystem.jl")
 include("./src/linear_system/generateLinearSystem.jl")
 
 # Update Laws
-include("./src/update_laws/updateMomentum.jl")
-include("./src/update_laws/updateThickness.jl")
-include("./src/update_laws/updatePressure.jl")
+include("./src/update_laws/implicit/updateMomentum.jl")
+include("./src/update_laws/implicit/updateThickness.jl")
+include("./src/update_laws/implicit/updatePressure.jl")
 
 export solve
 
-# Computes the solution of the free-surface flow equations (savage hutter model) 
+# Computes the solution of the free-surface flow equations (savage hutter model) in an implicit manner 
 """
-    solve(solver, tspan; Cₘ = 0.9, saveat=0.0, rtol=0.01)
+    implicit_solve(solver, tspan, Cₘ, saveat, rtol)
 The solver process which simulates the flow. 
 
 ## Arguments 
@@ -50,16 +50,17 @@ The solver process which simulates the flow.
 - saveat - Save the solution at an equal intervals of `saveat`. If set to `0.0`, no interpolation will be done and original solution returned. 
 - rtol - Relative tolerance for linear solvers.
 """
-function solve(solver, tspan; Cₘ = 0.9, saveat=0.0, rtol=0.01) 
+function implicit_solve(solver, tspan, Cₘ, saveat, rtol) 
     
     global INT_TYPE, stats, threads, plots 
-    Cells = solver.Cells 
-    Δₑ = computeMeanDelta(Cells) # Computing Average Spacing between cells. Useful in time-step calculations
-    
-    T = eltype(Cells[1].center)
-    W = typeof(Cells[1].h)
+
     @unpack MAX_ITERS, p_MAX_RESIDUAL, u_MAX_RESIDUAL, h_MAX_RESIDUAL, MIN_ITERS, Cells, alpha_h, alpha_u, alpha_p = solver
-    
+
+    Δₑ = computeMeanDelta(Cells) # Computing Average Spacing between cells. Useful in time-step calculations
+
+    T = eltype(Cells[1].center) # Datatype for Geometry
+    W = typeof(Cells[1].h) # Datatype for fields
+
     ## FIELD UPDATE CACHE ##                                     
     nthreads = Threads.nthreads()
     caches = Channel{Cache{T,INT_TYPE[],W}}(sizeof(Cache{T,INT_TYPE[],W})*nthreads*2) # Allocate Cache for Each threads
@@ -218,7 +219,8 @@ function solve(solver, tspan; Cₘ = 0.9, saveat=0.0, rtol=0.01)
                      && u_resi < u_MAX_RESIDUAL && resi_scaled < p_MAX_RESIDUAL 
                      && iters > MIN_ITERS) 
         end     
-        stats && println("Exited Loop after ", iters, " iterations") 
+        stats && println("Exited Loop after ", iters, " iterations")
+        
         @inbounds @maybe_threads Threads.nthreads()==1 || !threads for i in eachindex(Cells)
             Cells[i].h = alpha_h*h[i] + (1.0-alpha_h)*Cells[i].h # Relaxation to curb oscillations
             Cells[i].pb = alpha_p*p[i] + (1.0-alpha_p)*Cells[i].pb
@@ -268,4 +270,17 @@ function solve(solver, tspan; Cₘ = 0.9, saveat=0.0, rtol=0.01)
     else
         return time_steps, sol 
     end  
+end
+
+# A user-exposed function for easy usage. Implicit is already defined by the user in Process struct. 
+function solve(solver, tspan; Cₘ = 0.9, saveat = 0.0, rtol = 0.01)
+    global implicit 
+    if implicit 
+        return implicit_solve(solver, tspan, Cₘ, saveat, rtol)
+    end 
+    
+    # Still under work :( 
+    # else 
+    #     return explicit_solve(solver, tspan, Cₘ, saveat, rtol)
+    # end
 end

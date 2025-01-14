@@ -5,6 +5,7 @@ Multi-threaded if allowed.
 Last Updated On: 12th January, 2025 10:20 UTC+5:30
 =#
 
+# Function doesn't use threads will have to modify this later. 
 """
     computeResidual(solver, u, u_avg, A, B) 
 Computes the residual of the linear system ``Au=B``. 

@@ -152,17 +152,7 @@ Computes mean spacing between face centroids. Uses multiple threads if `threads=
 function computeMeanDelta(Cells) 
     global threads, INT_TYPE
     T = eltype(Cells[1].center) 
-    if threads && (Threads.nthreads() != 1)
-        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-                    Threads.@spawn sum_meandelta(Cells, chunk)
-                end
-        Δₑ = mapreduce(fetch, +, tasks, init=zero(T))
-        tasks1 = map(chunks) do chunk 
-                Threads.@spawn sum_edges(Cells, chunk)
-        end
-        count = mapreduce(fetch, +, tasks1, init=zero(INT_TYPE[]))
-    else 
+    if (Threads.nthreads() == 1) || !threads
         Δₑ = zero(T)
         count = zero(INT_TYPE[])
         @inbounds for i in eachindex(Cells)
@@ -172,7 +162,17 @@ function computeMeanDelta(Cells)
                 Δₑ += magnitude(Cells[i].center, Cells[n].center)
                 count += 1 
             end 
-        end 
+        end
+    else 
+        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        tasks = map(chunks) do chunk
+                    Threads.@spawn sum_meandelta(Cells, chunk)
+                end
+        Δₑ = mapreduce(fetch, +, tasks, init=zero(T))
+        tasks1 = map(chunks) do chunk 
+                Threads.@spawn sum_edges(Cells, chunk)
+        end
+        count = mapreduce(fetch, +, tasks1, init=zero(INT_TYPE[]))
     end
     return Δₑ/count 
 end
