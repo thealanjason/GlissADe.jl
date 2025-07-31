@@ -2,7 +2,7 @@
 Custom Linear-Algebra functions redefined for 3D vectors to bypass bounds-checking as present in Julia's 
 inbuilt library: LinearAlgebra.jl. This functions are not meant to be used by the end-user.
 
-Last Updated On: 11th January, 2025 20:43 UTC+5:30
+Last Updated On: 31st July, 2025 22:35 UTC+5:30
 =#
 
 export magnitude, normalize, normalize!, cross, dot, normalize_cross, normal_centroid, center, normals
@@ -92,15 +92,15 @@ Returns the normal to the plane containing 3D vectors `v1`, `v2` and `v3` center
 end
 
 """
-    computeSurfaceGrad!(Iₛ, nₚ)
-Updates the matrix Iₛ inplace using the surface normal nₚ. 
+    computeSurfaceGrad!(surface_grad, n)
+Updates the matrix surface_grad inplace using the surface normal n. 
 """
-function computeSurfaceGrad!(Iₛ, nₚ) 
+function computeSurfaceGrad!(surface_grad, n) 
     for i in 1:3 
         for j in 1:3 
-            @inbounds Iₛ[i,j] = -nₚ[i]*nₚ[j]
+            @inbounds surface_grad[i,j] = -n[i]*n[j]
             if(i == j)
-                Iₛ[i,j] += one(eltype(nₚ))
+                surface_grad += one(eltype(n))
             end
         end
     end
