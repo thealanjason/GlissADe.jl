@@ -39,4 +39,3 @@ function parsefacelabels(location_faceLabels::String, correction_factor)
     end
     return idx_surface_aligned_faces
 end
-

@@ -16,11 +16,11 @@ function convertToMatrix(a) # Time and Memory Complexity O(MN)
     nrows = length(a)
     nrows == 0 && throw("Empty vector passed to $convertToMatrix")
     @inbounds ndims = length(a[1])
-    a_mat = zeros(W, ndims, nrows) # Preallocate Buffer 
-    @inbounds @maybe_threads Threads.nthreads()==1 || !threads for i in eachindex(a)
+    a_mat = zeros(W, ndims, nrows) # Preallocate Buffer
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(a)
         @inbounds for j in eachindex(a[i])
-            a_mat[j,i] = a[i][j]
+            a_mat[j, i] = a[i][j]
         end
     end
-    return a_mat 
+    return a_mat
 end

@@ -5,7 +5,7 @@ Multi-threaded if allowed.
 Last Updated On: 12th January, 2025 10:20 UTC+5:30
 =#
 
-# Function doesn't use threads will have to modify this later. 
+# Function doesn't use threads will have to modify this later.
 """
     computeResidual(solver, u, u_avg, A, B) 
 Computes the residual of the linear system ``Au=B``. 
@@ -24,18 +24,18 @@ function computeResidual(solver, u, u_avg, A, B, res)
     res1 = [zero(W)]
     res2 = [zero(W)]
     res3 = [zero(W)]
-    res .= B 
+    res .= B
     mul!(res, A, u, -1.0, 1.0) # Res1 = B-A*u
-    res .= abs.(res) 
+    res .= abs.(res)
     sum!(res1, res)
-    u .-= u_avg 
-    mul!(res, A, u, 1.0, 0.0) # Res2 = A*u - A*u_avg 
+    u .-= u_avg
+    mul!(res, A, u, 1.0, 0.0) # Res2 = A*u - A*u_avg
     res .= abs.(res)
     sum!(res2, res)
     u .+= u_avg
     res .= u_avg
     mul!(B, A, res, -1.0, 1.0)
-    B .= abs.(B) 
+    B .= abs.(B)
     sum!(res3, B)
-    return res1[1]/(res2[1]+res3[1]+1e-10)
+    return res1[1] / (res2[1] + res3[1] + 1.0e-10)
 end

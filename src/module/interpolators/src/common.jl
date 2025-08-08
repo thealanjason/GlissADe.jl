@@ -13,22 +13,22 @@ Returns the index of the cells sharing the edge given by Cells[i].edge[edge_idx]
 - Cell_idx - Index of current cell 
 - edge_idx - Edge Index 
 """
-@inline function getIds!(ids, Cells, Cell_idx, edge_idx) 
-    @inbounds ids[1] = Cell_idx 
+@inline function getIds!(ids, Cells, Cell_idx, edge_idx)
+    @inbounds ids[1] = Cell_idx
     @inbounds ids[2] = (Cells[Cell_idx].neighbours[edge_idx] <= 0) ? Cell_idx : Cells[Cell_idx].neighbours[edge_idx] # Neumann Boundary Condition
-    nothing 
+    return nothing
 end
 
 """
     linearInterpolate!(out, params, vars)
 Computes and stores `params[1]*vars[1]+params[2]*vars[2]` in `out`. 
 """
-@inline function linearInterpolate!(out, params, vars) 
+@inline function linearInterpolate!(out, params, vars)
     if eltype(out) <: Vector
-        @inbounds out[1] .= params[1].*vars[1]
-        @inbounds out[1] .+= params[2].*vars[2]
-    else 
-        @inbounds out[1] = params[1]*vars[1]+params[2]*vars[2]
+        @inbounds out[1] .= params[1] .* vars[1]
+        @inbounds out[1] .+= params[2] .* vars[2]
+    else
+        @inbounds out[1] = params[1] * vars[1] + params[2] * vars[2]
     end
-    nothing 
+    return nothing
 end

@@ -5,25 +5,25 @@ using Parameters # For creating structs with default values
 # For convinience. These types will be used throughout.
 global const FLOAT_TYPE = Ref{DataType}(Float64)
 global const INT_TYPE = Ref{DataType}(Int64)
-global const g = [0.0,0.0,-9.81]
+global const g = [0.0, 0.0, -9.81]
 
-# Dependencies 
-import LinearAlgebra.mul! 
+# Dependencies
+import LinearAlgebra.mul!
 import LinearAlgebra.I as identity
-import LinearAlgebra: norm2   
+import LinearAlgebra: norm2
 import Interpolations: linear_interpolation
 import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
 import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
-import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value 
-import JLD2:load_object, save_object 
+import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
+import JLD2: load_object, save_object
 
-## UTILS SUBMODULE ## 
+## UTILS SUBMODULE ##
 include("./module/utils/utils.jl")
 #####################
 
 ## PARSER SUBMODULE ##
-include("./module/parser/parser.jl") 
+include("./module/parser/parser.jl")
 ######################
 
 ## GEOMETRY SUBMODULE ##
@@ -31,11 +31,11 @@ include("./module/geometry/geometry.jl")
 ######################
 
 ## CACHE SUBMODULE ##
-include("./module/cache/cache.jl") 
+include("./module/cache/cache.jl")
 ######################
 
 ## INIT SUBMODULE ##
-include("./module/init/init.jl") 
+include("./module/init/init.jl")
 ######################
 
 ## MESH SUBMODULE ##
@@ -47,11 +47,11 @@ include("./module/reordering/reordering.jl")
 ######################
 
 ## PRECOMPUTATIONS SUBMODULE ##
-include("./module/precomputations/precomputations.jl") 
-###################### 
+include("./module/precomputations/precomputations.jl")
+######################
 
-## INTERPOLATORS SUBMODULE ## 
-include("./module/interpolators/interpolators.jl") 
+## INTERPOLATORS SUBMODULE ##
+include("./module/interpolators/interpolators.jl")
 ######################
 
 ## QUALITY SUBMODULE ##
@@ -59,11 +59,11 @@ include("./module/quality/quality.jl")
 ######################
 
 ## INITIALCONDITIONS SUBMODULE ##
-include("./module/initialConditions/initialConditions.jl") 
+include("./module/initialConditions/initialConditions.jl")
 ######################
 
 ## SOLVER SUBMODULE ##
-include("./module/solver/solver.jl") # Solution of the Savage Hutter Model 
+include("./module/solver/solver.jl") # Solution of the Savage Hutter Model
 ######################
 
 ## VISUALIZATION SUBMODULE ##

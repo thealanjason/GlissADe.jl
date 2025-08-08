@@ -5,7 +5,7 @@ logs printing, real-time field plotting, and use of implicit / explicit solvers.
 Last Updated On: 14th January, 2025 18:32 UTC+5:30
 =#
 
-export Process 
+export Process
 
 """
     struct Process 
@@ -26,10 +26,10 @@ Contains user-defined choices for controlling a process.
 - INT_TYPE - Default type used for all integers throughout the library. Defaults to `Int64`
 """
 @with_kw struct Process
-    threads::Bool = true 
+    threads::Bool = true
     stats::Bool = true
     plots::Bool = false
-    implicit::Bool = true 
-    FLOAT_TYPE::DataType = Float64 
-    INT_TYPE::DataType = Int64 
+    implicit::Bool = true
+    FLOAT_TYPE::DataType = Float64
+    INT_TYPE::DataType = Int64
 end

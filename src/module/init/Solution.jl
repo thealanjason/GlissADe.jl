@@ -32,24 +32,22 @@ A Structure containing information to for solution process
 """
 @with_kw mutable struct Solution
     # Solution Properties
-    alpha = nothing 
-    zeta = nothing 
+    alpha = nothing
+    zeta = nothing
     rho = nothing
     basal_stress = nothing
-    alpha_p = nothing 
-    alpha_u = nothing 
-    alpha_h = nothing 
+    alpha_p = nothing
+    alpha_u = nothing
+    alpha_h = nothing
     p_MAX_RESIDUAL = nothing
-    h_MAX_RESIDUAL = nothing 
-    u_MAX_RESIDUAL = nothing 
+    h_MAX_RESIDUAL = nothing
+    u_MAX_RESIDUAL = nothing
     MAX_ITERS = nothing
-    MIN_ITERS = nothing 
-    h_clip = nothing 
-    h_min = nothing 
-    Cells = nothing # Discrete Geometry 
+    MIN_ITERS = nothing
+    h_clip = nothing
+    h_min = nothing
+    Cells = nothing # Discrete Geometry
     location::String = "./solution"
-    points = nothing 
-    faces = nothing 
+    points = nothing
+    faces = nothing
 end
-
-

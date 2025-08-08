@@ -30,31 +30,31 @@ If `ids[2] == ids[1]` then the edge is part of boundary. Has a fixed size `2`.
 - vel_i::Vector{W} - Stores the velocity at owner cell. 
 - vel_n::Vector{W} - Stores the velocity at neighbour cell. 
 """
-@with_kw mutable struct Cache{T,S,W}
+@with_kw mutable struct Cache{T, S, W}
     # Storage for interpolation parameters
-    ids::Vector{S} = [0,1] 
+    ids::Vector{S} = [0, 1]
     params_central::Vector{T} = zeros(T, 2)
-    params_upwind::Vector{W} = zeros(W,2)
-    
+    params_upwind::Vector{W} = zeros(W, 2)
+
     # Storage for storing scalar and vector variables to be interpolated
-    vars_sca::Vector{W} = zeros(W, 2) 
-    vars_vec::Vector{Vector{W}} = [zeros(W, 3), zeros(W, 3)] 
+    vars_sca::Vector{W} = zeros(W, 2)
+    vars_vec::Vector{Vector{W}} = [zeros(W, 3), zeros(W, 3)]
 
     # Storage of storing interpolated variables
-    sca_e::Vector{W} = [zero(W)] 
+    sca_e::Vector{W} = [zero(W)]
     vec_e::Vector{Vector{W}} = [zeros(W, 3)]
 
     # Storage for storing gradient informations [ Gamma Interpolation dropped due to bugs ]
-    # grad_sca::Vector{W} = zeros(W,3) # For scalar fields -> grad(S) = vector 
+    # grad_sca::Vector{W} = zeros(W,3) # For scalar fields -> grad(S) = vector
     # grad_vec::Matrix{W} = zeros(W,3,3) # For vector fields -> grad(V) = tensor
 
     ## Storage for Variables to be used during matrix assembly, pressure update, etc. - I hate Julia for this. Why allocate again and again!
 
     ### MOMENTUM ONLY ###
-    Iₛ::Matrix{T} = zeros(T,3,3) 
-    coupling::Matrix{W} = zeros(W,3,3) 
-      
-    ### COMMON FOR ALL ## 
-    vel_i::Vector{W} = zeros(W,3) # @view allocates vector when not previously defined. To perform inplace copy instead of allocations.
-    vel_n::Vector{W} = zeros(W,3) # @view allocates vector. To perform inplace copy instead of allocating a new vector. 
+    Iₛ::Matrix{T} = zeros(T, 3, 3)
+    coupling::Matrix{W} = zeros(W, 3, 3)
+
+    ### COMMON FOR ALL ##
+    vel_i::Vector{W} = zeros(W, 3) # @view allocates vector when not previously defined. To perform inplace copy instead of allocations.
+    vel_n::Vector{W} = zeros(W, 3) # @view allocates vector. To perform inplace copy instead of allocating a new vector.
 end

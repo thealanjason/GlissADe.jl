@@ -17,19 +17,19 @@ Initialize the library and start PyPlot backend if `process.plots=true`
 ## Arguments
 - process::Process - `Process` object containing computation choices.
 """
-function init(process::Process) 
-    if(process.plots)
-        @eval begin 
+function init(process::Process)
+    if (process.plots)
+        @eval begin
             using Plots, PyPlot # Initialize for plotting
             pyplot()
         end
     end
-    global threads = process.threads 
-    global stats = process.stats 
+    global threads = process.threads
+    global stats = process.stats
     global plots = process.plots
-    global implicit = process.implicit 
-    global FLOAT_TYPE[] = process.FLOAT_TYPE 
+    global implicit = process.implicit
+    global FLOAT_TYPE[] = process.FLOAT_TYPE
     global INT_TYPE[] = process.INT_TYPE
     stats && println("Library Initialized!")
-    nothing
+    return nothing
 end

@@ -13,18 +13,18 @@ Computes the parameters for central interpolation between edges.
 - Cell_idx - Index of current cell 
 - edge_idx - Edge Index 
 """
-@inline function centralInterpolateParams!(params, Cells, Cell_idx, edge_idx, ids) 
+@inline function centralInterpolateParams!(params, Cells, Cell_idx, edge_idx, ids)
     T = eltype(Cells[Cell_idx].center)
     sum = zero(T)
     @inbounds for k in eachindex(ids)
         params[k] = magnitude(Cells[Cell_idx].edge_centers[edge_idx], Cells[ids[k]].center)
         sum += params[k]
-    end 
-    sumᵢ = 1.0/sum 
-    @inbounds params[1] *= sumᵢ 
+    end
+    sumᵢ = 1.0 / sum
+    @inbounds params[1] *= sumᵢ
     @inbounds params[2] *= sumᵢ
     reverse!(params)
-    nothing 
+    return nothing
 end
 
 """
@@ -39,11 +39,11 @@ Performs central interpolation on variables stored in `cache.vars_vec` if `scala
 - PARAMS_PRECOMPUTED - Skip computation of parameters if `set` true
 - scalar - Use `cache.vars_sca` instead of `cache.vars_vec` if set `true`
 """
-function centralInterpolate!(Cells, Cell_idx, edge_idx, cache; IDS_PRECOMPUTED=false, PARAMS_PRECOMPUTED=false, scalar=true)
-    @unpack ids, params_central, sca_e, vec_e, vars_sca, vars_vec = cache 
-    !IDS_PRECOMPUTED && getIds!(ids, Cells, Cell_idx, edge_idx) 
+function centralInterpolate!(Cells, Cell_idx, edge_idx, cache; IDS_PRECOMPUTED = false, PARAMS_PRECOMPUTED = false, scalar = true)
+    @unpack ids, params_central, sca_e, vec_e, vars_sca, vars_vec = cache
+    !IDS_PRECOMPUTED && getIds!(ids, Cells, Cell_idx, edge_idx)
     !PARAMS_PRECOMPUTED && centralInterpolateParams!(params_central, Cells, Cell_idx, edge_idx, ids)
     scalar && linearInterpolate!(sca_e, params_central, vars_sca) # Interpolate vars_sca if scalar variable
     !scalar && linearInterpolate!(vec_e, params_central, vars_vec) # Interpolate vars_vec if vector variable
-    nothing 
+    return nothing
 end

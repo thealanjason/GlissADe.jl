@@ -7,7 +7,7 @@ Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
 
 export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon
- 
+
 
 # Better than angle summation and almost 60 times faster than angle summation
 # Test Membership of a point and a bounding polygon [Macmartin Test]
@@ -16,43 +16,43 @@ export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon
 Tests whether a point with coordinates `coords` is inside the region given by `bounding_coords`: [x_min, x_max, y_min, y_max]
 `INTERNAL`
 """
-function testInside(coords, bounding_coords)::Bool 
+function testInside(coords, bounding_coords)::Bool
     n_vertices = length(bounding_coords)
     if n_vertices < 3
         throw("function testInside expects atleast 3 arguments, got $n_vertices")
     end
     @inbounds x = coords[1]
     @inbounds y = coords[2]
-    inside = false 
+    inside = false
 
     for v in eachindex(bounding_coords)
-        e = v % length(bounding_coords) + 1 
-        @inbounds p1 = bounding_coords[v] 
+        e = v % length(bounding_coords) + 1
+        @inbounds p1 = bounding_coords[v]
         @inbounds p2 = bounding_coords[e]
 
         # Check if point is above the minimum y and below the maximum y coordinate of the edge
-        @inbounds if (y > min(p1[2], p2[2])) 
-            @inbounds if y < max(p1[2], p2[2]) || isapprox(y, max(p1[2], p2[2]), rtol=1e-6)
-                @inbounds if(x < max(p1[1], p2[1]) || isapprox(x, max(p1[1],p2[1]), rtol=1e-6))
+        @inbounds if (y > min(p1[2], p2[2]))
+            @inbounds if y < max(p1[2], p2[2]) || isapprox(y, max(p1[2], p2[2]), rtol = 1.0e-6)
+                @inbounds if (x < max(p1[1], p2[1]) || isapprox(x, max(p1[1], p2[1]), rtol = 1.0e-6))
                     @inbounds x_intersection = (y - p1[2]) * (p2[1] - p1[1]) / (p2[2] - p1[2]) + p1[1]
-                    @inbounds if isapprox(p1[1],p2[1], rtol=1e-10) || x < x_intersection || isapprox(x, x_intersection, rtol=1e-6)
-                        inside = !inside 
+                    @inbounds if isapprox(p1[1], p2[1], rtol = 1.0e-10) || x < x_intersection || isapprox(x, x_intersection, rtol = 1.0e-6)
+                        inside = !inside
                     end
                 end
             end
         end
     end
-    return inside 
+    return inside
 end
 
 """
     findRegularPolygon(coord_limits; npoints=4, epsilon=1e-1)
 Returns a regular polygon within the given constraints: [x_min, x_max, y_min, y_max]. 
 """
-function findRegularPolygon(coord_limits; npoints = 4, epsilon=1e-1)
+function findRegularPolygon(coord_limits; npoints = 4, epsilon = 1.0e-1)
     global FLOAT_TYPE, stats
     l = length(coord_limits)
-    if l != 4 
+    if l != 4
         throw("expected 4, got $l")
     end
     point_uncertainty = [-epsilon, epsilon, -epsilon, epsilon]
@@ -61,27 +61,27 @@ function findRegularPolygon(coord_limits; npoints = 4, epsilon=1e-1)
     @inbounds x_max = coord_limits[2]
     @inbounds y_min = coord_limits[3]
     @inbounds y_max = coord_limits[4]
-    polygon_center = [0.5*(x_min+x_max), 0.5*(y_min+y_max)]
-    L1 = 0.5*(x_max - x_min) 
-    L2 = 0.5*(y_max - y_min)
-    seed_angle = (2*pi)/npoints
-    seed_point = [0.0,0.0] # Initialize inital point
-    if L1 > L2 
-        seed_point[1] = 0.5*(x_min+x_max)
-        seed_point[2] = y_max 
-    else 
+    polygon_center = [0.5 * (x_min + x_max), 0.5 * (y_min + y_max)]
+    L1 = 0.5 * (x_max - x_min)
+    L2 = 0.5 * (y_max - y_min)
+    seed_angle = (2 * pi) / npoints
+    seed_point = [0.0, 0.0] # Initialize inital point
+    if L1 > L2
+        seed_point[1] = 0.5 * (x_min + x_max)
+        seed_point[2] = y_max
+    else
         seed_point[1] = x_max
-        seed_point[2] = 0.5*(y_min+y_max)
+        seed_point[2] = 0.5 * (y_min + y_max)
     end
     polygon_points = [zeros(FLOAT_TYPE[], 2) for _ in 1:npoints]
     @inbounds polygon_points[1] = seed_point
     # Compute rest of the points
     @inbounds for i in 2:npoints
-        vector_to_be_rotated = polygon_points[i-1] - polygon_center
-        rotation_matrix = [cos(seed_angle) sin(seed_angle); -sin(seed_angle) cos(seed_angle)] 
+        vector_to_be_rotated = polygon_points[i - 1] - polygon_center
+        rotation_matrix = [cos(seed_angle) sin(seed_angle); -sin(seed_angle) cos(seed_angle)]
         polygon_points[i] .= polygon_center
         # ↓ This evaluates to polygon_points[1]*1.0 + rotation_matrix*vector_to_be_rotated*1.0
-        mul!(polygon_points[i], rotation_matrix, vector_to_be_rotated, 1.0, 1.0) 
+        mul!(polygon_points[i], rotation_matrix, vector_to_be_rotated, 1.0, 1.0)
     end
     stats && println("Computed Regular Polygon.")
     return polygon_points
@@ -99,7 +99,7 @@ function cellsInsideBoundingPolygon(polygon, Cells)
     global threads, INT_TYPE
     cells_inside_polygon = Vector{INT_TYPE[]}()
     for i in eachindex(Cells) # Multi-thread leads to issues, will have to fix this later.
-        if(testInside(Cells[i].center, polygon))
+        if (testInside(Cells[i].center, polygon))
             push!(cells_inside_polygon, i)
         end
     end
@@ -116,12 +116,12 @@ function resetCells(Cells)
     global threads, stats
     t_start = time()
     W = eltype(Cells[1].h)
-    @maybe_threads Threads.nthreads()==1 || !threads for i in eachindex(Cells)
+    @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
         Cells[i].h = zero(W)
-        Cells[i].vel = zeros(W,3)
+        Cells[i].vel = zeros(W, 3)
         Cells[i].pb = zero(W)
     end
-    stats && println("Cells Re-Initialized in ", time() - t_start, " seconds")
+    return stats && println("Cells Re-Initialized in ", time() - t_start, " seconds")
 end
 
 # Pressure set to some initial value [general guess]
@@ -130,23 +130,23 @@ end
     initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
 Initializes the faces in `cells_inside_polygon` to have a thickness `h0` and velocity `u0`. Pressure is initialized with a value used for flat surfaces. 
 """
-function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing) 
+function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
     global threads, stats, g
     if isnothing(h0)
         println("WARNING: h0 = 0. Faces left dry!")
-        return 
+        return
     end
     W = eltype(Cells[1].vel)
-    @inbounds @maybe_threads Threads.nthreads==1 || !threads for idx in eachindex(Cells)
+    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
         if idx in cells_inside_polygon
             Cells[idx].h = max(Cells[idx].h, h0)
             if isnothing(u0)
                 Cells[idx].vel .= zero(W)
-            else 
+            else
                 Cells[idx].vel .= max.(Cells[idx].vel, u0)
             end
         end
-        Cells[idx].pb = dot(g, Cells[idx].normal) * Cells[idx].h * rho 
+        Cells[idx].pb = dot(g, Cells[idx].normal) * Cells[idx].h * rho
     end
-    stats && println("Cells initialized.")
+    return stats && println("Cells initialized.")
 end

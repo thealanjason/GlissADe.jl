@@ -21,13 +21,13 @@ The results will be wrong if it isn't.
 function adjgraph(A::SparseMatrixCSC; sortbydeg = true)
     colptr = A.colptr
     rowval = A.rowval
-    ncols = length(colptr)-1
+    ncols = length(colptr) - 1
     neighbors = Vector{Vector{eltype(colptr)}}(undef, ncols)
     cdeg = diff(colptr) # the degree is colptr[j+1]-colptr[j]
     @inbounds for j in 1:ncols
         cstart = colptr[j]
         jdeg = cdeg[j]
-        neighbors[j] = [rowval[cstart+m-1] for m in 1:jdeg]
+        neighbors[j] = [rowval[cstart + m - 1] for m in 1:jdeg]
     end
     # All of these sorts can be done in parallel,  they are totally independent.
     # The question is when to switch over to parallel execution so as to
@@ -72,7 +72,7 @@ should produce
 function adjgraph(conn, nfens)
     neighbors = fill(INT_TYPE[], nfens)
     @inbounds for i in eachindex(neighbors)
-        neighbors[i] =  INT_TYPE[]
+        neighbors[i] = INT_TYPE[]
     end
     @inbounds for k in eachindex(conn)
         @inbounds for node1 in conn[k, :]
@@ -195,7 +195,7 @@ assumed to be symmetric. The results will be wrong if it isn't.
   set to `false` and the lists are not sorted. The second option can be much
   faster, as the sorting is expensive when the neighbor lists are long.
 """
-function RCM(A::SparseMatrixCSC; sortbydeg = true) 
+function RCM(A::SparseMatrixCSC; sortbydeg = true)
     ag = adjgraph(A; sortbydeg = sortbydeg)
     nd = computeDegrees(ag)
     return RCM(ag, nd)
@@ -210,14 +210,14 @@ Computes the Adjacency Matrix of the Mesh given the neighbours
 - neighbours::Vector{Vector{INT_TYPE}} - List of neighbours for each face. 
 """
 function adjMatrix(neighbours)
-    global INT_TYPE 
+    global INT_TYPE
     A = ExtendableSparseMatrix{INT_TYPE[], INT_TYPE[]}(length(neighbours), length(neighbours))
     @inbounds for i in eachindex(neighbours)
-        A[i,i] = 1
+        A[i, i] = 1
         @inbounds for j in eachindex(neighbours[i])
-            (neighbours[i][j] <= 0) && continue 
+            (neighbours[i][j] <= 0) && continue
             n = neighbours[i][j]
-            A[n,i] = 1
+            A[n, i] = 1
         end
     end
     return SparseMatrixCSC(A)

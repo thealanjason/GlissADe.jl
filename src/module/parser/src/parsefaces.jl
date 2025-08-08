@@ -22,11 +22,11 @@ function parsefaces(location_faces::String)
     s_faces_arr = String[]
 
     open(location_faces, "r") do f_faces
-        for (i, line) in enumerate(eachline(f_faces)) 
+        for (i, line) in enumerate(eachline(f_faces))
             if i == 20
                 total_faces = parse(INT_TYPE[], line)
-            elseif i >= 22 
-                !is_valid_face_line(line) && continue 
+            elseif i >= 22
+                !is_valid_face_line(line) && continue
                 push!(s_faces_arr, line)
             end
         end
@@ -34,7 +34,7 @@ function parsefaces(location_faces::String)
     # Process the string
     stats && println("Reading face information...")
     mesh_faces = Vector{Vector{INT_TYPE[]}}(undef, length(s_faces_arr))
-    @inbounds @maybe_threads Threads.nthreads() ==1 || !threads for i in eachindex(s_faces_arr)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(s_faces_arr)
         line = s_faces_arr[i]
         parts = split(line, '(')
         # n = parse(Int, strip(parts[1]))  # Number of points in the face Check: Length(numbers) == n. Not required, In Openfoam we trust!
