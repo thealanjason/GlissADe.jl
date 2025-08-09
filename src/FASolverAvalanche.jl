@@ -2,33 +2,72 @@ module FASolverAvalanche
 
 using Parameters # For creating structs with default values
 
-## GLOBAL TYPES FOR VARIABLES ALLOWED ## 
+# For convinience. These types will be used throughout.
 global const FLOAT_TYPE = Ref{DataType}(Float64)
 global const INT_TYPE = Ref{DataType}(Int64)
-global const g = [0.0,0.0,-9.81]
+global const g = [0.0, 0.0, -9.81]
 
-# # Dependencies 
-import LinearAlgebra.mul! 
+# Dependencies
+import LinearAlgebra.mul!
 import LinearAlgebra.I as identity
-import LinearAlgebra: norm2   
+import LinearAlgebra: norm2
 import Interpolations: linear_interpolation
 import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
 import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
-import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value 
+import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
+import JLD2: load_object, save_object
 
-# ## FILES FROM THIS LIBRARY ## 
-include("./module/additionals.jl") # Commonly used macro
-include("./module/cache.jl") # Cache structure for interpolations 
-include("./module/init.jl") # Initializing Library
-include("./module/parser.jl") # For Parsing input files 
-include("./module/geometry.jl") # For precomputing mesh geometry (doesn't require interpolations)
-include("./module/mesh.jl") # Mesh Computations (area, quality, etc.)
-include("./module/reordering.jl") # Reordering of the mesh 
-include("./module/precomputations.jl") # Pre-processing and structuring mesh 
-include("./module/interpolators.jl") # Interpolators for solving at edge problems
-include("./module/quality.jl") # Non-orthogonal quality estimation
-include("./module/initialConditions.jl") # Initialize the discretized system
-include("./module/solver.jl") # Solution of the Savage Hutter Model 
-include("./module/vizualization.jl") # Saving the file to disk
+## UTILS SUBMODULE ##
+include("./module/utils/utils.jl")
+#####################
+
+## PARSER SUBMODULE ##
+include("./module/parser/parser.jl")
+######################
+
+## GEOMETRY SUBMODULE ##
+include("./module/geometry/geometry.jl")
+######################
+
+## CACHE SUBMODULE ##
+include("./module/cache/cache.jl")
+######################
+
+## INIT SUBMODULE ##
+include("./module/init/init.jl")
+######################
+
+## MESH SUBMODULE ##
+include("./module/mesh/mesh.jl")
+######################
+
+## REORDERING SUBMODULE ##
+include("./module/reordering/reordering.jl")
+######################
+
+## PRECOMPUTATIONS SUBMODULE ##
+include("./module/precomputations/precomputations.jl")
+######################
+
+## INTERPOLATORS SUBMODULE ##
+include("./module/interpolators/interpolators.jl")
+######################
+
+## QUALITY SUBMODULE ##
+include("./module/quality/quality.jl")
+######################
+
+## INITIALCONDITIONS SUBMODULE ##
+include("./module/initialConditions/initialConditions.jl")
+######################
+
+## SOLVER SUBMODULE ##
+include("./module/solver/solver.jl") # Solution of the Savage Hutter Model
+######################
+
+## VISUALIZATION SUBMODULE ##
+include("./module/visualization/vizualization.jl") # Saving the file to disk
+######################
+
 end

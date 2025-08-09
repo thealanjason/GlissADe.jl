@@ -1,0 +1,106 @@
+#=
+Computation of the time-step based on CFL law (CFL <= 1)
+
+Last Updated On: 12th January, 2025 10:16 UTC+5:30
+=#
+
+"""
+Multithreading auxillary for computeTimeStep
+"""
+function compute_chunk_edge_velocity(solver, caches, chunk)
+    global g
+    cache = take!(caches)
+    @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
+    Cells = solver.Cells
+    @inbounds W = typeof(Cells[1].h)
+    cₑ = zero(W)
+    nₑ = zeros(W, 3)
+    for i in chunk
+        checkDry(solver, ids, i) && continue # Skip Dry Cells
+        @inbounds for j in eachindex(Cells[i].neighbours)
+
+            mₑ = Cells[i].edge_binormals[j]
+            # Get IDS to be looked at
+            getIds!(ids, Cells, i, j)
+            n = ids[2] # Nearest neighbour sharing this edge
+
+            # Normal at edge
+            Pe = magnitude(Cells[i].center, Cells[i].edge_centers[j])
+            Pen = magnitude(Cells[n].center, Cells[i].edge_centers[j]) + Pe
+            frac = one(W) - Pe / Pen
+            nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
+
+            # Interpolate Velocity to edges #
+            mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
+            mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
+            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+            vel_edge = vec_e[1]
+            flux_edge = computeFlux(mₑ, vel_edge)
+
+            # Interpolate thickness to edges #
+            vars_sca[1] = Cells[i].h
+            vars_sca[2] = Cells[n].h
+            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+            h_edge = sca_e[1]
+            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
+            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+        end
+    end
+    put!(caches, cache)
+    return cₑ
+end
+
+"""
+    computeTimeStep(solver, Cₘ, Δₑ, caches)
+Compute the timestep adaptively based on the CFL criterion. ``dt = Cₘ*Δₑ/cₑ``
+`INTERNAL`
+"""
+function computeTimeStep(solver, Cₘ, Δₑ, caches)
+    global threads, g
+    Cells = solver.Cells
+    W = typeof(Cells[1].h)
+    if (Threads.nthreads() == 1) || !threads
+        cₑ = zero(W)
+        cache = take!(caches)
+        for i in eachindex(Cells)
+            checkDry(solver, cache.ids, i) && continue # Skip Dry Cells
+            @inbounds for j in eachindex(Cells[i].neighbours)
+
+                mₑ = Cells[i].edge_binormals[j]
+                # Get IDS to be looked at
+                getIds!(ids, Cells, i, j)
+                n = ids[2] # Nearest neighbour sharing this edge
+
+                # Normal at edge
+                Pe = magnitude(Cells[i].center, Cells[i].edge_centers[j])
+                Pen = magnitude(Cells[n].center, Cells[i].edge_centers[j]) + Pe
+                frac = one(W) - Pe / Pen
+                nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
+
+                # Interpolate Velocity to edges #
+                mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
+                mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
+                centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+                vel_edge = vec_e[1]
+                flux_edge = computeFlux(mₑ, vel_edge)
+
+                # Interpolate thickness to edges #
+                vars_sca[1] = Cells[i].h
+                vars_sca[2] = Cells[n].h
+                centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+                h_edge = sca_e[1]
+                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
+                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+            end
+        end
+        put!(caches, cache)
+    else
+        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        tasks = map(chunks) do chunk
+            Threads.@spawn compute_chunk_edge_velocity(solver, caches, chunk)
+        end
+        cₑ = maximum(fetch.(tasks))
+    end
+    dt = (Cₘ * Δₑ / cₑ) * 0.4 # Some Factor to reduce the maximum time-step.
+    return dt
+end

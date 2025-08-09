@@ -7,3 +7,4 @@ _output-presentation
 stored
 solution
 docs/progress/progress.qmd
+*.vtu
