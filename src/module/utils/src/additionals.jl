@@ -1,9 +1,8 @@
 #=
-Type-checking functions for internal use. 
-
-Last Updated On: 11th January, 2025 20:34 UTC+5:30
+# Typechecking for parsing.
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
-
 
 """
             is_valid_integer(s)
@@ -12,7 +11,6 @@ Checks if the given variable is of type-constant `INT_TYPE`.
 - s::AnyDataType - Any Variable 
 """
 function is_valid_integer(s)
-    global INT_TYPE
     try
         parse(INT_TYPE[], s)
         return true

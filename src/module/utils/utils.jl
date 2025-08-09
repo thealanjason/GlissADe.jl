@@ -1,10 +1,9 @@
 #=
-UTILS submodule is a collection of some "short-form" macros and some convinience functions
-which are used everywhere but don't necessarily belong to a particular module/sub-module. 
-
-Last Updated On: 11th January, 2025 20:29 UTC+5:30
+# Some Utility Macros and functions.
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
 
-include("./src/maybe_threads.jl") # Defines Custom Macro. Julia Rule, Macros defined before functions
+include("./macros/maybe_threads.jl") # Defines Custom Macro. Julia Rule, Macros defined before functions
 include("./src/additionals.jl")
 include("./src/convertToMatrix.jl")

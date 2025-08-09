@@ -1,35 +1,36 @@
 #=
-Functions exposed to the user to interact with the library, define the computational flow, 
-and solution process control. 
-
-Last Updated On: 11th January, 2025 20:49 UTC+5:30
+# Defines process control by the user.
+# Copyright (c) 2025 Tanish Jain. 
+# Licensed under the MIT license.
 =#
 
-include("./Process.jl")
 include("./Solution.jl")
 
 export init
 
 """
-    init(process::Process)
-Initialize the library and start PyPlot backend if `process.plots=true`
+    init(plots, threads, stats, float_type, int_type)
+Initialize the library and start PyPlot backend if `plots=true`
 
 ## Arguments
-- process::Process - `Process` object containing computation choices.
+- `plots::Bool`: toggle side-by-side iteration plotting.
+- `threads::Bool`: toggle multi-threading
+- `stats::Bool`: toggle debug-printing
+- `float_type::DataType`: fallback type for floats.
+- `int_type::DataType`: fallback type for ints.
 """
-function init(process::Process)
-    if (process.plots)
+function init(plots = false, threads = true, stats = true, float_type = Float64, int_type = Int64)
+    if (plots)
         @eval begin
             using Plots, PyPlot # Initialize for plotting
             pyplot()
         end
     end
-    global threads = process.threads
-    global stats = process.stats
-    global plots = process.plots
-    global implicit = process.implicit
-    global FLOAT_TYPE[] = process.FLOAT_TYPE
-    global INT_TYPE[] = process.INT_TYPE
+    THREADS[] = threads
+    STATS[] = stats
+    PLOTS[] = plots
+    FLOAT_TYPE[] = FLOAT_TYPE
+    INT_TYPE[] = INT_TYPE
     stats && println("Library Initialized!")
     return nothing
 end

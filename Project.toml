@@ -1,7 +1,7 @@
 name = "FASolverAvalanche"
 uuid = "d94f865e-9be7-4415-9b4a-0e34ca8c7922"
 authors = ["Tanish Jain"]
-version = "1.0.0-DEV"
+version = "0.0.1"
 
 [deps]
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
@@ -20,7 +20,7 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
 MonteCarloMeasurements = "1.4.0"
-julia = "1.6.7"
+julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
