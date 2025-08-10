@@ -29,11 +29,11 @@ function _check_valid_face(line)
     parts = split(line, '(', limit = 2)
     length(parts) != 2 && return false
     @inbounds n_str = strip(parts[1])
-    !is_valid_integer(n_str) && return false
+    !_check_valid_int(n_str) && return false
     n = parse(INT_TYPE[], n_str)
     @inbounds face_str = strip(parts[2], [' ', ')'])
     face_elements = split(face_str)
     length(face_elements) != n && return false
-    !all(is_valid_integer, face_elements) && return false
+    !all(_check_valid_int, face_elements) && return false
     return true
 end

@@ -88,7 +88,9 @@ Updates the matrix surface_grad inplace using the surface normal n.
 function _surface_grad!(surface_grad, n)
     for i in 1:3
         @inbounds for j in 1:3
-            (i == j) && surface_grad[i, j] = one(eltype(n))
+            if i == j 
+                surface_grad[i,j] = one(eltype(n))
+            end
             surface_grad[i, j] -= n[i] * n[j]
         end
     end
