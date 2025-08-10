@@ -29,8 +29,8 @@ function init(plots = false, threads = true, stats = true, float_type = Float64,
     THREADS[] = threads
     STATS[] = stats
     PLOTS[] = plots
-    FLOAT_TYPE[] = FLOAT_TYPE
-    INT_TYPE[] = INT_TYPE
-    stats && println("Library Initialized!")
+    FLOAT_TYPE[] = float_type
+    INT_TYPE[] = int_type
+    STATS[] && println("Library Initialized!")
     return nothing
 end

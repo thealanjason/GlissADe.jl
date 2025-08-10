@@ -3,7 +3,6 @@
 # Copyright (c) 2025 Tanish Jain.
 # Licensed under the MIT license.
 =#
-
 """
     _parsefaces_openfoam(location_faces)
 Parse the connectivity list of a mesh in an OpenFOAM format and store it in type `INT_TYPE`
@@ -19,7 +18,7 @@ function _parsefaces_openfoam(location_faces::String)
     ts_faces = @view s_faces_file[22:(22 + n_faces - 1)]
     s_faces = String[]
     for (idx, face) in enumerate(ts_faces)
-        !is_valid_face_line(face) && continue
+        !_check_valid_face(face) && continue
         push!(s_faces, face)
     end
 

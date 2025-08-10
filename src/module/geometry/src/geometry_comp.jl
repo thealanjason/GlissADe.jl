@@ -1,16 +1,8 @@
-# Contains functions to precompute geometrical information: Area, normals, etc.
-
 #=
-Geometry Precompute functions responsible for computing face areas, surface normals, local coordinates, 
-edge normals, edge lengths, edge binormals, and face centroids. Multi-threaded wherever 
-possible. 
-
-Last Updated On: 11th January, 2025 20:45 UTC+5:30
+# Geometry Precomputations. 
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
-
-# Defines an Abstract type for compatibility later.
-abstract type AbstractCell end
-
 """
     localcoords(normal::Vector{W}, p1::Vector{W}, p2::Vector{W}; axis=2) where W<:Real
 Computes the local coordinate system given two vertices `p1` and `p2` and the `normal`. 

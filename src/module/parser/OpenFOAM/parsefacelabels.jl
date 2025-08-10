@@ -3,7 +3,6 @@
 # Copyright (c) 2025 Tanish Jain.
 # Licensed under the MIT license.
 =#
-
 """
     _parsefacelabels_openfoam(location_faceLabels, correction_factor)
 Parse indices of the faces forming the terrain in a text file with OpenFoam format and stores it in `INT_TYPE`

@@ -30,10 +30,10 @@ include("./module/utils/utils.jl")
 include("./module/parser/parser.jl")
 ######################
 
-# ## GEOMETRY SUBMODULE ##
-# include("./module/geometry/geometry.jl")
-# ######################
-#
+## GEOMETRY SUBMODULE ##
+include("./module/geometry/geometry.jl")
+######################
+
 # ## CACHE SUBMODULE ##
 # include("./module/cache/cache.jl")
 # ######################
