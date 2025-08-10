@@ -1,14 +1,12 @@
 #=
-The Cell struct is used to store local (face-only) geometrical data and 
-field values (pressure, velocity, snow thickness)
-
-Last Updated On: 11th January, 2025 20:53 UTC+5:30
+# Cell structure to store element geometrical information.
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
-
 export Cell
 
 """
-    mutable struct Cell{T,S,W} <: Abstract Cell 
+    mutable struct Cell{T,S,W}
 Structure used for storing geometrical data. 
 
 ## DataTypes
@@ -32,7 +30,7 @@ Structure used for storing geometrical data.
 - vel::Vector{W} - Velocity (in global coords) in this cell 
 - pb::W - Basal Pressure at this cell 
 """
-@with_kw mutable struct Cell{T, S, W} <: AbstractCell
+@with_kw mutable struct Cell{T, S, W}
     idx::S # index of the cell
     center::Vector{T} # coords of the centroid of the cell
     vertices::Vector{Vector{T}} # coords of the vertices of the cell -> A View of the global points array

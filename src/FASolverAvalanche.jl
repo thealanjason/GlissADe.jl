@@ -16,11 +16,11 @@ const PLOTS = Ref{Bool}(false)
 # import LinearAlgebra.I as identity
 # import LinearAlgebra: norm2
 # import Interpolations: linear_interpolation
-# import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
-# import SparseArrays: SparseMatrixCSC
+import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
+import SparseArrays: SparseMatrixCSC
 # import LinearSolve as LinSolv
 # import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
-# import JLD2: load_object, save_object
+import JLD2: load_object, save_object
 
 ## UTILS SUBMODULE ##
 include("./module/utils/utils.jl")
@@ -37,23 +37,23 @@ include("./module/geometry/geometry.jl")
 # ## CACHE SUBMODULE ##
 # include("./module/cache/cache.jl")
 # ######################
-#
-# ## INIT SUBMODULE ##
-# include("./module/init/init.jl")
-# ######################
-#
-# ## MESH SUBMODULE ##
-# include("./module/mesh/mesh.jl")
-# ######################
-#
-# ## REORDERING SUBMODULE ##
-# include("./module/reordering/reordering.jl")
-# ######################
-#
-# ## PRECOMPUTATIONS SUBMODULE ##
-# include("./module/precomputations/precomputations.jl")
-# ######################
-#
+
+## INIT SUBMODULE ##
+include("./module/init/init.jl")
+######################
+
+## MESH SUBMODULE ##
+include("./module/mesh/mesh.jl")
+######################
+
+## REORDERING SUBMODULE ##
+include("./module/reordering/reordering.jl")
+######################
+
+## PRECOMPUTATIONS SUBMODULE ##
+include("./module/precomputations/precomputations.jl")
+######################
+
 # ## INTERPOLATORS SUBMODULE ##
 # include("./module/interpolators/interpolators.jl")
 # ######################
