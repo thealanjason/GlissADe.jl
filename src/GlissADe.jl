@@ -1,4 +1,4 @@
-module FASolverAvalanche
+module GlissADe
 
 using Parameters # For creating structs with default values
 
