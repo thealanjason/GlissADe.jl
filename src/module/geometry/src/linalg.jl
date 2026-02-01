@@ -1,26 +1,22 @@
 #=
-Custom Linear-Algebra functions redefined for 3D vectors to bypass bounds-checking as present in Julia's 
-inbuilt library: LinearAlgebra.jl. This functions are not meant to be used by the end-user.
-
-Last Updated On: 31st July, 2025 22:35 UTC+5:30
+# Linear Algebra without bounds checking
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
-
-export magnitude, normalize, normalize!, cross, dot, normalize_cross, normal_centroid, center, normals
-
 """
-    magnitude(x::Vector{W}) where W<:Real
+    _mag(x::Vector{W}) where W<:Real
 Computes the Euclidean norm (2-norm) of 3D vector `x`. 
 """
-@inline function magnitude(x)
+@inline function _mag(x)
     @inbounds mag = sqrt(x[1] * x[1] + x[2] * x[2] + x[3] * x[3])
     return mag
 end
 
 """
-    magnitude(x::Vector{W},y::Vector{W}) where W<:Real 
+    _mag2(x::Vector{W},y::Vector{W}) where W<:Real 
 Computes the Euclidean norm (2-norm) of 3D vector `x-y`.
 """
-@inline function magnitude(x, y)
+@inline function _mag2(x, y)
     @inbounds x1 = x[1] - y[1]
     @inbounds x2 = x[2] - y[2]
     @inbounds x3 = x[3] - y[3]
@@ -28,80 +24,74 @@ Computes the Euclidean norm (2-norm) of 3D vector `x-y`.
 end
 
 """
-    normalize(x::Vector{W}) where W<:Real 
+    _normalize(x::Vector{W}) where W<:Real 
 Return 3D vector `x` normalized using its Euclidean norm (2-norm). 
 """
-@inline function normalize(x)
-    m = magnitude(x)
-    if m ≈ zero(m)
-        return x
-    end
+@inline function _normalize(x)
+    m = _mag(x)
+    m ≈ zero(m) && return x
     inv_mag = one(eltype(x)) / m
-    y = x .* inv_mag
-    return y
+    return x .* inv_mag
 end
 
 """
-    normalize!(x::Vector{W}) where W<:Real 
+    _normalize!(x::Vector{W}) where W<:Real 
 Normalizes 3D vector `x` inplace using its Euclidean norm (2-norm).
 """
-@inline function normalize!(x)
-    m = magnitude(x)
-    if m ≈ zero(m)
-        return x
-    end
+@inline function _normalize!(x)
+    m = _mag(x)
+    m ≈ zero(m) && return x
     inv_mag = one(eltype(x)) / m
-    x .*= inv_mag
-    return nothing
+    return x .*= inv_mag
 end
 
 """
-    cross(x::Vector{W},y::Vector{W}) where W<:Real 
+    _cross(x::Vector{W},y::Vector{W}) where W<:Real 
 Returns the cross product of 3D vectors `x` and `y`.
 """
-@inline function cross(x, y)
+@inline function _cross(x, y)
     @inbounds z = [x[2] * y[3] - y[2] * x[3], x[3] * y[1] - y[3] * x[1], x[1] * y[2] - x[2] * y[1]]
     return z
 end
 
 """
-    dot(x::Vector{W},y::Vector{W}) where W<:Real 
+    _dot(x::Vector{W},y::Vector{W}) where W<:Real 
 Computes the dot product (inner product) of 3D vectors `x` and `y`.
 """
-@inline function dot(x, y)
+@inline function _dot(x, y)
     @inbounds mdot = x[1] * y[1] + x[2] * y[2] + x[3] * y[3]
     return mdot
 end
 
 """
-    normalize_cross(x::Vector{W},y::Vector{W}) where W<:Real 
-Expands to `normalize(cross(x,y))`. Returns the normalized cross product of 3D vectors `x` and `y`.
+    _ncross(x::Vector{W},y::Vector{W}) where W<:Real 
+Expands to `_normalize(_cross(x,y))`. Returns the normalized cross product of 3D vectors `x` and `y`.
 """
-@inline function normalize_cross(x, y)
-    return normalize(cross(x, y))
+@inline function _ncross(x, y)
+    return _normalize(_cross(x, y))
 end
 
 """
-    normal_centroid(v1::Vector{W}, v2::Vector{W}, v3::Vector{W}) where W<:Real 
+    _ncentroid(v1::Vector{W}, v2::Vector{W}, v3::Vector{W}) where W<:Real 
 Returns the normal to the plane containing 3D vectors `v1`, `v2` and `v3` centered at `v2`.
 """
-@inline function normal_centroid(v1, v2, v3)
-    edge1 = normalize(v1 - v2)
-    edge2 = normalize(v3 - v2)
-    return normalize_cross(edge1, edge2)
+@inline function _ncentroid(v1, v2, v3)
+    edge1 = _normalize(v1 - v2)
+    edge2 = _normalize(v3 - v2)
+    return _ncross(edge1, edge2)
 end
 
 """
-    computeSurfaceGrad!(surface_grad, n)
+    _surface_grad!(surface_grad, n)
 Updates the matrix surface_grad inplace using the surface normal n. 
 """
-function computeSurfaceGrad!(surface_grad, n)
+function _surface_grad!(surface_grad, n)
     for i in 1:3
-        for j in 1:3
-            @inbounds surface_grad[i, j] = -n[i] * n[j]
-            if (i == j)
-                surface_grad += one(eltype(n))
+        @inbounds for j in 1:3
+            if i == j 
+                surface_grad[i,j] = one(eltype(n))
             end
+            surface_grad[i, j] -= n[i] * n[j]
         end
     end
     return

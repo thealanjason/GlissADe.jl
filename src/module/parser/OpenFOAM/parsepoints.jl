@@ -3,7 +3,6 @@
 # Copyright (c) 2025 Tanish Jain
 # Licensed for use under MIT License 
 =#
-
 """
             _parsepoints_openfoam(location_points)
 Parse the points file generated in an OpenFoam format and stores the coordinates in `FLOAT_TYPE` format. 

@@ -1,27 +1,23 @@
 #=
-Functions computing neighbours of a face, mesh bounds and the average spacing between faces. 
-Multi-threaded wherever possible. 
-
-Last Updated On: 11th January, 2025 20:57 UTC+5:30
+# Mesh Utils.
+# Copyright (c) 2025 Tanish Jain.
+# Licensed under the MIT license.
 =#
-
-export meshbounds, computeneighbours, computeMeanDelta
+export meshbounds
 
 """
-    computeneighbours(l, faces)
+    _neighbours(l, faces)
 Computes the neighbours of all faces in the mesh. This algorithm has a time complexity of ``O(PE)`` where 
 ``P, E`` are the total number of points and edges in the mesh respectively.
-    
+## Arguments
 - l = ``P``, Total number of points in the mesh
 - faces - Vector containing information of all the faces in the mesh
 """
-function computeneighbours(l, faces)
-    global threads, stats, INT_TYPE
-
+function _neighbours(l, faces)
     t_start = time()
     point_face_map = [Vector{INT_TYPE[]}() for _ in 1:l]
-    stats && println("Computing point face map...")
-    if Threads.nthreads == 1 || !threads
+    STATS[] && println("Computing point face map...")
+    if Threads.nthreads == 1 || !THREADS[]
         for i in 1:l # Reduce Threads overhead
             @inbounds for j in eachindex(faces)
                 if i in faces[j]
@@ -39,9 +35,9 @@ function computeneighbours(l, faces)
         end
     end
     t1 = time()
-    stats && println("Computing point face map took: ", t1 - t_start, " seconds") # Status Update
+    STATS[] && println("Computing point face map took: ", t1 - t_start, " seconds") # Status Update
     neighbours = [Vector{INT_TYPE[]}() for _ in eachindex(faces)]
-    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for j in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for j in eachindex(faces)
         count = 0
         @inbounds for v in eachindex(faces[j])
             e = (v) % length(faces[j]) + 1
@@ -58,7 +54,7 @@ function computeneighbours(l, faces)
             end
         end
     end
-    stats && println("Computing neighbours took: ", time() - t1, " seconds")
+    STATS[] && println("Computing neighbours took: ", time() - t1, " seconds")
     return neighbours
 end
 
@@ -116,7 +112,7 @@ end
 """
 Multithreading auxillary for computeMeanDelta
 """
-function sum_meandelta(Cells, chunk)
+function _sum_meandelta(Cells, chunk)
     T = eltype(Cells[1].center)
     s = zero(T)
     for i in chunk
@@ -132,7 +128,7 @@ end
 """
 Multithreading auxillary for computeMeanDelta
 """
-function sum_edges(Cells, chunk)
+function _sum_edges(Cells, chunk)
     global INT_TYPE
     count = zero(INT_TYPE[])
     for i in chunk
@@ -149,7 +145,7 @@ end
     computeMeanDelta(Cells)
 Computes mean spacing between face centroids. Uses multiple threads if `threads=true`. 
 """
-function computeMeanDelta(Cells)
+function _mean_delta(Cells)
     global threads, INT_TYPE
     T = eltype(Cells[1].center)
     if (Threads.nthreads() == 1) || !threads
