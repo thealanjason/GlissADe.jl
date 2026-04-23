@@ -1,0 +1,13 @@
+# Changes here will be overwritten by Copier
+Authors: Tanish Jain, Alan Correa
+JuliaMinVersion: '1.10'
+License: MIT
+LicenseCopyrightHolders: Tanish Jain, Alan Correa
+PackageName: GlissADe
+PackageOwner: reckylurker
+PackageUUID: ca26f490-bc68-4489-97cc-95a4c39097e5
+StrategyConfirmIncluded: false
+StrategyLevel: 1
+StrategyReviewExcluded: false
+_commit: v0.18.6
+_src_path: https://github.com/JuliaBesties/BestieTemplate.jl
