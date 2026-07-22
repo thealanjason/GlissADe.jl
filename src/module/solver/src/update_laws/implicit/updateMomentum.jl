@@ -35,7 +35,7 @@ function updateMomentum!(solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0,
         end
         nₚ = Cells[i].normal
         area = Cells[i].area
-        computeSurfaceGrad!(Iₛ, nₚ)
+        _surface_grad!(Iₛ, nₚ)
         vel_i .= @view vel0[(3 * i - 2):(3 * i)]
         ## Temporal Derivative ##
         if (t < 2.0 * dt)

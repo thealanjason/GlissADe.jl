@@ -119,7 +119,7 @@ function _sum_meandelta(Cells, chunk)
         @inbounds for j in eachindex(Cells[i].neighbours)
             n = Cells[i].neighbours[j]
             (n <= 0) && continue
-            s += magnitude(Cells[i].center, Cells[n].center)
+            s += _mag2(Cells[i].center, Cells[n].center)
         end
     end
     return s
@@ -155,18 +155,18 @@ function _mean_delta(Cells)
             @inbounds for j in eachindex(Cells[i].neighbours)
                 (Cells[i].neighbours[j] <= 0) && continue
                 n = Cells[i].neighbours[j]
-                Δₑ += magnitude(Cells[i].center, Cells[n].center)
+                Δₑ += _mag2(Cells[i].center, Cells[n].center)
                 count += 1
             end
         end
     else
         chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         tasks = map(chunks) do chunk
-            Threads.@spawn sum_meandelta(Cells, chunk)
+            Threads.@spawn _sum_meandelta(Cells, chunk)
         end
         Δₑ = mapreduce(fetch, +, tasks, init = zero(T))
         tasks1 = map(chunks) do chunk
-            Threads.@spawn sum_edges(Cells, chunk)
+            Threads.@spawn _sum_edges(Cells, chunk)
         end
         count = mapreduce(fetch, +, tasks1, init = zero(INT_TYPE[]))
     end

@@ -86,7 +86,7 @@ function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ =
         @inbounds vars_n = @view vars[(3 * n - 2):(3 * n)]
         @inbounds vars_i = @view vars[(3 * idx - 2):(3 * idx)]
         gradfV = vars_n - vars_i
-        gradfv = magnitude(vars_n, vars_i)
+        gradfv = _mag2(vars_n, vars_i)
         gradcf = zero(Cells[idx].h)
         mul!(grad_sca, grad_vec, gradfV)
         gradcf = dot(grad_sca, d) # won't allocate, japak!

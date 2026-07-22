@@ -56,7 +56,7 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
     @unpack MAX_ITERS, p_MAX_RESIDUAL, u_MAX_RESIDUAL, h_MAX_RESIDUAL, MIN_ITERS, Cells, alpha_h, alpha_u, alpha_p = solver
 
-    Δₑ = computeMeanDelta(Cells) # Computing Average Spacing between cells. Useful in time-step calculations
+    Δₑ = _mean_delta(Cells) # Computing Average Spacing between cells. Useful in time-step calculations
 
     T = eltype(Cells[1].center) # Datatype for Geometry
     W = typeof(Cells[1].h) # Datatype for fields

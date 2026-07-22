@@ -17,7 +17,7 @@ Computes the parameters for central interpolation between edges.
     T = eltype(Cells[Cell_idx].center)
     sum = zero(T)
     @inbounds for k in eachindex(ids)
-        params[k] = magnitude(Cells[Cell_idx].edge_centers[edge_idx], Cells[ids[k]].center)
+        params[k] = _mag2(Cells[Cell_idx].edge_centers[edge_idx], Cells[ids[k]].center)
         sum += params[k]
     end
     sumᵢ = 1.0 / sum

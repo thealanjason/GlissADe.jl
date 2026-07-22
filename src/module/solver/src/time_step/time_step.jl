@@ -25,8 +25,8 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             n = ids[2] # Nearest neighbour sharing this edge
 
             # Normal at edge
-            Pe = magnitude(Cells[i].center, Cells[i].edge_centers[j])
-            Pen = magnitude(Cells[n].center, Cells[i].edge_centers[j]) + Pe
+            Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
+            Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
             frac = one(W) - Pe / Pen
             nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
 
@@ -42,8 +42,8 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             vars_sca[2] = Cells[n].h
             centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
             h_edge = sca_e[1]
-            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
-            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * abs(dot(nₑ, g))))
+            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * abs(dot(nₑ, g))))
         end
     end
     put!(caches, cache)
@@ -61,9 +61,11 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     W = typeof(Cells[1].h)
     if (Threads.nthreads() == 1) || !threads
         cₑ = zero(W)
+        nₑ = zeros(W, 3)
         cache = take!(caches)
+        @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
         for i in eachindex(Cells)
-            checkDry(solver, cache.ids, i) && continue # Skip Dry Cells
+            checkDry(solver, ids, i) && continue # Skip Dry Cells
             @inbounds for j in eachindex(Cells[i].neighbours)
 
                 mₑ = Cells[i].edge_binormals[j]
@@ -72,8 +74,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 n = ids[2] # Nearest neighbour sharing this edge
 
                 # Normal at edge
-                Pe = magnitude(Cells[i].center, Cells[i].edge_centers[j])
-                Pen = magnitude(Cells[n].center, Cells[i].edge_centers[j]) + Pe
+                Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
+                Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
                 frac = one(W) - Pe / Pen
                 nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
 
@@ -89,8 +91,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 vars_sca[2] = Cells[n].h
                 centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
                 h_edge = sca_e[1]
-                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
-                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * abs(dot(nₑ, g))))
+                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * abs(dot(nₑ, g))))
             end
         end
         put!(caches, cache)
