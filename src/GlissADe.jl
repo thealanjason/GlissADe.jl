@@ -9,17 +9,17 @@ const THREADS = Ref{Bool}(true)
 const STATS = Ref{Bool}(true)
 const PLOTS = Ref{Bool}(false)
 
-# const g = [0.0, 0.0, -9.81]
+global const g = [0.0, 0.0, -9.81]
 
 # Dependencies
-# import LinearAlgebra.mul!
-# import LinearAlgebra.I as identity
-# import LinearAlgebra: norm2
-# import Interpolations: linear_interpolation
+import LinearAlgebra.mul!
+import LinearAlgebra.I as identity
+import LinearAlgebra: norm2, dot
+import Interpolations: linear_interpolation
 import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
 import SparseArrays: SparseMatrixCSC
-# import LinearSolve as LinSolv
-# import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
+import LinearSolve as LinSolv
+import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
 import JLD2: load_object, save_object
 
 ## UTILS SUBMODULE ##
