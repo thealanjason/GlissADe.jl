@@ -34,9 +34,9 @@ include("./module/parser/parser.jl")
 include("./module/geometry/geometry.jl")
 ######################
 
-# ## CACHE SUBMODULE ##
-# include("./module/cache/cache.jl")
-# ######################
+## CACHE SUBMODULE ##
+include("./module/cache/cache.jl")
+######################
 
 ## INIT SUBMODULE ##
 include("./module/init/init.jl")
@@ -54,24 +54,24 @@ include("./module/reordering/reordering.jl")
 include("./module/precomputations/precomputations.jl")
 ######################
 
-# ## INTERPOLATORS SUBMODULE ##
-# include("./module/interpolators/interpolators.jl")
-# ######################
-#
-# ## QUALITY SUBMODULE ##
-# include("./module/quality/quality.jl")
-# ######################
-#
-# ## INITIALCONDITIONS SUBMODULE ##
-# include("./module/initialConditions/initialConditions.jl")
-# ######################
-#
-# ## SOLVER SUBMODULE ##
-# include("./module/solver/solver.jl") # Solution of the Savage Hutter Model
-# ######################
-#
-# ## VISUALIZATION SUBMODULE ##
-# include("./module/visualization/vizualization.jl") # Saving the file to disk
-# ######################
+## INTERPOLATORS SUBMODULE ##
+include("./module/interpolators/interpolators.jl")
+######################
+
+## QUALITY SUBMODULE ##
+include("./module/quality/quality.jl")
+######################
+
+## INITIALCONDITIONS SUBMODULE ##
+include("./module/initialConditions/initialConditions.jl")
+######################
+
+## SOLVER SUBMODULE ##
+include("./module/solver/solver.jl") # Solution of the Savage Hutter Model
+######################
+
+## VISUALIZATION SUBMODULE ##
+include("./module/visualization/vizualization.jl") # Saving the file to disk
+######################
 
 end
