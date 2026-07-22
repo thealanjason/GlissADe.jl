@@ -6,7 +6,7 @@ The Polygon is generated inside a given rectangle bounded by x = [x_min, x_max] 
 Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
 
-export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon
+export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon, resetCells
 
 
 # Better than angle summation and almost 60 times faster than angle summation
