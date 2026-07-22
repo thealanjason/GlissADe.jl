@@ -42,8 +42,8 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             vars_sca[2] = Cells[n].h
             centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
             h_edge = sca_e[1]
-            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * abs(dot(nₑ, g))))
-            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * abs(dot(nₑ, g))))
+            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
+            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
         end
     end
     put!(caches, cache)
@@ -91,8 +91,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 vars_sca[2] = Cells[n].h
                 centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
                 h_edge = sca_e[1]
-                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * abs(dot(nₑ, g))))
-                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * abs(dot(nₑ, g))))
+                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
+                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
             end
         end
         put!(caches, cache)
