@@ -1,7 +1,7 @@
 using Test
 using GlissADe
 
-@testset "avalanche-solver" begin
+@testset "solver" begin
     points, faces = plane_mesh()
     Cells = preprocess(points, faces, Float64, comp_neighbours = true)
 
@@ -22,7 +22,7 @@ using GlissADe
         @test_throws Any Solver(solution)
     end
 
-    # --- End-to-end simulation & AD-gradient scenarios (spec: avalanche-solver) ---
+    # --- End-to-end simulation & AD-gradient scenarios (spec: solver) ---
     #
     # These are written against `simpleslope`, the mesh examples/simpleslope/simpleslope.jl
     # actually exercises solve() against -- plane_sample is meshing/geometry-only (per its
