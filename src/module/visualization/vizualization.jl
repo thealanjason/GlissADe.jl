@@ -28,7 +28,7 @@ function writeToVTK(location::String, sol, points, faces)
     end
 
     if location[end] == '/'
-        chop(location)
+        location = chop(location)
     end
 
     if !isdir(location)
@@ -78,7 +78,7 @@ function initWriter(location::String, points, faces)
     end
 
     if location[end] == '/'
-        chop(location)
+        location = chop(location)
     end
 
     if !isdir(location)

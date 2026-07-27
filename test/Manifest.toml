@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "f1b6e0234963aea138c6cf7c060a8b329c5a3f37"
+project_hash = "1ce1bccf5e28e27fb2958117e8189059fa975658"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "ec6be48a85c93d995563b84bff8a86bc98df45ce"
@@ -72,9 +72,9 @@ version = "1.1.2"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra"]
-git-tree-sha1 = "75757da5d9f771ef5909fc84f81d2f9d24127315"
+git-tree-sha1 = "60f11b38ebeabd984f5535838d91e197d97202f0"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "7.27.0"
+version = "7.28.1"
 
     [deps.ArrayInterface.extensions]
     ArrayInterfaceAMDGPUExt = "AMDGPU"
@@ -379,9 +379,9 @@ uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.8.2+0"
 
 [[deps.ExprTools]]
-git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
+git-tree-sha1 = "d2e49e7efd29719d6f28b891b0e0e159daa9d2b4"
 uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
-version = "0.1.10"
+version = "0.1.11"
 
 [[deps.ExtendableSparse]]
 deps = ["DocStringExtensions", "ILUZero", "LinearAlgebra", "Printf", "SparseArrays", "Sparspak", "StaticArrays", "SuiteSparse", "Test"]
@@ -571,7 +571,7 @@ version = "2.86.3+0"
 
 [[deps.GlissADe]]
 deps = ["ExtendableSparse", "ForwardDiff", "Interpolations", "JLD2", "LinearAlgebra", "LinearSolve", "MonteCarloMeasurements", "Parameters", "Plots", "PyPlot", "SparseArrays", "Test", "WriteVTK"]
-path = "."
+path = ".."
 uuid = "d94f865e-9be7-4415-9b4a-0e34ca8c7922"
 version = "0.0.1"
 
@@ -852,9 +852,9 @@ version = "1.12.0"
 
 [[deps.LinearSolve]]
 deps = ["AMD", "ArrayInterface", "ConcreteStructs", "DocStringExtensions", "EnumX", "GPUArraysCore", "InteractiveUtils", "Krylov", "Libdl", "LinearAlgebra", "MKL_jll", "Markdown", "OpenBLAS_jll", "PrecompileTools", "Preferences", "PureKLU", "RecursiveArrayTools", "Reexport", "SciMLBase", "SciMLLogging", "SciMLOperators", "Setfield", "SparseArrays", "SparseColumnPivotedQR", "StaticArraysCore"]
-git-tree-sha1 = "ef12628e82a96bd048340cd5dc99b6aada88a42f"
+git-tree-sha1 = "c8736a1afe6e913011a33b194c2dc2e9c4e335bd"
 uuid = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
-version = "5.0.1"
+version = "5.2.0"
 
     [deps.LinearSolve.extensions]
     LinearSolveAMDGPUExt = "AMDGPU"
@@ -1438,9 +1438,9 @@ version = "0.6.46"
 
 [[deps.SciMLBase]]
 deps = ["ADTypes", "Accessors", "Adapt", "ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "EnumX", "FindFirstFunctions", "FunctionWrappersWrappers", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "Markdown", "PreallocationTools", "PrecompileTools", "Preferences", "Printf", "Random", "RecipesBase", "RecursiveArrayTools", "Reexport", "RuntimeGeneratedFunctions", "SciMLLogging", "SciMLOperators", "SciMLPublic", "SciMLStructures", "StaticArraysCore", "Statistics", "SymbolicIndexingInterface"]
-git-tree-sha1 = "31ac2340dd2e27662420f8a368f18c7d20eddd33"
+git-tree-sha1 = "32e737a78dae3baa8c469c35f1aba29fe058db35"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "3.36.1"
+version = "3.39.1"
 
     [deps.SciMLBase.extensions]
     SciMLBaseChainRulesCoreExt = "ChainRulesCore"
@@ -1497,9 +1497,9 @@ version = "2.0.3"
 
 [[deps.SciMLOperators]]
 deps = ["Accessors", "Adapt", "ArrayInterface", "DocStringExtensions", "LinearAlgebra"]
-git-tree-sha1 = "71878d6cb880919fcf64135083fbac0bc2ef0098"
+git-tree-sha1 = "10e4313d1bce847140611c12469ce532ffbdf3dd"
 uuid = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
-version = "1.24.4"
+version = "1.25.0"
 
     [deps.SciMLOperators.extensions]
     SciMLOperatorsLoopVectorizationExt = "LoopVectorization"
