@@ -1,5 +1,6 @@
 using Test
 using GlissADe
+using ForwardDiff: Dual, value
 
 @testset "solution-export" begin
     points, faces = plane_mesh()
@@ -50,9 +51,51 @@ using GlissADe
         saveSolution(loc, 1.5, time_steps, sol_hist, 2, points_mat, cells)
 
         content = read(joinpath(loc, "time_2.vtu"), String)
+        for (field, offset) in (("H", -4), ("U", -3), ("V", -2), ("W", -1), ("P", 0))
+            vals = extract_vtk_field(content, field)
+            expected = 0.5 * (sol_hist[2][5 + offset] + sol_hist[3][5 + offset])
+            @test all(v -> isapprox(v, expected, atol = 1e-8), vals)
+        end
+
+        # iter == 1 writes sol_hist[1] directly rather than interpolating; check it matches exactly.
+        content_1 = read(joinpath(loc, "time_1.vtu"), String)
+        for (field, offset) in (("H", -4), ("U", -3), ("V", -2), ("W", -1), ("P", 0))
+            vals = extract_vtk_field(content_1, field)
+            expected = sol_hist[1][5 + offset]
+            @test all(v -> isapprox(v, expected, atol = 1e-8), vals)
+        end
+        rm(loc, recursive = true)
+    end
+
+    @testset "writeToVTK preserves mesh geometry" begin
+        loc = "./test_vtk_geometry"
+        rm(loc, recursive = true, force = true)
+        writeToVTK(loc, sol_hist, points, faces)
+        content = read(joinpath(loc, "time_1.vtu"), String)
+        m_points = match(r"NumberOfPoints=\"(\d+)\"", content)
+        m_cells = match(r"NumberOfCells=\"(\d+)\"", content)
+        @test parse(Int, m_points.captures[1]) == length(points)
+        @test parse(Int, m_cells.captures[1]) == length(faces)
+        rm(loc, recursive = true)
+    end
+
+    @testset "writeToVTK strips Dual derivative information" begin
+        loc = "./test_vtk_dual"
+        rm(loc, recursive = true, force = true)
+        dual_sol = [Dual.(sol, 1.0) for sol in sol_hist]
+        writeToVTK(loc, dual_sol, points, faces)
+        content = read(joinpath(loc, "time_1.vtu"), String)
         h_vals = extract_vtk_field(content, "H")
-        expected_h = 0.5 * (sol_hist[2][1] + sol_hist[3][1])
-        @test all(v -> isapprox(v, expected_h, atol = 1e-8), h_vals)
+        @test all(v -> isapprox(v, value(dual_sol[1][1]), atol = 1e-8), h_vals)
+        rm(loc, recursive = true)
+    end
+
+    @testset "writeToVTK normalizes a trailing slash in the output location" begin
+        loc = "./test_vtk_trailing_slash"
+        rm(loc, recursive = true, force = true)
+        writeToVTK(loc * "/", sol_hist, points, faces)
+        @test isdir(loc)
+        @test length(readdir(loc)) == length(sol_hist)
         rm(loc, recursive = true)
     end
 end
