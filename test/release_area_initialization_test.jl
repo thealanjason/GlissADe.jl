@@ -32,7 +32,7 @@ using LinearAlgebra: dot
         rho = 1500.0
 
         initializeGeometry(cells_inside, Cells, rho, h0 = 0.1, u0 = [0.0, 0.0, 0.0])
-        @test all(i -> Cells[i].h >= 0.1 - 1e-12, cells_inside)
+        @test all(i -> isapprox(Cells[i].h, 0.1, atol = 1e-12), cells_inside)
         for c in Cells
             @test isapprox(c.pb, dot([0.0, 0.0, -9.81], c.normal) * c.h * rho, atol = 1e-8)
         end
