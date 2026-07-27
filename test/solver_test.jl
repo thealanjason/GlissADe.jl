@@ -2,6 +2,7 @@ using Test
 using GlissADe
 import LinearAlgebra: norm2
 import ForwardDiff
+import JLD2: load
 
 @testset "solver" begin
     points, faces = plane_mesh()
@@ -60,6 +61,20 @@ import ForwardDiff
             for k in eachindex(sol)
         ]
         @test issorted(x_com)
+
+        # Full-solution golden regression: every field (H, U, V, W, P) for every cell at
+        # every saved timestep, compared against values recorded from a known-good run
+        # (test/fixtures/simpleslope_golden.jld2). This is deliberately loose-toleranced —
+        # unlike the invariant checks above, it's meant to catch *any* unintended change to
+        # the solver's numerical output, at the cost of needing re-recording whenever the
+        # solver's numerics are intentionally changed (relaxation factors, linear solver,
+        # tolerances, etc.) or when floating-point results drift across platforms/BLAS.
+        golden = load(joinpath(@__DIR__, "fixtures", "simpleslope_golden.jld2"))
+        @test length(sol) == length(golden["sol"])
+        @test isapprox(time_steps, golden["time_steps"], rtol = 1e-6)
+        for k in eachindex(sol)
+            @test isapprox(sol[k], golden["sol"][k], rtol = 1e-6, atol = 1e-8)
+        end
         rm("./test_solution_simpleslope", recursive = true, force = true)
     end
 
