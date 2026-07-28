@@ -10,7 +10,7 @@ Here's a walkthrough of how to perform a simulation using this library.
 
 ## Mesh definition and precomputations
 
-GlissADe was built to provide differentiability for a specific use case: sensitivity analyses of avalanches with respect to topography, initial conditions, and model parameters. As such, meshes are expected in OpenFOAM's finite area mesh format. For general support with any 3D model, generate the mesh using OpenFOAM's [avalanche](https://develop.openfoam.com/Community/avalanche) module. Once the files are generated, look into `constant/polyMesh` and `constant/faMesh` for the `points`, `faces`, and `faceLabels` files. Once that's done, here's how to proceed.
+GlissADe was built to provide differentiability for a specific use case: sensitivity analyses of gravity-driven shallow flows with respect to topography, initial conditions, and model parameters. As such, meshes are expected in OpenFOAM's finite area mesh format. For general support with any 3D model, generate the mesh using OpenFOAM's [avalanche](https://develop.openfoam.com/Community/avalanche) module. Once the files are generated, look into `constant/polyMesh` and `constant/faMesh` for the `points`, `faces`, and `faceLabels` files. From there, here's how to proceed.
 
 Initialize the library:
 
@@ -38,7 +38,7 @@ Cells = preprocess(points, faces, Float64, comp_neighbours = true) # Precompute 
 
 The free surface flow equations of the Savage-Hutter model typically don't require boundary conditions. To handle the boundary, the solver uses a zero-gradient (Neumann) scheme. User-defined boundary conditions are not yet supported. Boundary conditions can help simulate inflow and outflow; zero-gradient, being the easiest to realize in code, was chosen to represent the boundary. The solver is therefore currently limited to flows without external inflow and outflow.
 
-Initial conditions are given using a polygonal release area. Spherical release areas are not directly supported — but remember, a polygon with infinite vertices approaches a circle. Here's how initial conditions are defined:
+Initial conditions are given using a polygonal release area. Spherical release areas are not directly supported. But, remember, a polygon with infinite vertices approaches a circle. Here's how initial conditions are defined:
 
 ```julia
 meshbounds(Cells)
@@ -73,7 +73,7 @@ initializeGeometry(cells_inside2, Cells, rho, h0 = 0.3, u0 = [0.0, 0.0, 1e-2]) #
 ```
 
 !!! note
-    Choose the initial polygon carefully. If the polygon is too large, the solver might require stabilization through an appropriate choice of parameters — this isn't always straightforward and might take several iterations to get right.
+    Choose the initial polygon carefully. If the polygon is too large, the solver might require stabilization through an appropriate choice of parameters. This isn't always straightforward and might take several iterations to get right.
 
 ## Setting up the solver and running a simulation
 
@@ -124,7 +124,7 @@ writeToVTK("./solution/", sol, points, faces)
 !!! note
     To avoid overwriting issues, `writeToVTK` deletes the contents of the given directory before saving the new VTK files. It's recommended to use an empty directory for the solution to avoid losing other files.
 
-And that's it — you've solved the free surface flow equations and simulated an avalanche on your geometry!
+And that's it. You've solved the free surface flow equations and simulated a gravity-driven shallow flow on your geometry!
 
 ## Differentiation
 
@@ -186,7 +186,7 @@ autodiff = ForwardDiff.gradient(averageThicknessAt, [0.50])
 
 ## Using custom rheology models
 
-The default ``\mu(I)`` rheology model might not be suitable for all flow types. GlissADe supports customization: any rheology model whose basal stress term ``\tau_b`` is orthogonal to the flow velocity ``\bar{u}`` — i.e. ``\tau_b \cdot \bar{u} = 0`` — is compatible. In empirical terms, the current implementation is valid for non-entraining models.
+The default ``\mu(I)`` rheology model might not be suitable for all flow types. GlissADe supports customization: any rheology model whose basal stress term ``\tau_b`` is orthogonal to the flow velocity ``\bar{u}``, i.e. ``\tau_b \cdot \bar{u} = 0``, is compatible. In empirical terms, the current implementation is valid for non-entraining models.
 
 For example, the Voellmy model:
 
@@ -194,7 +194,7 @@ For example, the Voellmy model:
 \tau_b = \mu\;p_b\;\frac{\bar{u}}{\bar{u} + u_0} + \frac{\rho g}{\zeta}\lvert \bar{u}\rvert \bar{u}
 ```
 
-The library treats the basal friction term implicitly, so it needs the coefficient in the implicit discretization — i.e., given ``\tau_b = \mathcal{A}\bar{u}``, write a function returning ``\mathcal{A}``. The function must have the fixed signature:
+The library treats the basal friction term implicitly, so it needs the coefficient in the implicit discretization, i.e., given ``\tau_b = \mathcal{A}\bar{u}``, write a function returning ``\mathcal{A}``. The function must have the fixed signature:
 
 ```julia
 function myBasalStress(Cell, h, vel, pb, alpha, zeta, rho)

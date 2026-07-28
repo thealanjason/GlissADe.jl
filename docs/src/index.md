@@ -4,9 +4,11 @@ CurrentModule = GlissADe
 
 # GlissADe
 
-Documentation for [GlissADe](https://github.com/thealanjason/GlissADe.jl), a forward-mode fully differentiable finite area solver for avalanche simulations.
+Documentation for [GlissADe](https://github.com/thealanjason/GlissADe.jl), a forward-mode fully differentiable finite area solver for gravity-driven shallow flows.
 
-GlissADe uses the depth-averaged Savage-Hutter model to simulate slab avalanches on surfaces with mild curvature, with support for forward-mode automatic differentiation via [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl). This enables sensitivity analysis — the influence of input parameters on the solution — orders of magnitude faster than the finite-difference approaches conventionally used in industry.
+GlissADe aims to provide a forward-mode autodiff (automatic differentiation) compatible solver for gravity-driven shallow flows, through the use of [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl). The depth-averaged Savage-Hutter model is used to simulate thin flows on surfaces with mild curvature. The implementation follows the description given by Matthias Rauter and the [OpenFOAM avalanche](https://develop.openfoam.com/Community/avalanche) module, though the underlying model is general to shallow mass flows.
+
+This solver can be used for performing sensitivity analysis, the influence of input parameters on the solution. Sensitivity analyses using automatic differentiation can be more accurate and orders of magnitude faster than the conventional approach through finite differences.
 
 - New to GlissADe? Start with the [Getting Started](10-tutorials/getting-started.md) tutorial.
 - Looking for a specific capability? See the [how-to guides](20-how-to/).
