@@ -6,6 +6,11 @@ Last Updated On: 14th January, 2025 10:50 UTC+5:30
 
 export updateThicknessExplicit!
 
+"""
+    updateThicknessExplicit!(solver, dt, t, h, h0, vel0, p0, caches)
+Explicit (RK4) update of the thickness equation. `INTERNAL`, experimental, and not yet complete;
+the explicit solve path is not wired up in [`solve`](@ref), which only supports the implicit solver.
+"""
 function updateThicknessExplicit!(solver, dt, t, h, h0, vel0, p0, caches)
     global threads
     W = eltype(h0)

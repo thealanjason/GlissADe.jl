@@ -60,10 +60,16 @@ end
 
 """
     meshbounds(points)
-Computes the mesh span on the ``xy`` plane of mesh vertices. 
+Computes the mesh span on the ``xy`` plane of mesh vertices.
 
-## Arguments 
-- points - Coordinates of all vertices of a mesh. 
+## Arguments
+- points - Coordinates of all vertices of a mesh.
+
+```jldoctest
+julia> meshbounds([[0.0, 0.0, 0.0], [1.0, 2.0, 0.0], [-1.0, 3.0, 0.0]])
+x_min: -1.0, x_max: 1.0
+y_min: 0.0, y_max: 3.0
+```
 """
 function meshbounds(points::Vector{Vector{T}}) where {T <: Real}
     @inbounds x_min = points[1][1]

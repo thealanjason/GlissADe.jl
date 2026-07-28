@@ -286,7 +286,19 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
     end
 end
 
-# A user-exposed function for easy usage. Implicit is already defined by the user in Process struct.
+"""
+    solve(solver, tspan; Cₘ=0.9, saveat=0.0, rtol=0.01)
+Solve the flow equations over the time span `tspan`.
+
+## Arguments
+- `solver::Solver` - Solver object created via [`Solver`](@ref).
+- `tspan` - Time span `(t0, t1)` to simulate over.
+- `Cₘ` - Maximum Courant number used to control adaptive step sizes. Default `0.9`.
+- `saveat` - Uniform interval at which to save the solution. `0.0` (default) returns every adaptive timestep instead of resampling onto a uniform grid.
+- `rtol` - Relative tolerance used by the linear solve. Default `0.01`.
+
+Whether the implicit or explicit update is used is set by [`init`](@ref)'s `implicit` keyword; only the implicit path is currently implemented.
+"""
 function solve(solver, tspan; Cₘ = 0.9, saveat = 0.0, rtol = 0.01)
     global implicit
     if implicit

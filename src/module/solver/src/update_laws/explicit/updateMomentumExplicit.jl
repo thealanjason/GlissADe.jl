@@ -6,6 +6,11 @@ Last Updated On: 14th January, 2025 09:53 UTC+5:30
 
 export updateMomentumExplicit!
 
+"""
+    updateMomentumExplicit!(solver, dt, t, vel, h0, vel0, p0, caches)
+Explicit (RK4, global timestepping) update of the momentum equation. `INTERNAL`, experimental, and not yet complete;
+the explicit solve path is not wired up in [`solve`](@ref), which only supports the implicit solver.
+"""
 function updateMomentumExplicit!(solver, dt, t, vel, h0, vel0, p0, caches)
     global threads, rho, alpha, zeta, g, INT_TYPE, FLOAT_TYPE
     W = eltype(vel0)

@@ -47,7 +47,20 @@ end
 
 """
     findRegularPolygon(coord_limits; npoints=4, epsilon=1e-1)
-Returns a regular polygon within the given constraints: [x_min, x_max, y_min, y_max]. 
+Returns a regular polygon within the given constraints: [x_min, x_max, y_min, y_max].
+
+```jldoctest
+julia> init(stats = false, threads = false, plots = false);
+
+julia> polygon = findRegularPolygon([0.0, 10.0, 0.0, 10.0], npoints = 4);
+
+julia> [round.(p, digits = 4) for p in polygon]
+4-element Vector{Vector{Float64}}:
+ [10.1, 5.0]
+ [5.0, -0.1]
+ [-0.1, 5.0]
+ [5.0, 10.1]
+```
 """
 function findRegularPolygon(coord_limits; npoints = 4, epsilon = 1.0e-1)
     global FLOAT_TYPE, stats

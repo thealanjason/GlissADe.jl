@@ -11,8 +11,8 @@ GlissADe aims to provide a forward-mode autodiff (automatic differentiation) com
 This solver can be used for performing sensitivity analysis, the influence of input parameters on the solution. Sensitivity analyses using automatic differentiation can be more accurate and orders of magnitude faster than the conventional approach through finite differences.
 
 - New to GlissADe? Start with the [Getting Started](10-tutorials/getting-started.md) tutorial.
-- Looking for a specific capability? See the [how-to guides](20-how-to/).
-- Want to understand the numerics and theory behind the solver? See the [explanation](30-explanation/) section.
+- Looking for a specific capability? See the [how-to guides](20-how-to/parsing-a-mesh.md).
+- Want to understand the numerics and theory behind the solver? See the [background](30-explanation/background.md) page.
 - Looking for function-level documentation? See the [reference](95-reference.md) page.
 
 ## Contributors
