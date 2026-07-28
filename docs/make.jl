@@ -1,3 +1,75 @@
+# using GlissADe
+# using Documenter
+
+# DocMeta.setdocmeta!(GlissADe, :DocTestSetup, :(using GlissADe); recursive = true)
+
+# # Add titles of sections and overrides page titles
+# const titles = Dict(
+#     # "10-tutorials" => "Tutorials", # example folder title
+#     "91-developer.md" => "Developer docs",
+# )
+
+# function recursively_list_pages(folder; path_prefix="")
+#     pages_list = Any[]
+#     for file in readdir(folder)
+#         if file == "index.md"
+#             # We add index.md separately to make sure it is the first in the list
+#             continue
+#         end
+#         # this is the relative path according to our prefix, not @__DIR__, i.e., relative to `src`
+#         relpath = joinpath(path_prefix, file)
+#         # full path of the file
+#         fullpath = joinpath(folder, relpath)
+
+#         if isdir(fullpath)
+#             # If this is a folder, enter the recursion case
+#             subsection = recursively_list_pages(fullpath; path_prefix=relpath)
+
+#             # Ignore empty folders
+#             if length(subsection) > 0
+#                 title = if haskey(titles, relpath)
+#                 titles[relpath]
+#                 else
+#                 @error "Bad usage: '$relpath' does not have a title set. Fix in 'docs/make.jl'"
+#                 relpath
+#                 end
+#                 push!(pages_list, title => subsection)
+#             end
+
+#             continue
+#         end
+
+#         if splitext(file)[2] != ".md" # non .md files are ignored
+#             continue
+#         elseif haskey(titles, relpath) # case 'title => path'
+#             push!(pages_list, titles[relpath] => relpath)
+#         else # case 'title'
+#             push!(pages_list, relpath)
+#         end
+#     end
+
+#     return pages_list
+# end
+
+# function list_pages()
+#     root_dir = joinpath(@__DIR__, "src")
+#     pages_list = recursively_list_pages(root_dir)
+
+#     return ["index.md"; pages_list]
+# end
+
+# makedocs(;
+#     modules = [GlissADe],
+#     authors = "Tanish Jain <recklurker@gmail.com>, Alan Correa <correa@mbd.rwth-aachen.de>",
+#     repo = "https://github.com/thealanjason/GlissADe.jl/blob/{commit}{path}#{line}",
+#     sitename = "GlissADe.jl",
+#     format = Documenter.HTML(; canonical = "https://thealanjason.github.io/GlissADe.jl"),
+#     pages = list_pages(),
+# )
+
+# deploydocs(; repo = "github.com/thealanjason/GlissADe.jl")
+#
+
 using GlissADe
 using Documenter
 
@@ -9,7 +81,7 @@ const titles = Dict(
     "91-developer.md" => "Developer docs",
 )
 
-function recursively_list_pages(folder; path_prefix="")
+function recursively_list_pages(folder; path_prefix = "")
     pages_list = Any[]
     for file in readdir(folder)
         if file == "index.md"
@@ -20,25 +92,21 @@ function recursively_list_pages(folder; path_prefix="")
         relpath = joinpath(path_prefix, file)
         # full path of the file
         fullpath = joinpath(folder, relpath)
-
         if isdir(fullpath)
             # If this is a folder, enter the recursion case
-            subsection = recursively_list_pages(fullpath; path_prefix=relpath)
-
+            subsection = recursively_list_pages(fullpath; path_prefix = relpath)
             # Ignore empty folders
             if length(subsection) > 0
                 title = if haskey(titles, relpath)
-                titles[relpath]
+                    titles[relpath]
                 else
-                @error "Bad usage: '$relpath' does not have a title set. Fix in 'docs/make.jl'"
-                relpath
+                    @error "Bad usage: '$relpath' does not have a title set. Fix in 'docs/make.jl'"
+                    relpath
                 end
                 push!(pages_list, title => subsection)
             end
-
             continue
         end
-
         if splitext(file)[2] != ".md" # non .md files are ignored
             continue
         elseif haskey(titles, relpath) # case 'title => path'
@@ -47,21 +115,23 @@ function recursively_list_pages(folder; path_prefix="")
             push!(pages_list, relpath)
         end
     end
-
     return pages_list
 end
 
 function list_pages()
     root_dir = joinpath(@__DIR__, "src")
     pages_list = recursively_list_pages(root_dir)
-
     return ["index.md"; pages_list]
 end
+
+# Use a Remotes.Remote object instead of a raw string so Documenter can
+# resolve both the per-line source links AND the navbar repo URL.
+const repo = Documenter.Remotes.GitHub("thealanjason", "GlissADe.jl")
 
 makedocs(;
     modules = [GlissADe],
     authors = "Tanish Jain <recklurker@gmail.com>, Alan Correa <correa@mbd.rwth-aachen.de>",
-    repo = "https://github.com/thealanjason/GlissADe.jl/blob/{commit}{path}#{line}",
+    repo = repo,
     sitename = "GlissADe.jl",
     format = Documenter.HTML(; canonical = "https://thealanjason.github.io/GlissADe.jl"),
     pages = list_pages(),
