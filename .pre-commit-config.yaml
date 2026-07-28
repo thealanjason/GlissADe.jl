@@ -1,3 +1,4 @@
+exclude: "^(_docs/|_freeze/)"
 repos:
   - repo: local
     hooks:

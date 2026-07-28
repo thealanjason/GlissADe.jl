@@ -13,5 +13,7 @@ exclude = [
 ]
 
 exclude_path = [
-  "docs/build"
+  "docs/build",
+  "_docs",
+  "_freeze"
 ]

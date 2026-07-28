@@ -1,2 +1,6 @@
+ignore: |
+  _docs/
+  _freeze/
+
 rules:
   indentation: {spaces: 2}
