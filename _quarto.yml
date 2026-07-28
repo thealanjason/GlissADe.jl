@@ -1,6 +1,6 @@
 profile:
   default: private
-  group: 
+  group:
     - [private, public]
 
 project:
@@ -16,7 +16,7 @@ website:
     background: light
     border: true
     left: "Contact : [**Alan Correa**](mailto:correa@mbd.rwth-aachen.de), [**Tanish Jain**](mailto:tanish.jain@rwth-aachen.de)"
-    right: "[![](/_docs/images/logo_mbd.png){width=200px fig-alt=MBD  }](https://www.mbd.rwth-aachen.de)" 
+    right: "[![](/_docs/images/logo_mbd.png){width=200px fig-alt=MBD  }](https://www.mbd.rwth-aachen.de)"
 
 format:
   html:
@@ -25,5 +25,3 @@ format:
     toc: true
     code-block-bg: true
     code-copy: true
-
-    

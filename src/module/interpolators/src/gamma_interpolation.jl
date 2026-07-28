@@ -7,7 +7,7 @@ Last Updated On: 11th January, 2025 22:10 UTC+5:30
 
 """
     GreenGaussGradient!(cache, Cells, idx, var, vars)
-Compute the gradient using cell-based green gauss gradient scheme. 
+Compute the gradient using cell-based green gauss gradient scheme.
 """
 function GreenGaussGradient!(cache, Cells, idx, var, vars)
     @unpack ids, vars_sca, vars_vec, sca_e, vec_e, grad_sca, grad_vec = cache
@@ -33,7 +33,7 @@ function GreenGaussGradient!(cache, Cells, idx, var, vars)
         end
     else
         grad_vec .= zero(Cells[idx].h)
-        @inbounds vars_i = @view vars[(3 * idx - 2):(3 * idx)]
+        @inbounds vars_i = @view vars[(3*idx-2):(3*idx)]
         @inbounds for j in eachindex(Cells[idx].neighbours)
             mₑ = Cells[idx].edge_binormals[j]
             Lₑ = Cells[idx].edge_lengths[j]
@@ -41,15 +41,22 @@ function GreenGaussGradient!(cache, Cells, idx, var, vars)
             # Get Id of neighbour cell
             getIds!(ids, Cells, idx, j)
             n = ids[2]
-            vars_n = @view vars[(3 * n - 2):(3 * n)]
+            vars_n = @view vars[(3*n-2):(3*n)]
             ## Velocity at edge
             mul!(vars_vec[1], Cells[idx].transform[j], vars_i) # Global -> Local -> Global to preserve surface tangetiality, is that a word?
             mul!(vars_vec[2], Cells[idx].transform2[j], vars_n)
-            centralInterpolate!(Cells, idx, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+            centralInterpolate!(
+                Cells,
+                idx,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                scalar = false,
+            )
             vel_edge = vec_e[1]
 
-            for k1 in 1:3
-                for k2 in 1:3
+            for k1 = 1:3
+                for k2 = 1:3
                     @inbounds grad_vec[k1, k2] += (Lₑ * area_inv) * vel_edge[k1] * mₑ[k2] # Unrolling to prevent allocations
                 end
             end
@@ -61,7 +68,7 @@ end
 ## GAMMA INTERPOLATION SCHEME - SUPERSTAR (Reduces oscillations, increases stability much better than the switching scheme ) ##
 """
     gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
-Compute the parameters for the gamma interpolation scheme. 
+Compute the parameters for the gamma interpolation scheme.
 """
 function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
     @unpack ids, params_gamma, params_central, grad_sca, grad_vec = cache
@@ -83,8 +90,8 @@ function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ =
         gradfv = gradfV * gradfV
         gradcf = gradfV * dot(grad_sca, d)
     else
-        @inbounds vars_n = @view vars[(3 * n - 2):(3 * n)]
-        @inbounds vars_i = @view vars[(3 * idx - 2):(3 * idx)]
+        @inbounds vars_n = @view vars[(3*n-2):(3*n)]
+        @inbounds vars_i = @view vars[(3*idx-2):(3*idx)]
         gradfV = vars_n - vars_i
         gradfv = _mag2(vars_n, vars_i)
         gradcf = zero(Cells[idx].h)
@@ -92,7 +99,9 @@ function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ =
         gradcf = dot(grad_sca, d) # won't allocate, japak!
         ## This should be safe, not using scalar gradient variable with velocity ##
     end
-    Φᵪ = one(Cells[idx].h) - 0.5 * (gradfv * gradcf * gradcf) / (gradcf + 1.0e-37 * one(Cells[idx].h)) # Prevent Unboundedness
+    Φᵪ =
+        one(Cells[idx].h) -
+        0.5 * (gradfv * gradcf * gradcf) / (gradcf + 1.0e-37 * one(Cells[idx].h)) # Prevent Unboundedness
 
     if sign(Φᵪ) <= zero(Cells[idx].h) || Φᵪ > one(Cells[idx].h) || Φᵪ ≈ one(Cells[idx].h)
         upwindParams!(params_gamma, flux_edge)
@@ -113,7 +122,17 @@ end
     gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5, IDS_PRECOMPUTED=false)
 Perform gamma interpolation on the var given by `var` and the total array `vars`.
 """
-function gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5, IDS_PRECOMPUTED = false)
+function gamma!(
+    cache,
+    Cells,
+    idx,
+    edge_idx,
+    flux_edge,
+    var,
+    vars;
+    βₘ = 0.5,
+    IDS_PRECOMPUTED = false,
+)
     @unpack ids, params_gamma, vars_sca, vars_vec, sca_e, vec_e = cache
     !IDS_PRECOMPUTED && getIds!(ids, Cells, idx, edge_idx)
     gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = βₘ)

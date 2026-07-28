@@ -17,4 +17,3 @@ Have a look at our [wiki](/_docs/wiki/index.qmd).
 
 ::: {#refs}
 :::
-

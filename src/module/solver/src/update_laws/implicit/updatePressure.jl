@@ -26,7 +26,7 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
         limit = rho * h_clip * gravityFlux
         p[i] = rho * h0[i] * gravityFlux
         ## NEIGHBOUR COUPLING ##
-        vel_i .= @view vel0[(3 * i - 2):(3 * i)]
+        vel_i .= @view vel0[(3*i-2):(3*i)]
         @inbounds for j in eachindex(Cells[i].neighbours)
             Lₑ = Cells[i].edge_lengths[j] # Edge Length
             mₑ = Cells[i].edge_binormals[j] # Edge binormal
@@ -37,7 +37,7 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
             ## INTERPOLATIONS TO EDGE ##
 
             ### VELOCITY AT EDGE ###
-            vel_n .= @view vel0[(3 * n - 2):(3 * n)]
+            vel_n .= @view vel0[(3*n-2):(3*n)]
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)
             centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
@@ -50,13 +50,29 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
             ### THICKNESS AT EDGE ###
             vars_sca[1] = h0[i]
             vars_sca[2] = h0[n]
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = true,
+            )
             hₑ = sca_e[1]
 
             ### PRESSURE AT EDGE ###
             vars_sca[1] = p0[i]
             vars_sca[2] = p0[n]
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = true,
+            )
             pₑ = sca_e[1]
 
             ## PRESSURE UPDATE ##

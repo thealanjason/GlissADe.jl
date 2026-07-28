@@ -15,7 +15,7 @@ website:
         file: _docs/wiki/index.qmd
       - text: "Public Website"
         file: _output-public/index.html
-  sidebar: 
+  sidebar:
     - id: documentation
       title: "Documentation"
       contents:
@@ -36,8 +36,3 @@ website:
       title: "Wiki"
       contents:
         - _docs/wiki/index.qmd
-    
-
-
-
-

@@ -40,7 +40,15 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             # Interpolate thickness to edges #
             vars_sca[1] = Cells[i].h
             vars_sca[2] = Cells[n].h
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = true,
+            )
             h_edge = sca_e[1]
             cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
             cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
@@ -82,14 +90,29 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 # Interpolate Velocity to edges #
                 mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
                 mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
-                centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+                centralInterpolate!(
+                    Cells,
+                    i,
+                    j,
+                    cache,
+                    IDS_PRECOMPUTED = true,
+                    scalar = false,
+                )
                 vel_edge = vec_e[1]
                 flux_edge = computeFlux(mₑ, vel_edge)
 
                 # Interpolate thickness to edges #
                 vars_sca[1] = Cells[i].h
                 vars_sca[2] = Cells[n].h
-                centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+                centralInterpolate!(
+                    Cells,
+                    i,
+                    j,
+                    cache,
+                    IDS_PRECOMPUTED = true,
+                    PARAMS_PRECOMPUTED = true,
+                    scalar = true,
+                )
                 h_edge = sca_e[1]
                 cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
                 cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
@@ -97,7 +120,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
         end
         put!(caches, cache)
     else
-        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        chunks =
+            Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         tasks = map(chunks) do chunk
             Threads.@spawn compute_chunk_edge_velocity(solver, caches, chunk)
         end

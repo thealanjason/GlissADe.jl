@@ -7,7 +7,6 @@ image: $BASE_IMAGE
 stages:
   - build_all_and_deploy_private_version
   # - deploy_public_version
-  
 
 pages:
   stage: build_all_and_deploy_private_version
@@ -16,7 +15,7 @@ pages:
     - apt-get update -qq
     - apt-get install curl -y
     - echo "install julia"
-    - curl -fsSL https://install.julialang.org | sh -s -- -y 
+    - curl -fsSL https://install.julialang.org | sh -s -- -y
     - echo "install quarto"
     - mkdir -p /opt/quarto/${QUARTO_VERSION}
     - curl -o quarto.tar.gz -L "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
@@ -43,8 +42,7 @@ pages:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-
-# deploy-public:      
+# deploy-public:
 #   stage: deploy_public_version
 #   dependencies:
 #     - pages
@@ -54,7 +52,7 @@ pages:
 #     - apt-get install git -y
 #     - git config --global user.name MBD-CI-BOT
 #     - git config --global user.email cibot@mbd.rwth-aachen.de
-  
+
 #   script:
 #     - echo "Publishing rendered website to public repository.."
 #     - git clone https://oauth2:$ACCESS_TOKEN@git.rwth-aachen.de/mbd_student/projects.git
@@ -62,7 +60,7 @@ pages:
 #     - cd projects/projects
 #     - rm -rf $CI_PROJECT_NAME
 #     - mv ../../$CI_PROJECT_NAME .
-#     - git add -A  
+#     - git add -A
 #     - git commit -m "Update Website"
 #     - git push --force
 #     - echo "Publishing complete"
@@ -70,5 +68,3 @@ pages:
 #   rules:
 #     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 #     - when: manual
-
-

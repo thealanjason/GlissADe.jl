@@ -1,5 +1,5 @@
 #=
-The default rheology model used by the solver. 
+The default rheology model used by the solver.
 
 Last Updated On: 12th January, 2025 09:46 UTC+5:30
 =#

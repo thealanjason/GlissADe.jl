@@ -2,14 +2,14 @@
 
 #=
 QUALITY submodule is resposible for estimating the mesh-quality, i.e. the non-orthogonality of the mesh.
-The highest possible quality is 1.0 and lowest is -1.0 at each face. 
+The highest possible quality is 1.0 and lowest is -1.0 at each face.
 
 Last Updated On: 11th January, 2025 21:17 UTC+5:30
 =#
 
 """
     MeshQuality(Cells; threads=true)
-Compute the orthogonal quality of the mesh. 
+Compute the orthogonal quality of the mesh.
 """
 function MeshQuality(Cells)
     global threads

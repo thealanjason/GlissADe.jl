@@ -7,7 +7,7 @@ website:
     left:
       - text: "Documentation"
         file: _docs/report/00_intro.qmd
-  sidebar: 
+  sidebar:
     - id: documentation
       title: "Documentation"
       contents:
@@ -17,8 +17,3 @@ website:
         - _docs/report/API/API.qmd
         - _docs/report/30_appendix.qmd
         - _docs/report/40_references.qmd
-
-
-
-
-

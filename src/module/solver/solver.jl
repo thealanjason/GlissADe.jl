@@ -1,7 +1,7 @@
 #=
-The SOLVER submodule is responsible for solving the resulting PDE with initial value condition and Neumann 
+The SOLVER submodule is responsible for solving the resulting PDE with initial value condition and Neumann
 boundary conditions (only relevant if flow occurs close to boundary). This module contains all the essential logic
-and bookkeeping required to perform the simulation and/or differentiable simulation. 
+and bookkeeping required to perform the simulation and/or differentiable simulation.
 
 Last Updated On: 12th January, 2025 09:45 UTC+5:30
 =#
@@ -41,20 +41,28 @@ export solve
 # Computes the solution of the free-surface flow equations (savage hutter model) in an implicit manner
 """
     implicit_solve(solver, tspan, Cₘ, saveat, rtol)
-The solver process which simulates the flow. 
+The solver process which simulates the flow.
 
-## Arguments 
+## Arguments
 - solver - As generated from [`Solver`](@ref)
 - tspan - Flow simulated in the range [tspan[1], tspan[2]]
 - Cₘ - Maximum courant number allowed. Defaults to `0.9`
-- saveat - Save the solution at an equal intervals of `saveat`. If set to `0.0`, no interpolation will be done and original solution returned. 
+- saveat - Save the solution at an equal intervals of `saveat`. If set to `0.0`, no interpolation will be done and original solution returned.
 - rtol - Relative tolerance for linear solvers.
 """
 function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
     global INT_TYPE, stats, threads, plots
 
-    @unpack MAX_ITERS, p_MAX_RESIDUAL, u_MAX_RESIDUAL, h_MAX_RESIDUAL, MIN_ITERS, Cells, alpha_h, alpha_u, alpha_p = solver
+    @unpack MAX_ITERS,
+    p_MAX_RESIDUAL,
+    u_MAX_RESIDUAL,
+    h_MAX_RESIDUAL,
+    MIN_ITERS,
+    Cells,
+    alpha_h,
+    alpha_u,
+    alpha_p = solver
 
     Δₑ = _mean_delta(Cells) # Computing Average Spacing between cells. Useful in time-step calculations
 
@@ -63,9 +71,9 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
     ## FIELD UPDATE CACHE ##
     nthreads = Threads.nthreads()
-    caches = Channel{Cache{T, INT_TYPE[], W}}(sizeof(Cache{T, INT_TYPE[], W}) * nthreads * 2) # Allocate Cache for Each threads
-    for _ in 1:nthreads
-        put!(caches, Cache{T, INT_TYPE[], W}())
+    caches = Channel{Cache{T,INT_TYPE[],W}}(sizeof(Cache{T,INT_TYPE[],W}) * nthreads * 2) # Allocate Cache for Each threads
+    for _ = 1:nthreads
+        put!(caches, Cache{T,INT_TYPE[],W}())
     end
 
     ## INTEGRATOR ##
@@ -102,9 +110,9 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
     ## UPDATE INITIAL CONDITIONS ##
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
         h0[i] = Cells[i].h
-        vel0[3 * i - 2] = Cells[i].vel[1]
-        vel0[3 * i - 1] = Cells[i].vel[2]
-        vel0[3 * i] = Cells[i].vel[3]
+        vel0[3*i-2] = Cells[i].vel[1]
+        vel0[3*i-1] = Cells[i].vel[2]
+        vel0[3*i] = Cells[i].vel[3]
         p0[i] = Cells[i].pb
     end
     updatePressure!(solver, p, p0, vel0, h0, caches) # Correct the pressure at initial conditions #
@@ -113,9 +121,27 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
     # Preassemble the linear system #
 
     if W <: Dual
-        Ah, precon_h, Bh, Av, precon_v, Bv, cache_v, cache_h, Ahf, Bhf, Avf, Bvf, dAh, dBh, dAv, dBv, dxh, dxv = preassembleLinearSystem(Cells, rtol)
+        Ah,
+        precon_h,
+        Bh,
+        Av,
+        precon_v,
+        Bv,
+        cache_v,
+        cache_h,
+        Ahf,
+        Bhf,
+        Avf,
+        Bvf,
+        dAh,
+        dBh,
+        dAv,
+        dBv,
+        dxh,
+        dxv = preassembleLinearSystem(Cells, rtol)
     else
-        Ah, precon_h, Bh, Av, precon_v, Bv, cache_v, cache_h = preassembleLinearSystem(Cells, rtol)
+        Ah, precon_h, Bh, Av, precon_v, Bv, cache_v, cache_h =
+            preassembleLinearSystem(Cells, rtol)
     end
 
     resi_scaled = zero(FLOAT_TYPE[])
@@ -136,13 +162,38 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         if (plots)
             push!(dry_cells, n_dry)
             PyPlot.figure(1)
-            p1 = Plots.plot(time_steps, dry_cells, title = "Dry Cells", xlabel = "Time", ylabel = "Dry Cells")
+            p1 = Plots.plot(
+                time_steps,
+                dry_cells,
+                title = "Dry Cells",
+                xlabel = "Time",
+                ylabel = "Dry Cells",
+            )
             PyPlot.figure(2)
-            p2 = Plots.plot(time_steps, max_vel, title = "Max Vel", xlabel = "Time", ylabel = "Max U (m/s)")
+            p2 = Plots.plot(
+                time_steps,
+                max_vel,
+                title = "Max Vel",
+                xlabel = "Time",
+                ylabel = "Max U (m/s)",
+            )
             PyPlot.figure(3)
-            p3 = Plots.plot(time_steps, max_thickness, title = "Max h", xlabel = "Time", ylabel = "Max h (m)")
+            p3 = Plots.plot(
+                time_steps,
+                max_thickness,
+                title = "Max h",
+                xlabel = "Time",
+                ylabel = "Max h (m)",
+            )
             PyPlot.figure(4)
-            p4 = Plots.plot(time_steps, residuals, title = "Residual", xlabel = "Time", ylabel = "Residual", yscale = :log10)
+            p4 = Plots.plot(
+                time_steps,
+                residuals,
+                title = "Residual",
+                xlabel = "Time",
+                ylabel = "Residual",
+                yscale = :log10,
+            )
             display(p1)
             display(p2)
             display(p3)
@@ -173,46 +224,236 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
                 pprev_solution = interpolator(t - 2.0 * dt)
                 if W <: Dual
                     u_resi = updateMomentum!(
-                        solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution, pprev_solution = pprev_solution,
-                        Avf = Avf, dAv = dAv, dBv = dBv, dxv = dxv, Bvf = Bvf
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                        pprev_solution = pprev_solution,
+                        Avf = Avf,
+                        dAv = dAv,
+                        dBv = dBv,
+                        dxv = dxv,
+                        Bvf = Bvf,
                     )
                     h_resi = updateThickness!(
-                        solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution, pprev_solution = pprev_solution, Ahf = Ahf, dAh = dAh,
-                        dBh = dBh, dxh = dxh, Bhf = Bhf
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                        pprev_solution = pprev_solution,
+                        Ahf = Ahf,
+                        dAh = dAh,
+                        dBh = dBh,
+                        dxh = dxh,
+                        Bhf = Bhf,
                     )
                 else
-                    u_resi = updateMomentum!(solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution, pprev_solution = pprev_solution)
-                    h_resi = updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution, pprev_solution = pprev_solution)
+                    u_resi = updateMomentum!(
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                        pprev_solution = pprev_solution,
+                    )
+                    h_resi = updateThickness!(
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                        pprev_solution = pprev_solution,
+                    )
                 end
             elseif t < 2.0 * dt && t > dt
                 prev_solution = interpolator(t - dt)
                 if W <: Dual
                     u_resi = updateMomentum!(
-                        solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution,
-                        Avf = Avf, dAv = dAv, dBv = dBv, dxv = dxv, Bvf = Bvf
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                        Avf = Avf,
+                        dAv = dAv,
+                        dBv = dBv,
+                        dxv = dxv,
+                        Bvf = Bvf,
                     )
                     h_resi = updateThickness!(
-                        solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution, Ahf = Ahf, dAh = dAh,
-                        dBh = dBh, dxh = dxh, Bhf = Bhf
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                        Ahf = Ahf,
+                        dAh = dAh,
+                        dBh = dBh,
+                        dxh = dxh,
+                        Bhf = Bhf,
                     )
                 else
-                    u_resi = updateMomentum!(solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution)
-                    h_resi = updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution)
+                    u_resi = updateMomentum!(
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                    )
+                    h_resi = updateThickness!(
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                    )
                 end
             else
                 prev_solution = @view sol[iter][:]
                 if W <: Dual
                     u_resi = updateMomentum!(
-                        solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution,
-                        Avf = Avf, dAv = dAv, dBv = dBv, dxv = dxv, Bvf = Bvf
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                        Avf = Avf,
+                        dAv = dAv,
+                        dBv = dBv,
+                        dxv = dxv,
+                        Bvf = Bvf,
                     )
                     h_resi = updateThickness!(
-                        solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution, Ahf = Ahf, dAh = dAh,
-                        dBh = dBh, dxh = dxh, Bhf = Bhf
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                        Ahf = Ahf,
+                        dAh = dAh,
+                        dBh = dBh,
+                        dxh = dxh,
+                        Bhf = Bhf,
                     )
                 else
-                    u_resi = updateMomentum!(solver, Av, Bv, precon_v, cache_v, dt, t, p, vel, vel0, h0, caches, res_v, prev_solution = prev_solution)
-                    h_resi = updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res_h; prev_solution = prev_solution)
+                    u_resi = updateMomentum!(
+                        solver,
+                        Av,
+                        Bv,
+                        precon_v,
+                        cache_v,
+                        dt,
+                        t,
+                        p,
+                        vel,
+                        vel0,
+                        h0,
+                        caches,
+                        res_v,
+                        prev_solution = prev_solution,
+                    )
+                    h_resi = updateThickness!(
+                        solver,
+                        Ah,
+                        Bh,
+                        precon_h,
+                        cache_h,
+                        dt,
+                        t,
+                        vel,
+                        h,
+                        h0,
+                        caches,
+                        res_h;
+                        prev_solution = prev_solution,
+                    )
                 end
             end
             vel0 .= vel
@@ -220,7 +461,11 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
             ## PRINT OUT SIMULATION DATA
             resi = computePressureResidual(Cells, h, p, vel, caches, threads = threads)
             factor = scalingFactor(solver, p)
-            resi_scaled = 0.5 * (resi_scaled + value(resi) / (sqrt(length(Cells)) * (value(factor) + 1.0e-6)))
+            resi_scaled =
+                0.5 * (
+                    resi_scaled +
+                    value(resi) / (sqrt(length(Cells)) * (value(factor) + 1.0e-6))
+                )
             stats && println("Pressure Constraint Residual: ", resi_scaled)
             println("Average Pressure: ", value(norm2(p)) / value(sqrt(length(p))))
             println("Average Thickness: ", value(norm2(h)) / value(sqrt(length(h))))
@@ -228,17 +473,19 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
             ## Exit Conditions
             final = (
-                h_resi < h_MAX_RESIDUAL
-                    && u_resi < u_MAX_RESIDUAL && resi_scaled < p_MAX_RESIDUAL
-                    && iters > MIN_ITERS
+                h_resi < h_MAX_RESIDUAL &&
+                u_resi < u_MAX_RESIDUAL &&
+                resi_scaled < p_MAX_RESIDUAL &&
+                iters > MIN_ITERS
             )
         end
         stats && println("Exited Loop after ", iters, " iterations")
 
-        @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
+        @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in
+                                                                         eachindex(Cells)
             Cells[i].h = alpha_h * h[i] + (1.0 - alpha_h) * Cells[i].h # Relaxation to curb oscillations
             Cells[i].pb = alpha_p * p[i] + (1.0 - alpha_p) * Cells[i].pb
-            Cells[i].vel .= @. alpha_u * vel[(3 * i - 2):(3 * i)] + (1.0 - alpha_u) * Cells[i].vel
+            Cells[i].vel .= @. alpha_u * vel[(3*i-2):(3*i)] + (1.0 - alpha_u) * Cells[i].vel
         end
         if (typeof(dt) <: Dual)
             t += dt.value
@@ -260,7 +507,15 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         # sleep(0.1) # RELAXATION?
         if (saveat != zero(FLOAT_TYPE[]) && t >= nextTimeStep)
             iter_sa += one(INT_TYPE[])
-            saveSolution(solver.location, nextTimeStep, time_steps, sol, iter_sa, points_mat, cells)
+            saveSolution(
+                solver.location,
+                nextTimeStep,
+                time_steps,
+                sol,
+                iter_sa,
+                points_mat,
+                cells,
+            )
             nextTimeStep += saveat
         elseif (saveat == zero(FLOAT_TYPE[]))
             iter_sa += one(INT_TYPE[])

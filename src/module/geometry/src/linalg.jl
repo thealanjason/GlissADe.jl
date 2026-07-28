@@ -5,7 +5,7 @@
 =#
 """
     _mag(x::Vector{W}) where W<:Real
-Computes the Euclidean norm (2-norm) of 3D vector `x`. 
+Computes the Euclidean norm (2-norm) of 3D vector `x`.
 """
 @inline function _mag(x)
     @inbounds mag = sqrt(x[1] * x[1] + x[2] * x[2] + x[3] * x[3])
@@ -13,7 +13,7 @@ Computes the Euclidean norm (2-norm) of 3D vector `x`.
 end
 
 """
-    _mag2(x::Vector{W},y::Vector{W}) where W<:Real 
+    _mag2(x::Vector{W},y::Vector{W}) where W<:Real
 Computes the Euclidean norm (2-norm) of 3D vector `x-y`.
 """
 @inline function _mag2(x, y)
@@ -24,8 +24,8 @@ Computes the Euclidean norm (2-norm) of 3D vector `x-y`.
 end
 
 """
-    _normalize(x::Vector{W}) where W<:Real 
-Return 3D vector `x` normalized using its Euclidean norm (2-norm). 
+    _normalize(x::Vector{W}) where W<:Real
+Return 3D vector `x` normalized using its Euclidean norm (2-norm).
 """
 @inline function _normalize(x)
     m = _mag(x)
@@ -35,7 +35,7 @@ Return 3D vector `x` normalized using its Euclidean norm (2-norm).
 end
 
 """
-    _normalize!(x::Vector{W}) where W<:Real 
+    _normalize!(x::Vector{W}) where W<:Real
 Normalizes 3D vector `x` inplace using its Euclidean norm (2-norm).
 """
 @inline function _normalize!(x)
@@ -46,16 +46,17 @@ Normalizes 3D vector `x` inplace using its Euclidean norm (2-norm).
 end
 
 """
-    _cross(x::Vector{W},y::Vector{W}) where W<:Real 
+    _cross(x::Vector{W},y::Vector{W}) where W<:Real
 Returns the cross product of 3D vectors `x` and `y`.
 """
 @inline function _cross(x, y)
-    @inbounds z = [x[2] * y[3] - y[2] * x[3], x[3] * y[1] - y[3] * x[1], x[1] * y[2] - x[2] * y[1]]
+    @inbounds z =
+        [x[2] * y[3] - y[2] * x[3], x[3] * y[1] - y[3] * x[1], x[1] * y[2] - x[2] * y[1]]
     return z
 end
 
 """
-    _dot(x::Vector{W},y::Vector{W}) where W<:Real 
+    _dot(x::Vector{W},y::Vector{W}) where W<:Real
 Computes the dot product (inner product) of 3D vectors `x` and `y`.
 """
 @inline function _dot(x, y)
@@ -64,7 +65,7 @@ Computes the dot product (inner product) of 3D vectors `x` and `y`.
 end
 
 """
-    _ncross(x::Vector{W},y::Vector{W}) where W<:Real 
+    _ncross(x::Vector{W},y::Vector{W}) where W<:Real
 Expands to `_normalize(_cross(x,y))`. Returns the normalized cross product of 3D vectors `x` and `y`.
 """
 @inline function _ncross(x, y)
@@ -72,7 +73,7 @@ Expands to `_normalize(_cross(x,y))`. Returns the normalized cross product of 3D
 end
 
 """
-    _ncentroid(v1::Vector{W}, v2::Vector{W}, v3::Vector{W}) where W<:Real 
+    _ncentroid(v1::Vector{W}, v2::Vector{W}, v3::Vector{W}) where W<:Real
 Returns the normal to the plane containing 3D vectors `v1`, `v2` and `v3` centered at `v2`.
 """
 @inline function _ncentroid(v1, v2, v3)
@@ -83,11 +84,11 @@ end
 
 """
     _surface_grad!(surface_grad, n)
-Updates the matrix surface_grad inplace using the surface normal n. 
+Updates the matrix surface_grad inplace using the surface normal n.
 """
 function _surface_grad!(surface_grad, n)
-    for i in 1:3
-        @inbounds for j in 1:3
+    for i = 1:3
+        @inbounds for j = 1:3
             surface_grad[i, j] = -n[i] * n[j]
             if i == j
                 surface_grad[i, j] += one(eltype(n))

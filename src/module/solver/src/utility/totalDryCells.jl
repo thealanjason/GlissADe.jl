@@ -17,15 +17,16 @@ function sum_dry(Cells, h_min, chunk)
     return s
 end
 
-""" 
+"""
     totalDryCells(solver)
-Compute the total number of dry cells at any time step. See also: [`checkDry`](@ref). 
+Compute the total number of dry cells at any time step. See also: [`checkDry`](@ref).
 """
 function totalDryCells(solver)
     global INT_TYPE, threads
     Cells = solver.Cells
     if threads && (Threads.nthreads() != 1)
-        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        chunks =
+            Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         tasks = map(chunks) do chunk
             Threads.@spawn sum_dry(Cells, solver.h_min, chunk)
         end

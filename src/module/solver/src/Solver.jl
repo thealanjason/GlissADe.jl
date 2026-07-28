@@ -1,7 +1,7 @@
 #=
-The "Solver" struct is generated from the "Solution" struct in INIT submodule. It contains user-defined 
-information for simulation process control and other I/O. It also contains the rheology model to be used 
-for simulation, in terms of a function. 
+The "Solver" struct is generated from the "Solution" struct in INIT submodule. It contains user-defined
+information for simulation process control and other I/O. It also contains the rheology model to be used
+for simulation, in terms of a function.
 
 Last Updated On: 12th January, 2025 09:42 UTC+5:30
 =#
@@ -13,11 +13,11 @@ export Solver
 
 ## DataTypes
 - T - Storage format for numbers related to geometry. Should be `Dual` when differentiating with geometry
-- S - Storage format used for integers. 
-- W - Storage format for state variables. Should be `Dual` when differentiation is performed. 
+- S - Storage format used for integers.
+- W - Storage format for state variables. Should be `Dual` when differentiation is performed.
 
-## Fields 
-- alpha_p - Under relaxation for pressure. Default is `0.5` 
+## Fields
+- alpha_p - Under relaxation for pressure. Default is `0.5`
 - alpha_u - Under relaxation for velocity. Default is `0.5`
 - alpha_h - Under relaxation for thickness. Default is `0.5`
 - MIN_ITERS - Minimum corrections per timestep. Default is `6`
@@ -28,11 +28,11 @@ export Solver
 - h_clip - Clip the thickness to `0` if the value is below `h_clip`. Default is `0.0`
 - h_min - Minimum thickness to consider a face wet. Default is `1e-3`
 - Cells - Given by [`preprocess`](@ref)
-- points - Coordinates of the vertices of a mesh. 
-- faces - Connectivities of the vertices of a mesh. 
-- location::String - Location to store the solution 
+- points - Coordinates of the vertices of a mesh.
+- faces - Connectivities of the vertices of a mesh.
+- location::String - Location to store the solution
 """
-@with_kw mutable struct Solver{T, S, W}
+@with_kw mutable struct Solver{T,S,W}
     # Solution Properties
     basal_stress
     # UNDER-RELAXATION #
@@ -54,7 +54,7 @@ export Solver
     h_min::W
 
     # Discretized Precomputed Geometry
-    Cells::Vector{Cell{T, S, W}} # Precomputed discretized geometry
+    Cells::Vector{Cell{T,S,W}} # Precomputed discretized geometry
     points::Vector{Vector{W}} # Coordinates of vertices of the mesh
     faces::Vector{Vector{S}} # Connectivities of the vertices of the mesh
     location::String = "./solution" # Location to store the solution
@@ -65,8 +65,21 @@ end
 Create Solver object and fill with default values if solution fields left uninitialized.
 """
 function Solver(solution::Solution)
-    @unpack  basal_stress, alpha_p, alpha_u, alpha_h, p_MAX_RESIDUAL, h_MAX_RESIDUAL, u_MAX_RESIDUAL,
-        MAX_ITERS, MIN_ITERS, h_clip, h_min, Cells, location, points, faces = solution
+    @unpack basal_stress,
+    alpha_p,
+    alpha_u,
+    alpha_h,
+    p_MAX_RESIDUAL,
+    h_MAX_RESIDUAL,
+    u_MAX_RESIDUAL,
+    MAX_ITERS,
+    MIN_ITERS,
+    h_clip,
+    h_min,
+    Cells,
+    location,
+    points,
+    faces = solution
 
     global FLOAT_TYPE, INT_TYPE, stats
     T = eltype(Cells[1].center)
@@ -139,10 +152,21 @@ function Solver(solution::Solution)
         throw("faces field shouldn't be empty")
     end
     stats && println("Solver Generated.")
-    return Solver{T, INT_TYPE[], W}(
-        basal_stress = basal_stress, alpha_p = alpha_p, alpha_u = alpha_u, alpha_h = alpha_h, h_clip = h_clip, h_min = h_min,
-        Cells = Cells, p_MAX_RESIDUAL = p_MAX_RESIDUAL,
-        location = location, points = points, faces = faces, h_MAX_RESIDUAL = h_MAX_RESIDUAL, u_MAX_RESIDUAL = u_MAX_RESIDUAL,
-        MIN_ITERS = MIN_ITERS, MAX_ITERS = MAX_ITERS
+    return Solver{T,INT_TYPE[],W}(
+        basal_stress = basal_stress,
+        alpha_p = alpha_p,
+        alpha_u = alpha_u,
+        alpha_h = alpha_h,
+        h_clip = h_clip,
+        h_min = h_min,
+        Cells = Cells,
+        p_MAX_RESIDUAL = p_MAX_RESIDUAL,
+        location = location,
+        points = points,
+        faces = faces,
+        h_MAX_RESIDUAL = h_MAX_RESIDUAL,
+        u_MAX_RESIDUAL = u_MAX_RESIDUAL,
+        MIN_ITERS = MIN_ITERS,
+        MAX_ITERS = MAX_ITERS,
     )
 end

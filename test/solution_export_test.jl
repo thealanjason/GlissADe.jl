@@ -8,12 +8,12 @@ using ForwardDiff: Dual, value
 
     function synthetic_sol(t)
         v = zeros(5 * n)
-        for i in 1:n
-            v[5 * i - 4] = 0.1 + t       # H
-            v[5 * i - 3] = 1.0 * t       # U
-            v[5 * i - 2] = 2.0 * t       # V
-            v[5 * i - 1] = 3.0 * t       # W
-            v[5 * i] = 100.0 + 10.0 * t  # P
+        for i = 1:n
+            v[5*i-4] = 0.1 + t       # H
+            v[5*i-3] = 1.0 * t       # U
+            v[5*i-2] = 2.0 * t       # V
+            v[5*i-1] = 3.0 * t       # W
+            v[5*i] = 100.0 + 10.0 * t  # P
         end
         return v
     end
@@ -53,7 +53,7 @@ using ForwardDiff: Dual, value
         content = read(joinpath(loc, "time_2.vtu"), String)
         for (field, offset) in (("H", -4), ("U", -3), ("V", -2), ("W", -1), ("P", 0))
             vals = extract_vtk_field(content, field)
-            expected = 0.5 * (sol_hist[2][5 + offset] + sol_hist[3][5 + offset])
+            expected = 0.5 * (sol_hist[2][5+offset] + sol_hist[3][5+offset])
             @test all(v -> isapprox(v, expected, atol = 1e-8), vals)
         end
 
@@ -61,7 +61,7 @@ using ForwardDiff: Dual, value
         content_1 = read(joinpath(loc, "time_1.vtu"), String)
         for (field, offset) in (("H", -4), ("U", -3), ("V", -2), ("W", -1), ("P", 0))
             vals = extract_vtk_field(content_1, field)
-            expected = sol_hist[1][5 + offset]
+            expected = sol_hist[1][5+offset]
             @test all(v -> isapprox(v, expected, atol = 1e-8), vals)
         end
         rm(loc, recursive = true)

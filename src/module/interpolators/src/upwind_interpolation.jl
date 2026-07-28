@@ -6,10 +6,11 @@ Last Updated On: 11th January, 2025 22:08 UTC+5:30
 
 """
     upwindParams!(params, flux_edge)
-Compute Upwind Interpolation parameters based on flux at edge. 
+Compute Upwind Interpolation parameters based on flux at edge.
 """
 @inline function upwindParams!(params, flux_edge)
-    @inbounds params[1] = (sign(flux_edge) >= zero(params[1])) ? one(params[1]) : zero(params[1])
+    @inbounds params[1] =
+        (sign(flux_edge) >= zero(params[1])) ? one(params[1]) : zero(params[1])
     @inbounds params[2] = one(params[1]) - params[1]
     return nothing
 end
