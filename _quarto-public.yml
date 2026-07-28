@@ -6,17 +6,17 @@ website:
   navbar:
     left:
       - text: "Documentation"
-        file: docs/report/00_intro.qmd
+        file: _docs/report/00_intro.qmd
   sidebar: 
     - id: documentation
       title: "Documentation"
       contents:
-        - docs/report/00_intro.qmd
-        - docs/report/implementation/implementation.qmd
-        - docs/report/tutorial/tutorial.qmd
-        - docs/report/API/API.qmd
-        - docs/report/30_appendix.qmd
-        - docs/report/40_references.qmd
+        - _docs/report/00_intro.qmd
+        - _docs/report/implementation/implementation.qmd
+        - _docs/report/tutorial/tutorial.qmd
+        - _docs/report/API/API.qmd
+        - _docs/report/30_appendix.qmd
+        - _docs/report/40_references.qmd
 
 
 

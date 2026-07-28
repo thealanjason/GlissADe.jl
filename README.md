@@ -5,7 +5,7 @@ This is a self contained repository with code and documentation for the Research
 ## Repository Structure
 This repositor is a combination repository that is meant to host both, the computational code and documentation. It contains the following two folders:
 - src : The software assets are stored here
-- docs : The documentation website assets are stored here
+- _docs : The historical (Quarto) documentation website assets are stored here
 - examples: Some examples to start using the software
 
 ## Getting Started with Code
