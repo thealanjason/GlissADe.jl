@@ -1,0 +1,10 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
+GlissADe = "d94f865e-9be7-4415-9b4a-0e34ca8c7922"
+
+[compat]
+Documenter = "1"
+
+[sources]
+GlissADe = {path = ".."}
