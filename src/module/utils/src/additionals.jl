@@ -6,9 +6,9 @@
 
 """
             _check_valid_int(s)
-Checks if the given variable is of type-constant `INT_TYPE`. 
-## Arguments 
-- s::AnyDataType - Any Variable 
+Checks if the given variable is of type-constant `INT_TYPE`.
+## Arguments
+- s::AnyDataType - Any Variable
 """
 function _check_valid_int(s)
     try
@@ -21,9 +21,9 @@ end
 
 """
             _check_valid_face(line)
-Checks if the given string `line` represents a valid face. 
+Checks if the given string `line` represents a valid face.
 ## Arguments
-- line::String - line which needs to be checked 
+- line::String - line which needs to be checked
 """
 function _check_valid_face(line)
     parts = split(line, '(', limit = 2)

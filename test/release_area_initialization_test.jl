@@ -21,7 +21,8 @@ using LinearAlgebra: dot
         polygon = findRegularPolygon(bounds, npoints = 6)
         cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
         @test issorted(cells_inside)
-        expected = [i for i in eachindex(Cells) if GlissADe.testInside(Cells[i].center, polygon)]
+        expected =
+            [i for i in eachindex(Cells) if GlissADe.testInside(Cells[i].center, polygon)]
         @test cells_inside == expected
     end
 

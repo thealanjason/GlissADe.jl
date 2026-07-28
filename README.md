@@ -1,39 +1,42 @@
-# Differentiable Free Surface Flow Solver
+# GlissADe.jl
 
-This is a self contained repository with code and documentation for the Research Internship work carried out by Tanish Jain at the Chair of Methods for Model-based Development in Computational Engineering, RWTH Aachen University.
+[![Stable Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://thealanjason.github.io/GlissADe.jl/stable)
+[![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://thealanjason.github.io/GlissADe.jl/dev)
+[![Test workflow status](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Test.yml/badge.svg?branch=main)](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Test.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/thealanjason/GlissADe.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/thealanjason/GlissADe.jl)
+[![Lint workflow Status](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Lint.yml/badge.svg?branch=main)](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Lint.yml?query=branch%3Amain)
+[![Docs workflow Status](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Docs.yml/badge.svg?branch=main)](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Docs.yml?query=branch%3Amain)
+[![DOI](https://zenodo.org/badge/DOI/FIXME)](https://doi.org/FIXME)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![All Contributors](https://img.shields.io/github/all-contributors/thealanjason/GlissADe.jl?labelColor=5e1ec7&color=c0ffee&style=flat-square)](#contributors)
+[![BestieTemplate](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JuliaBesties/BestieTemplate.jl/main/docs/src/assets/badge.json)](https://github.com/JuliaBesties/BestieTemplate.jl)
 
-## Repository Structure
-This repositor is a combination repository that is meant to host both, the computational code and documentation. It contains the following two folders:
-- src : The software assets are stored here
-- docs : The documentation website assets are stored here
-- examples: Some examples to start using the software
+A differentiable free-surface flow solver, originally developed by Tanish Jain as a Research Internship project at the Chair of Methods for Model-based Development in Computational Engineering, RWTH Aachen University.
 
-## Getting Started with Code
-<!-- NOTE: Currently only Intel Processor based Linux is supported. If running Windows, please Windows Subsystem for Linux (WSL). -->
+## Getting Started
 
-1. Install Julia using instructions from [here](https://julialang.org/downloads/)
-2. Clone this repository using `git clone https://git.rwth-aachen.de/mbd_teaching/internship-tj.git`
-3. Change directory to cloned folder
-4. Setup the Environment using `julia setup.jl`
+1. [Install Julia](https://julialang.org/downloads/)
+2. Clone this repository
+3. Change directory to the cloned folder
+4. Setup the environment using `julia setup.jl`
 
-## Getting Started with Documentation Website
+## How to Cite
 
-1. Install Quarto
-    ```
-    export QUARTO_VERSION=1.5.39
-    sudo mkdir -p /opt/quarto/${QUARTO_VERSION}
-    sudo curl -o quarto.tar.gz -L "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
-    sudo tar -zxvf quarto.tar.gz -C "/opt/quarto/${QUARTO_VERSION}" --strip-components=1
-    sudo ln -s /opt/quarto/${QUARTO_VERSION}/bin/quarto /usr/local/bin/quarto
-    quarto install tinytex
-    quarto check
-    ```
-    
-2. Locally render documentation website
-    ```
-    cd scripts
-    ./build.sh
-    ```
+If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff).
 
-## Useful Links
-- [https://modernjuliaworkflows.github.io/](https://modernjuliaworkflows.github.io/) A non-exhaustive guide with best practices and useful tips for Julia-lang development
+## Contributing
+
+If you want to make contributions of any kind, please first take a look into our [contributing guide directly on GitHub](docs/src/90-contributing.md) or the [contributing page on the website](https://thealanjason.github.io/GlissADe.jl/dev/90-contributing/)
+
+---
+
+### Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->

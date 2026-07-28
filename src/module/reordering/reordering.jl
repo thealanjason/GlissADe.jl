@@ -1,5 +1,5 @@
 #=
-Performs Reverse Cuthill Mckee (RCM) reordering to improve cache-access times and increase "band" of the 
+Performs Reverse Cuthill Mckee (RCM) reordering to improve cache-access times and increase "band" of the
 resulting Finite-Volume Sparse Matrix.
 
 Last Updated On: 11th January, 2025 21:02 UTC+5:30
@@ -8,7 +8,7 @@ Last Updated On: 11th January, 2025 21:02 UTC+5:30
 """
     adjgraph(A; sortbydeg)
 
-Compute the adjacency graph from a sparse matrix. 
+Compute the adjacency graph from a sparse matrix.
 
 The sparse matrix `A` is assumed to be symmetric.
 The results will be wrong if it isn't.
@@ -24,16 +24,16 @@ function adjgraph(A::SparseMatrixCSC; sortbydeg = true)
     ncols = length(colptr) - 1
     neighbors = Vector{Vector{eltype(colptr)}}(undef, ncols)
     cdeg = diff(colptr) # the degree is colptr[j+1]-colptr[j]
-    @inbounds for j in 1:ncols
+    @inbounds for j = 1:ncols
         cstart = colptr[j]
         jdeg = cdeg[j]
-        neighbors[j] = [rowval[cstart + m - 1] for m in 1:jdeg]
+        neighbors[j] = [rowval[cstart+m-1] for m = 1:jdeg]
     end
     # All of these sorts can be done in parallel,  they are totally independent.
     # The question is when to switch over to parallel execution so as to
     # amortize the cost of starting up threads.
     if sortbydeg
-        @inbounds for j in 1:ncols
+        @inbounds for j = 1:ncols
             sort!(neighbors[j], by = j -> cdeg[j])
         end
     end
@@ -97,7 +97,7 @@ end
 
 Compute the degrees of the nodes in the adjacency graph.
 
-## Arguments 
+## Arguments
 - adjgr - Adjacency graph of a matrix. Computed using `adjgraph`
 
 ## Example
@@ -132,10 +132,10 @@ end
 """
     RCM(adjgr, degrees)
 
-Reverse Cuthill-McKee node-renumbering algorithm. 
+Reverse Cuthill-McKee node-renumbering algorithm.
 See also: [`adjgraph`](@ref), [`computeDegrees`](@ref)
 
-## Arguments 
+## Arguments
 - adjgr - Adjacency List of the matrix. Computed using `adjgraph`
 - degrees - Degrees of each node in the graph. Computed using `computeDegrees`
 """
@@ -163,18 +163,22 @@ function RCM(adjgr, degrees)
             break # That was the last node
         end
         # Now a node to start from present : put it into the result list
-        push!(R, P); inR[P] = true
+        push!(R, P)
+        inR[P] = true
         empty!(Q) # empty the queue
-        append!(Q, adjgr[P]); inQ[adjgr[P]] .= true # put adjacent nodes in queue
+        append!(Q, adjgr[P])
+        inQ[adjgr[P]] .= true # put adjacent nodes in queue
         while length(Q) >= 1
             C = popfirst!(Q) # child to put into the result list
             inQ[C] = false # make note: it is not in the queue anymore
             if !inR[C]
-                push!(R, C); inR[C] = true
+                push!(R, C)
+                inR[C] = true
             end
             @inbounds for i in adjgr[C] # add all adjacent nodes into the queue
                 if (!inR[i]) && (!inQ[i]) # contingent on not being in result/queue
-                    push!(Q, i); inQ[i] = true
+                    push!(Q, i)
+                    inQ[i] = true
                 end
             end
         end
@@ -183,7 +187,7 @@ function RCM(adjgr, degrees)
 end
 
 """
-    RCM(A::SparseMatrixCSC; sortbydeg = true) 
+    RCM(A::SparseMatrixCSC; sortbydeg = true)
 
 Reverse Cuthill-McKee node-renumbering algorithm.
 
@@ -206,12 +210,15 @@ end
 Computes the Adjacency Matrix of the Mesh given the neighbours
 
 
-## Arguments 
-- neighbours::Vector{Vector{INT_TYPE}} - List of neighbours for each face. 
+## Arguments
+- neighbours::Vector{Vector{INT_TYPE}} - List of neighbours for each face.
 """
 function adjMatrix(neighbours)
     global INT_TYPE
-    A = ExtendableSparseMatrix{INT_TYPE[], INT_TYPE[]}(length(neighbours), length(neighbours))
+    A = ExtendableSparseMatrix{INT_TYPE[],INT_TYPE[]}(
+        length(neighbours),
+        length(neighbours),
+    )
     @inbounds for i in eachindex(neighbours)
         A[i, i] = 1
         @inbounds for j in eachindex(neighbours[i])

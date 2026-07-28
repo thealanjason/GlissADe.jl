@@ -1,5 +1,5 @@
 #=
-# Performs precomputations on the mesh. 
+# Performs precomputations on the mesh.
 # Copyright (c) 2025 Tanish Jain.
 # Licensed under the MIT license.
 =#
@@ -8,7 +8,7 @@ export preprocess
 """
     _meshcomputations(points, faces, neighbours, mesh)
 Precompute geometrical information of a parsed mesh and store it in the `Cell` structure
-    
+
 - `points` - Array containing vertices of the mesh
 - `faces` - Array containing connectivities/faces of the mesh
 - `neighbours` - Array containing neighbours of each face of the mesh
@@ -23,18 +23,31 @@ function _meshcomputations(points, faces, neighbours, W)
     areas = _areas(points, faces, cell_centroids) # Surface Area of each face
     edgelengths = _edge_lengths(points, faces) # Edge Lengths of each edge of a face
 
-    binormal_transform = _bi_transforms(cell_centroids, edgecenters, cell_normals, points, faces, neighbours)
+    binormal_transform =
+        _bi_transforms(cell_centroids, edgecenters, cell_normals, points, faces, neighbours)
     @inbounds binormals = binormal_transform[1]
     @inbounds transforms = binormal_transform[2]
     @inbounds transforms2 = binormal_transform[3]
 
     # Construct Mesh Cells [Initialize to Zero]
     T = eltype(points[1])
-    Cells = Vector{Cell{T, INT_TYPE[], W}}(undef, length(faces))
+    Cells = Vector{Cell{T,INT_TYPE[],W}}(undef, length(faces))
     @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
-        Cells[i] = Cell{T, INT_TYPE[], W}(
-            i, cell_centroids[i], points[faces[i]], edgecenters[i], edgelengths[i],
-            cell_normals[i], areas[i], binormals[i], transforms[i], transforms2[i], neighbours[i], zero(W), zeros(W, 3), zero(W)
+        Cells[i] = Cell{T,INT_TYPE[],W}(
+            i,
+            cell_centroids[i],
+            points[faces[i]],
+            edgecenters[i],
+            edgelengths[i],
+            cell_normals[i],
+            areas[i],
+            binormals[i],
+            transforms[i],
+            transforms2[i],
+            neighbours[i],
+            zero(W),
+            zeros(W, 3),
+            zero(W),
         )
     end
     return Cells
@@ -42,10 +55,10 @@ end
 
 """
     preprocess(points, faces; comp_neighbours=true)
-Precompute geometrical information and store it in the `Cell` structure. 
+Precompute geometrical information and store it in the `Cell` structure.
 
-- `points` - coordinates of the vertices of the mesh. 
-- `faces` - connectivity list of the mesh. 
+- `points` - coordinates of the vertices of the mesh.
+- `faces` - connectivity list of the mesh.
 - `W` - Datatype to be used for variables. Should be of type `Dual` if differentiating with geometry
 - `comp_neighbours` - Whether to compute neighbours or read from file. Default is `true`. In case of incompatibility with mesh, neighbours will be recomputed.
 """

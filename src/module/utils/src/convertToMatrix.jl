@@ -8,8 +8,15 @@ export convertToMatrix
 
 """
     convertToMatrix(a)
-Converts a vector vector to a matrix of float type. 
+Converts a vector vector to a matrix of float type.
 The output matrix will be ``N``x``M`` where N = ndims or ncols and M = nrows in the original `Vector` of `Vector` `a`
+
+```jldoctest
+julia> convertToMatrix([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+2×3 Matrix{Float64}:
+ 1.0  3.0  5.0
+ 2.0  4.0  6.0
+```
 """
 function convertToMatrix(a) # Time and Memory Complexity O(MN)
     W = eltype(a[1])

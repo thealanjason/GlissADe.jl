@@ -1,15 +1,15 @@
 #=
-# Geometry Precomputations. 
+# Geometry Precomputations.
 # Copyright (c) 2025 Tanish Jain.
 # Licensed under the MIT license.
 =#
 """
     _local_coords(n::Vector{W}, p1::Vector{W}, p2::Vector{W}; axis=2) where W<:Real
-Computes the local coordinate system given two vertices `p1` and `p2` and the normal `n`. 
+Computes the local coordinate system given two vertices `p1` and `p2` and the normal `n`.
 
-## Arguments 
-- axis = 2 → The 3D vector p2-p1 is taken to be the y axis of the local coordinate system 
-- axis = 1 → The 3D vector p2-p1 is taken to be the x axis of the local coordinate system 
+## Arguments
+- axis = 2 → The 3D vector p2-p1 is taken to be the y axis of the local coordinate system
+- axis = 1 → The 3D vector p2-p1 is taken to be the x axis of the local coordinate system
 """
 @inline function _local_coords(n, p1, p2; axis = 2)
     if (axis == 2)
@@ -23,11 +23,11 @@ Computes the local coordinate system given two vertices `p1` and `p2` and the no
     end
 end
 
-""" 
+"""
     _DCM(local_coords::Vector{Vector{W}})
 Computes the Direction Cosine Matrix from local coords to global coords. Equivalent to converting the `Vector{Vector} localcoords` to `Matrix`
 
-## Arguments 
+## Arguments
 - local_coords::Vector{Vector{Real}} - Local coordinate system of a face
 """
 function _DCM(localcoords)
@@ -41,11 +41,11 @@ end
 
 """
     _edge_lengths(points::Vector{Vector{W}}, faces::Vector{Vector{S}}) where {W<:Real, S<:Integer}
-Returns the edge lengths of all edges of all faces of a mesh. 
+Returns the edge lengths of all edges of all faces of a mesh.
 
-## Arguments 
+## Arguments
 - points - Coordinates of all vertices of a mesh
-- faces - Connectivities of all vertices of a mesh 
+- faces - Connectivities of all vertices of a mesh
 """
 function _edge_lengths(points, faces)
     T = eltype(points[1]) # Should be Float or Dual
@@ -62,11 +62,11 @@ end
 
 """
     _edge_centers(points::Vector{Vector{W}}, faces::Vector{Vector{S}}) where {W<:Real, S<:Integer}
-Returns the edge centers for all edges of all faces of a mesh. 
+Returns the edge centers for all edges of all faces of a mesh.
 
-## Arguments 
-- points - Coordinates of all vertices of a mesh 
-- faces - Connecitivity list of vertices of a mesh 
+## Arguments
+- points - Coordinates of all vertices of a mesh
+- faces - Connecitivity list of vertices of a mesh
 """
 function _edge_centers(points, faces)
     T = eltype(points[1]) # Should be Float or Dual
@@ -80,14 +80,14 @@ function _edge_centers(points, faces)
     return edge_centers
 end
 
-""" 
+"""
     _areas(points::Vector{Vector{W}}, faces::Vector{Vector{S}}, centers::Vector{Vector{W}}) where {W<:Real, S<:Integer}
 Returns the areas of all faces of a mesh using the vertices `points` and the centroids `centers`.
 
-## Arguments 
-- points - Coordinates of all vertices of a mesh 
-- faces - Connectivities of all vertices of a mesh 
-- centers - Face centroids of all vertices of a mesh 
+## Arguments
+- points - Coordinates of all vertices of a mesh
+- faces - Connectivities of all vertices of a mesh
+- centers - Face centroids of all vertices of a mesh
 """
 function _areas(points, faces, centers)
     T = eltype(points[1]) # Should be Float or Dual
@@ -107,16 +107,16 @@ function _areas(points, faces, centers)
     return areas
 end
 
-""" 
+"""
     _bi_transforms(centers::Vector{Vector{W}}, edge_centers::Vector{Vector{W}}, normals::Vector{Vector{W}}, points::Vector{Vector{W}}, faces::Vector{Vector{S}}, neighbours::Vector{Vector{S}}) where {W<:Real, S<:Integer}
-Returns the edge binormals and transformation matrices for all faces of a mesh. 
+Returns the edge binormals and transformation matrices for all faces of a mesh.
 
-## Arguments 
-- centers - Face centroids of all faces of a mesh 
-- edge_centers - Edge centers of all edges of all faces of a mesh 
-- normals - Surface normal at face centroids of all faces of a mesh 
-- points - Coordinates of all vertices of a mesh 
-- faces - Connectivity list of all vertices of a mesh 
+## Arguments
+- centers - Face centroids of all faces of a mesh
+- edge_centers - Edge centers of all edges of all faces of a mesh
+- normals - Surface normal at face centroids of all faces of a mesh
+- points - Coordinates of all vertices of a mesh
+- faces - Connectivity list of all vertices of a mesh
 - neighbours - Adjacency list (neighbour list) of all faces of a mesh
 """
 function _bi_transforms(centers, edge_centers, normals, points, faces, neighbours)
@@ -143,10 +143,16 @@ function _bi_transforms(centers, edge_centers, normals, points, faces, neighbour
 
             # Local coord System
             jj = j % length(edges_i) + 1
-            local_edge = _local_coords(normal_edge, points[edges_i[jj]], points[edges_i[j]], axis = 1)
+            local_edge = _local_coords(
+                normal_edge,
+                points[edges_i[jj]],
+                points[edges_i[j]],
+                axis = 1,
+            )
             transform = _DCM(_local_coords(normal_i, center, edge_centers_i[j], axis = 2))
             if n != i
-                transform2 = _DCM(_local_coords(normals[n], edge_centers_i[j], centers[n], axis = 2))
+                transform2 =
+                    _DCM(_local_coords(normals[n], edge_centers_i[j], centers[n], axis = 2))
             else
                 transform2 = transform
             end
@@ -161,10 +167,10 @@ end
 
 """
     _center(points::Vector{Vector{W}}, face::Vector{S}) where {W<:Real, S<:Integer}
-Computes the centroid (arithmetic mean) given the vertices and connectivity of a face. 
+Computes the centroid (arithmetic mean) given the vertices and connectivity of a face.
 
-## Arguments 
-- points - Coordinates of all vertices of a mesh 
+## Arguments
+- points - Coordinates of all vertices of a mesh
 - face - Connectivity of a "face"
 """
 @inline function _center(points, face)
@@ -174,11 +180,11 @@ end
 
 """
     _normals(points::Vector{Vector{W}}, faces::Vector{Vector{S}}) where {W<:Real, S<:Integer}
-Returns the face centroid and the surface normal at face centroid. 
+Returns the face centroid and the surface normal at face centroid.
 
 ## Arguments
-- points - Coordinates of the vertices of a mesh 
-- faces - Connecitivity list of the vertices of a mesh 
+- points - Coordinates of the vertices of a mesh
+- faces - Connecitivity list of the vertices of a mesh
 """
 function _normals(points, faces)
     T = eltype(points) # Should be Vector{FLOAT} or Vector{Dual}

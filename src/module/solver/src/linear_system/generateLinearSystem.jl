@@ -5,16 +5,16 @@ Last Updated On: 12th January, 2025 UTC+5:30
 =#
 
 """
-Pre-allocate the memory for storing linear systems. 
+Pre-allocate the memory for storing linear systems.
 """
 function generateLinearSystem(Cells, W)
     global INT_TYPE
-    Ah = ExtendableSparseMatrix{W, INT_TYPE[]}(length(Cells), length(Cells))
-    Av = ExtendableSparseMatrix{W, INT_TYPE[]}(3 * length(Cells), 3 * length(Cells))
+    Ah = ExtendableSparseMatrix{W,INT_TYPE[]}(length(Cells), length(Cells))
+    Av = ExtendableSparseMatrix{W,INT_TYPE[]}(3 * length(Cells), 3 * length(Cells))
     @inbounds for i in eachindex(Cells)
         Ah[i, i] = rand(W)
-        for i1 in (3 * i - 2):(3 * i)
-            for i2 in (3 * i - 2):(3 * i)
+        for i1 = (3*i-2):(3*i)
+            for i2 = (3*i-2):(3*i)
                 Av[i1, i2] = rand(W)
             end
         end
@@ -22,8 +22,8 @@ function generateLinearSystem(Cells, W)
             Cells[i].neighbours[j] <= 0 && continue
             n = Cells[i].neighbours[j]
             Ah[i, n] = rand(W)
-            for i1 in (3 * i - 2):(3 * i)
-                for i2 in (3 * n - 2):(3 * n)
+            for i1 = (3*i-2):(3*i)
+                for i2 = (3*n-2):(3*n)
                     Av[i1, i2] = rand(W)
                 end
             end
@@ -34,12 +34,12 @@ function generateLinearSystem(Cells, W)
     return Ah, Av
 end
 
-""" 
-    preassembleLinearSystem(Cells::Vector{Cell{T,INT_TYPE,W}}) where {T<:ALLOWED_NUMBERS, W<:ALLOWED_NUMBERS} 
-Generate Sparse matrices and their preconditoners with the sparsity pattern of the mesh. 
-Also allocated additional arrays for solving partial derivatives of linear systems. 
+"""
+    preassembleLinearSystem(Cells::Vector{Cell{T,INT_TYPE,W}}) where {T<:ALLOWED_NUMBERS, W<:ALLOWED_NUMBERS}
+Generate Sparse matrices and their preconditoners with the sparsity pattern of the mesh.
+Also allocated additional arrays for solving partial derivatives of linear systems.
 
-## Arguments 
+## Arguments
 Cells::Vector{Cell{T,INT_TYPE,W}} - Discretized Geometry
 """
 function preassembleLinearSystem(Cells, rtol)
@@ -54,14 +54,14 @@ function preassembleLinearSystem(Cells, rtol)
     if W <: Dual
         chunksize = length(Cells[1].h.partials) # Use a Dual Number to get chunksize
         Ahf, Avf = generateLinearSystem(Cells, FLOAT_TYPE[])
-        dAh = [deepcopy(Ahf) for _ in 1:chunksize] # Make copies for jacobian calculations
-        dAv = [deepcopy(Avf) for _ in 1:chunksize]
+        dAh = [deepcopy(Ahf) for _ = 1:chunksize] # Make copies for jacobian calculations
+        dAv = [deepcopy(Avf) for _ = 1:chunksize]
         Bhf = ones(FLOAT_TYPE[], length(Cells))
         Bvf = ones(FLOAT_TYPE[], 3 * length(Cells))
-        dBh = [ones(FLOAT_TYPE[], length(Cells)) for _ in 1:chunksize]
-        dBv = [ones(FLOAT_TYPE[], 3 * length(Cells)) for _ in 1:chunksize]
-        dxh = [ones(FLOAT_TYPE[], length(Cells)) for _ in 1:chunksize] # To store intermediate partial derivatives
-        dxv = [ones(FLOAT_TYPE[], 3 * length(Cells)) for _ in 1:chunksize]
+        dBh = [ones(FLOAT_TYPE[], length(Cells)) for _ = 1:chunksize]
+        dBv = [ones(FLOAT_TYPE[], 3 * length(Cells)) for _ = 1:chunksize]
+        dxh = [ones(FLOAT_TYPE[], length(Cells)) for _ = 1:chunksize] # To store intermediate partial derivatives
+        dxv = [ones(FLOAT_TYPE[], 3 * length(Cells)) for _ = 1:chunksize]
     end
 
 
@@ -74,7 +74,24 @@ function preassembleLinearSystem(Cells, rtol)
         cache_h = LinSolv.init(prob_h, LinSolv.KrylovJL_GMRES(), Pl = precon_h)
         cache_v.reltol = FLOAT_TYPE[](rtol)
         cache_h.reltol = FLOAT_TYPE[](rtol)
-        return Ah, precon_h, Bh, Av, precon_v, Bv, cache_v, cache_h, Ahf, Bhf, Avf, Bvf, dAh, dBh, dAv, dBv, dxh, dxv
+        return Ah,
+        precon_h,
+        Bh,
+        Av,
+        precon_v,
+        Bv,
+        cache_v,
+        cache_h,
+        Ahf,
+        Bhf,
+        Avf,
+        Bvf,
+        dAh,
+        dBh,
+        dAv,
+        dBv,
+        dxh,
+        dxv
     else
         precon_v = ILUZeroPreconditioner(Av)
         precon_h = ILUZeroPreconditioner(Ah)

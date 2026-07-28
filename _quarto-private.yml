@@ -6,38 +6,33 @@ website:
   navbar:
     left:
       - text: "Organization"
-        file: docs/orga/organization.qmd
+        file: _docs/orga/organization.qmd
       - text: "Documentation"
-        file: docs/report/00_intro.qmd
+        file: _docs/report/00_intro.qmd
       - text: "Presentation"
         file: _output-presentation/presentation.html
       - text: "Wiki"
-        file: docs/wiki/index.qmd
+        file: _docs/wiki/index.qmd
       - text: "Public Website"
         file: _output-public/index.html
-  sidebar: 
+  sidebar:
     - id: documentation
       title: "Documentation"
       contents:
-        - docs/report/00_intro.qmd
-        - docs/report/implementation/implementation.qmd
-        - docs/report/tutorial/tutorial.qmd
-        - docs/report/API/API.qmd
-        - docs/report/30_appendix.qmd
-        - docs/report/40_references.qmd
+        - _docs/report/00_intro.qmd
+        - _docs/report/implementation/implementation.qmd
+        - _docs/report/tutorial/tutorial.qmd
+        - _docs/report/API/API.qmd
+        - _docs/report/30_appendix.qmd
+        - _docs/report/40_references.qmd
     - id: organization
       title: "Organization"
       contents:
-        - docs/orga/organization.qmd
-        - docs/orga/milestones.qmd
-        - docs/orga/tasklist.qmd
-        - docs/orga/meeting1.qmd
+        - _docs/orga/organization.qmd
+        - _docs/orga/milestones.qmd
+        - _docs/orga/tasklist.qmd
+        - _docs/orga/meeting1.qmd
     - id: wiki
       title: "Wiki"
       contents:
-        - docs/wiki/index.qmd
-    
-
-
-
-
+        - _docs/wiki/index.qmd

@@ -1,5 +1,5 @@
 #=
-Implicit solution of the thickness equation at t+1 using information at t. 
+Implicit solution of the thickness equation at t+1 using information at t.
 
 Last Updated On: 12th January, 2025 17:19 UTC+5:30
 =#
@@ -9,7 +9,27 @@ Last Updated On: 12th January, 2025 17:19 UTC+5:30
     updateThickness!(solver, Ah, Bh, precon_h, dt, t, p, vel, h0, caches; threads=true, prev_solution=nothing, pprev_solution=nothing)
 Solves the continuity (thickness) equation inplace and stores the result in h0. `INTERNAL`
 """
-function updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, caches, res; prev_solution = nothing, pprev_solution = nothing, Ahf = nothing, Bhf = nothing, dAh = nothing, dBh = nothing, dxh = nothing)
+function updateThickness!(
+    solver,
+    Ah,
+    Bh,
+    precon_h,
+    cache_h,
+    dt,
+    t,
+    vel,
+    h,
+    h0,
+    caches,
+    res;
+    prev_solution = nothing,
+    pprev_solution = nothing,
+    Ahf = nothing,
+    Bhf = nothing,
+    dAh = nothing,
+    dBh = nothing,
+    dxh = nothing,
+)
     global threads
     W = eltype(h0)
     ## RESET SYSTEM ##
@@ -32,15 +52,16 @@ function updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, 
             continue
         end
         area = Cells[i].area
-        vel_i .= @view vel[(3 * i - 2):(3 * i)]
+        vel_i .= @view vel[(3*i-2):(3*i)]
 
         ## Temporal Derivative ##
         if (t < 2.0 * dt)
             @inbounds Ah[i, i] = dt_inv * area
-            @inbounds Bh[i] = dt_inv * area * prev_solution[5 * i - 4]
+            @inbounds Bh[i] = dt_inv * area * prev_solution[5*i-4]
         else
             @inbounds Ah[i, i] = 1.5 * dt_inv * area
-            @inbounds Bh[i] = area * dt_inv * (2.0 * prev_solution[5 * i - 4] - 0.5 * pprev_solution[5 * i - 4])
+            @inbounds Bh[i] =
+                area * dt_inv * (2.0 * prev_solution[5*i-4] - 0.5 * pprev_solution[5*i-4])
         end
 
         ## NEIGHBOUR COUPLING ##
@@ -50,7 +71,7 @@ function updateThickness!(solver, Ah, Bh, precon_h, cache_h, dt, t, vel, h, h0, 
             getIds!(ids, Cells, i, j)
             n = ids[2] # Neighbour sharing an edge. ids[2] == i if the edge is end of surface (boundary)
 
-            vel_n .= @view vel[(3 * n - 2):(3 * n)]
+            vel_n .= @view vel[(3*n-2):(3*n)]
             ## Velocity at edge ##
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)

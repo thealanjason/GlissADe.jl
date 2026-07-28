@@ -39,26 +39,35 @@ import JLD2: load
         cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
         initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
         solution = Solution(
-            alpha = 0.5, zeta = 1.25, rho = 1500.0,
-            alpha_p = 0.5, alpha_u = 0.5, alpha_h = 0.5,
-            p_MAX_RESIDUAL = 1e-4, h_MAX_RESIDUAL = 5e-1, u_MAX_RESIDUAL = 5e-1,
-            MAX_ITERS = 60, MIN_ITERS = 50,
-            h_clip = 0.0, h_min = 1e-3,
-            Cells = Cells, location = "./test_solution_simpleslope",
-            points = points, faces = faces,
+            alpha = 0.5,
+            zeta = 1.25,
+            rho = 1500.0,
+            alpha_p = 0.5,
+            alpha_u = 0.5,
+            alpha_h = 0.5,
+            p_MAX_RESIDUAL = 1e-4,
+            h_MAX_RESIDUAL = 5e-1,
+            u_MAX_RESIDUAL = 5e-1,
+            MAX_ITERS = 60,
+            MIN_ITERS = 50,
+            h_clip = 0.0,
+            h_min = 1e-3,
+            Cells = Cells,
+            location = "./test_solution_simpleslope",
+            points = points,
+            faces = faces,
         )
         solver = Solver(solution)
         time_steps, sol = solve(solver, (0.0, 0.3), saveat = 0.1, Cₘ = 0.9)
-        h_all = reduce(vcat, [[s[5 * i - 4] for i in eachindex(Cells)] for s in sol])
+        h_all = reduce(vcat, [[s[5*i-4] for i in eachindex(Cells)] for s in sol])
         @test all(isfinite, h_all)
         @test all(>=(-1e-10), h_all)
 
         # simpleslope descends in +x (mean z drops from ~-0.29 at low x to ~-12.95 at high
         # x), so the thickness-weighted center of mass should move toward +x over time.
         x_com = [
-            sum(sol[k][5 * i - 4] * Cells[i].center[1] for i in eachindex(Cells)) /
-                sum(sol[k][5 * i - 4] for i in eachindex(Cells))
-            for k in eachindex(sol)
+            sum(sol[k][5*i-4] * Cells[i].center[1] for i in eachindex(Cells)) /
+            sum(sol[k][5*i-4] for i in eachindex(Cells)) for k in eachindex(sol)
         ]
         @test issorted(x_com)
 
@@ -92,17 +101,27 @@ import JLD2: load
             cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
             initializeGeometry(cells_inside, Cells, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
             solution = Solution(
-                alpha = 0.5, zeta = 1.25, rho = 1500.0,
-                alpha_p = 0.5, alpha_u = 0.5, alpha_h = 0.5,
-                p_MAX_RESIDUAL = 1e-4, h_MAX_RESIDUAL = 5e-1, u_MAX_RESIDUAL = 5e-1,
-                MAX_ITERS = 60, MIN_ITERS = 50,
-                h_clip = 0.0, h_min = 1e-3,
-                Cells = Cells, location = "./test_solution_diff",
-                points = points, faces = faces,
+                alpha = 0.5,
+                zeta = 1.25,
+                rho = 1500.0,
+                alpha_p = 0.5,
+                alpha_u = 0.5,
+                alpha_h = 0.5,
+                p_MAX_RESIDUAL = 1e-4,
+                h_MAX_RESIDUAL = 5e-1,
+                u_MAX_RESIDUAL = 5e-1,
+                MAX_ITERS = 60,
+                MIN_ITERS = 50,
+                h_clip = 0.0,
+                h_min = 1e-3,
+                Cells = Cells,
+                location = "./test_solution_diff",
+                points = points,
+                faces = faces,
             )
             solver = Solver(solution)
             time_steps, sol = solve(solver, (0.0, 0.3), saveat = 0.1, Cₘ = 0.9)
-            h = [sol[end][5 * i - 4] for i in eachindex(Cells)]
+            h = [sol[end][5*i-4] for i in eachindex(Cells)]
             rm("./test_solution_diff", recursive = true, force = true)
             return norm2(h) / sqrt(length(h))
         end

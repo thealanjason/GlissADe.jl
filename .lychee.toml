@@ -1,0 +1,19 @@
+exclude = [
+  "@ref",
+  "@cite",
+  "^https://github.com/.*/releases/tag/v.*$",
+  "^https://doi.org/FIXME$",
+  "^https://thealanjason.github.io/GlissADe.jl/stable$",
+  "^https://thealanjason.github.io/GlissADe.jl/dev",
+  "^https://github.com/thealanjason/GlissADe.jl/actions/workflows/.*/badge.svg",
+  "^https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff$",
+  "^https://github.com/thealanjason/GlissADe.jl/compare/v.*\\.\\.\\.HEAD$",
+  "^https://blog.esciencecenter.nl", # due to a certificate error (cf. #556)
+  "zenodo.org/badge/DOI/FIXME$"
+]
+
+exclude_path = [
+  "docs/build",
+  "_docs",
+  "_freeze"
+]

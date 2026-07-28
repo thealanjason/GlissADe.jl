@@ -10,11 +10,10 @@ sidebar: false
 
 ## Getting started
 
-Have a look at our [wiki](/docs/wiki/index.qmd).
+Have a look at our [wiki](/_docs/wiki/index.qmd).
 
 
 ### References
 
 ::: {#refs}
 :::
-

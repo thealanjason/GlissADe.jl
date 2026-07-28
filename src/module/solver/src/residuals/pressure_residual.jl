@@ -1,12 +1,12 @@
 #=
-Responsible for computing the residual (by 2nd norm) in the pressure-constraint equation. 
-Multi-threaded if allowed. 
+Responsible for computing the residual (by 2nd norm) in the pressure-constraint equation.
+Multi-threaded if allowed.
 
 Last Updated On: 12th January, 2025 10:13 UTC+5:30
 =#
 
 """
-    computePressureResidual(Cells, h, pb, vel, caches; threads=true) 
+    computePressureResidual(Cells, h, pb, vel, caches; threads=true)
 Compute the pressure residual after an iteration. Used mainly for implicit solvers.
 """
 function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
@@ -23,7 +23,7 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
         area = Cells[i].area
         gravityFlux = computeFlux(Cells[i].normal, g)
         res1 += (rho_inv * area * pb[i] - gravityFlux * area * h[i])
-        vel_i = @view vel[(3 * i - 2):(3 * i)]
+        vel_i = @view vel[(3*i-2):(3*i)]
         # Edge-dependent Terms #
         @inbounds for j in eachindex(Cells[i].neighbours)
             Lₑ = Cells[i].edge_lengths[j]
@@ -42,14 +42,30 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
             # Pressure at edge #
             vars_sca[1] = pb[i]
             vars_sca[2] = pb[n]
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = true,
+            )
             pₑ = sca_e[1]
 
             # Velocity at edge
-            vel_n = @view vel[(3 * n - 2):(3 * n)]
+            vel_n = @view vel[(3*n-2):(3*n)]
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[1], Cells[i].transform2[j], vel_n)
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = false)
+            centralInterpolate!(
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = false,
+            )
             vel_e = vec_e[1]
 
             flux_edge = computeFlux(mₑ, vel_e)
@@ -66,7 +82,7 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
     return sqrt(res)
 end
 
-""" 
+"""
     scalingFactor(solver, p)
 Returns the scaling factor for scaling the pressure equation residual. `INTERNAL`
 """
