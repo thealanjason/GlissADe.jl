@@ -1,0 +1,42 @@
+# Changes here will be overwritten by Copier
+AddAllcontributors: true
+AddChangelog: true
+AddCitationCFF: true
+AddCodeOfConduct: true
+AddContributionDocs: true
+AddCopierCI: false
+AddDocs: true
+AddDocsCI: true
+AddFormatterAndLinterConfigFiles: true
+AddGitHubPRTemplate: true
+AddGitHubTemplates: true
+AddLintCI: true
+AddLychee: false
+AddMacToCI: false
+AddPrecommit: true
+AddPrecommitUpdateCI: false
+AddTagBotCI: false
+AddTestCI: false
+AddWinToCI: false
+Authors: Tanish Jain <recklurker@gmail.com>, Alan Correa <correa@mbd.rwth-aachen.de>
+CheckExplicitImports: true
+CodeOfConductContact: recklurker@gmail.com
+ConfigIndentation: 4
+ExplicitImportsChecklist: exclude_all_qualified_accesses_are_public
+GitHubActionVersionAutoUpdate: none
+JuliaCompatAutoUpdate: dependabot
+JuliaIndentation: 4
+JuliaMinVersion: lts
+License: MIT
+LicenseCopyrightHolders: Tanish Jain, Alan Correa
+MarkdownIndentation: 4
+PackageName: GlissADe
+PackageOwner: thealanjason
+PackageUUID: c62e89b2-53d1-54ab-a70e-4de435161310
+RunJuliaNightlyOnCI: false
+StrategyConfirmIncluded: true
+StrategyLevel: 1
+StrategyReviewExcluded: false
+TestingStrategy: basic
+UseCirrusCI: false
+_src_path: /Users/reck/.julia/packages/BestieTemplate/6QVd6
