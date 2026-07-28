@@ -15,7 +15,7 @@ A differentiable free-surface flow solver, originally developed by Tanish Jain a
 
 ## Getting Started
 
-1. Install Julia using instructions from [here](https://julialang.org/downloads/)
+1. [Install Julia](https://julialang.org/downloads/)
 2. Clone this repository
 3. Change directory to the cloned folder
 4. Setup the environment using `julia setup.jl`

@@ -8,14 +8,16 @@ This solver was originally developed as part of a Research Internship at the Cha
 
 This solver can be used for performing sensitivity analysis, the influence of input parameters on the solution. Sensitivity analyses using automatic differentiation can be more accurate and orders of magnitude faster than the conventional approach through finite differences.
 
-The solver relies on OpenFOAM's [polyMesh](https://www.openfoam.com/documentation/guides/latest/api/classFoam_1_1polyMesh.html) and [faMesh](https://www.openfoam.com/documentation/guides/latest/api/classFoam_1_1faMesh.html) utilities for spatial discretization. Please refer to the aforementioned library for more details. For timestepping, a second order accurate implicit "Backward" timestepping scheme, similar but more accurate and stable than the Crank Nicholson scheme, is used for solving the resulting semi-discretized temporal ODEs.
+The solver relies on OpenFOAM's `polyMesh` and `faMesh` utilities for spatial discretization. Please refer to the aforementioned library for more details. For timestepping, a second order accurate implicit "Backward" timestepping scheme, similar but more accurate and stable than the Crank Nicholson scheme, is used for solving the resulting semi-discretized temporal ODEs.
 
 ```math
 \frac{\partial h}{\partial t} + \nabla\cdot(h\bar{u}) = 0
 ```
+
 ```math
 \frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot(h\bar{u}\bar{u}) = -\frac1\rho\tau_b + h\;\mathbf{g}_s - \frac\alpha\rho\nabla_s\;(h\;p_b)
 ```
+
 ```math
 \xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\;\mathbf{g}_n - \frac\alpha\rho\nabla_n\;(h\;p_b) - \frac1\rho(\mathbf{n}_b\;p_b)
 ```
@@ -27,6 +29,7 @@ The equation parameters ``\alpha`` and ``\xi`` arise from depth averaging and ar
 ```math
 \alpha = \frac1{h\;p_b} \int_0^h p(z)\;dz
 ```
+
 ```math
 \xi\;(\bar{u}\bar{u})= \frac1{h} \int_0^h u(z)\otimes u(z)\;dz
 ```
@@ -38,6 +41,7 @@ The solver allows for any rheology to be used given that the basal friction is o
 ```math
 \tau_b = \mu(I_b)p_b\frac{\bar{u}}{\lvert\bar{u}\rvert + u_0}
 ```
+
 ```math
 \mu(I_b) = \mu_s + \frac{\mu_f - \mu_s}{I_0/I_b + 1}
 ```
@@ -47,6 +51,7 @@ I_b = \gamma \frac{\lvert\bar{u}\rvert}{h}\frac{d}{\sqrt{p_b/\rho_p}}
 ```
 
 A factor ``u_0`` is added for regularization to prevent "divide-by-zero" errors and unphysical values in dry regions. Default values are used for the above rheology model:
+
 ```math
 \mu_s = 0.38, \; \mu_f = 0.65, \; I_0 = 0.3, \; \gamma = 2.5
 ```

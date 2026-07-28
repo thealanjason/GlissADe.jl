@@ -15,7 +15,7 @@ The library was written with the intention to reduce complexity for the end user
 
 ## Mesh Generation
 
-Rauter and Toković (2018) developed an all-in-one library for avalanche simulations using the OpenFOAM framework. This library is open-source and can be accessed [here](https://develop.openfoam.com/Community/avalanche). OpenFOAM's `polyMesh` and `makeFaMesh` functionalities allow for generating finite area meshes for any given topography.
+Rauter and Toković (2018) developed an all-in-one library for avalanche simulations using the OpenFOAM framework. This library is [open-source](https://develop.openfoam.com/Community/avalanche). OpenFOAM's `polyMesh` and `makeFaMesh` functionalities allow for generating finite area meshes for any given topography.
 
 One advantage of the mild surface assumption is that the surface can be discretized with convex planar elements, which reduces computational requirements as compared to handling non-planar geometry.
 
@@ -27,15 +27,15 @@ To initialize the library, the [`init`](@ref) function is called with keyword ar
 
 OpenFOAM's `polyMesh` and `makeFaMesh` utility writes the mesh in structured text files which can be easily parsed, even without using regular expressions (ReGex). Three example meshes are present with the library: an inclined plane surface, a mildly curved slope, and the wolfsgrube terrain.
 
-An example [line](https://github.com/thealanjason/GlissADe.jl/blob/main/examples/simpleslope/simpleslope/points) in the "points" file for a mildly curved slope, representing a vertex in 3D space:
+An example [line in the "points" file](https://github.com/thealanjason/GlissADe.jl/blob/main/examples/simpleslope/simpleslope/points) for a mildly curved slope, representing a vertex in 3D space:
 
-```
+```text
 (0.682627 -20 -0.47798)
 ```
 
-Similarly, the "faces" file gives the connectivities for the mesh, i.e. which vertices are connected to form a convex polygon. An example [line](https://github.com/thealanjason/GlissADe.jl/blob/main/examples/simpleslope/simpleslope/faces) for a mildly curved slope which gives the indices forming a closed and convex polygon:
+Similarly, the "faces" file gives the connectivities for the mesh, i.e. which vertices are connected to form a convex polygon. An example [line in the "faces" file](https://github.com/thealanjason/GlissADe.jl/blob/main/examples/simpleslope/simpleslope/faces) for a mildly curved slope which gives the indices forming a closed and convex polygon:
 
-```
+```text
 4(120 122 123 121)
 ```
 
@@ -45,21 +45,26 @@ Here's an example [points](https://github.com/thealanjason/GlissADe.jl/blob/main
 
 ![An example "points" file given to the parser.](../assets/points_example.png)
 
-The file parser returns arrays of "points", "faces", and "faceLabels". The parser's source code can be found [here](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/parser/parser.jl). The parser is accessed internally by the [`parsemesh`](@ref) function exposed to the user. It will automatically parse and perform reordering for the data extracted.
+The file parser returns arrays of "points", "faces", and "faceLabels". The [parser's source code](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/parser/parser.jl) is on GitHub. The parser is accessed internally by the [`parsemesh`](@ref) function exposed to the user. It will automatically parse and perform reordering for the data extracted.
 
 ## Geometry Precomputation
 
 The "points" and "faces" arrays returned by the parser are filtered using the indices given in "faceLabels". The filtering algorithm can be described as follows:
 
 1. Compute the faces on the surface:
+
 ```math
 F_S = \lbrace f; f \in faceLabels\rbrace
 ```
-2. Compute the points on each face computed in step 1:
+
+1. Compute the points on each face computed in step 1:
+
 ```math
 \forall f \in F_S\;P_f = \lbrace p ; p \in f \rbrace
 ```
-3. Compute the points on the surface:
+
+1. Compute the points on the surface:
+
 ```math
 P_S = \bigcup\limits_{f\;\in\;F_S} P_f
 ```
@@ -73,6 +78,7 @@ Before moving further, here's the spatially discretized form of the pressure con
 ```math
 \frac1{\rho}p_P^n\;\mathbf{n}_P\;S_P + (\mathbf{n}_P\;\mathbf{n}_P)\cdot\xi \sum_{e} \mathbf{m}_e\cdot h_e^{*} \bar{\mathbf{u}}_e^{*}\bar{\mathbf{u}}_e^{*} L_e = (\mathbf{n}_P\mathbf{n}_P)\cdot h_P^{*}\;\mathbf{g}\;S_P
 ```
+
 ```math
 -\;(\mathbf{n}_P\;\mathbf{n}_P)\cdot\frac\alpha\rho\sum_{e}\mathbf{m}_e\;h_e^{*}\;p_{e}^{*}L_e
 ```
@@ -123,11 +129,12 @@ Computing the surface normal at the center is a bit tricky. For a planar surface
 ![Normal vectors for the surface.](../assets/normal_plane.png)
 
 Thus,
+
 ```math
 \mathbf{n}_P = -\frac{\mathbf{PV}_1 \times \mathbf{PV}_2}{\lvert\lvert \mathbf{PV}_1\times\mathbf{PV}_2\rvert\rvert}
 ```
 
-where ``P`` is the center of the element as described in [Face Centers](#Face-Centers-center).
+where ``P`` is the center of the element as described in [Face Centers](#face-centers-center).
 
 ### Area
 
@@ -153,7 +160,9 @@ This is a pretty smart trick to find the area of a polygon. This is generally us
 ```math
 \int_{V}(\nabla\cdot\mathbf{B}) = \oint_{S = \partial V} (\mathbf{B}\cdot\hat{n}) dS
 ```
+
 Similarly, for a 2D planar surface,
+
 ```math
 \int_{S}(\nabla\cdot\mathbf{B}) = \oint_{L = \partial S}(\mathbf{B}\cdot{\hat{n}}) dL
 ```
@@ -171,6 +180,7 @@ where the line integral along the boundary of the surface is broken into integra
 ```
 
 Using this field, the area of the polygon can be written as:
+
 ```math
 S_P \approx \sum_{e\in\;\text{edges}} \int_L (\mathbf{B}\cdot\hat{n}) dL \approx \sum_{e\in\;\text{edges}} (\mathbf{B}_e\cdot\hat{n}_e)\;L_e = \sum_{e\in\;\text{edges}} (\frac13 (x_e, y_e, z_e) \cdot\hat{n}_e)\;L_e
 ```
@@ -225,23 +235,25 @@ The fields `transform` and `transform2` store the transformation matrices ``\mat
 
 The figure shows that the element consists of only six vertices. But that is not true in general; the elements are not expected to follow any rules other than being planar and regular. Thus, the binormals should not depend on geometrical information which is dependent on the number of vertices. The edge binormal ``\textbf{t}_e`` in the figure is simply the cross product of the normal at the edge ``\textbf{n}_e`` and the edge ``\textbf{e}`` (``t_e'`` in the figure) itself. Thus, following the right-hand rule, ``\mathbf{t}_e = \mathbf{n}_e \times \mathbf{e}``. This completes the precomputation.
 
-The [`preprocess`](@ref) function performs the necessary precomputations and mesh index reordering using the [Reverse-Cuthill-McKee](https://en.wikipedia.org/wiki/Cuthill%E2%80%93McKee_algorithm) algorithm. The source code for the geometrical precomputations can be found [here](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/geometry/geometry.jl).
+The [`preprocess`](@ref) function performs the necessary precomputations and mesh index reordering using the [Reverse-Cuthill-McKee](https://en.wikipedia.org/wiki/Cuthill%E2%80%93McKee_algorithm) algorithm. The [source code for the geometrical precomputations](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/geometry/geometry.jl) is on GitHub.
 
 ## Defining the Release Area
 
 Release area in "avalanche" literature refers to the region where a fracture of snow has occurred. The variable ``h`` in the equations represents the thickness of the "slab" that has broken apart and started to flow. The library is currently limited to setting polygonal release areas. Given a rectangular region defined by ``\lbrack x_{min}, x_{max}, y_{min}, y_{max} \rbrack``, a regular polygon is found lying completely inside. Any faces lying inside the region are initialized with user-defined values.
 
-The source code can be found [here](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/initialConditions/initialConditions.jl), which contains all the related functions.
+The [source code](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/initialConditions/initialConditions.jl) contains all the related functions.
 
 ## Solving the equations
 
 Here comes the real deal: solution of the equations. Following the sequential approach typically used, and as described by Rauter and Toković (2018), the flowchart can be shown as:
 
-![](../assets/solverstruct.png)
+![Flowchart of the sequential solution procedure.](../assets/solverstruct.png)
 
 Firstly, the pressure constraint equation is used to solve for pressure satisfying the constraint, and is treated explicitly. This is used to update the momentum, followed by the thickness, which are treated implicitly. This procedure is iterated over and over until convergence is achieved. The [`Solution`](@ref) structure takes input from the user for the parameters controlling this process.
 
-Under-relaxation is performed to reduce oscillations of the solution. `alpha_p`, `alpha_h`, and `alpha_u` are under-relaxation parameters. The field `basal_stress` allows the user to use their own rheology model. Fields `h_min` and `h_clip` are used to determine whether a face should be considered dry or not, and whether the thickness should be clipped once below a certain value `h_clip`. `MIN_ITERS` is used to allow a minimum number of corrections to be completed before moving on to the next time step, and `MAX_ITERS` limits the total number of corrections performed, i.e. if `MIN_ITERS = 3` and `MAX_ITERS = 10`, then the solver will perform at least 3 corrections and at most 10 corrections per timestep. The `location` field is the location of the directory the files need to be stored at; the current implementation restricts the location to a simple format as given in the default value: `"./<foldername>"`. `alpha`, `zeta`, and `rho` are the model parameters; `p_MAX_RESIDUAL`, `h_MAX_RESIDUAL`, and `u_MAX_RESIDUAL` are the maximum allowed residuals in the solution of the pressure constraint equation, the thickness "continuity" equation, and the momentum equations.
+Under-relaxation is performed to reduce oscillations of the solution. `alpha_p`, `alpha_h`, and `alpha_u` are under-relaxation parameters. The field `basal_stress` allows the user to use their own rheology model. Fields `h_min` and `h_clip` are used to determine whether a face should be considered dry or not, and whether the thickness should be clipped once below a certain value `h_clip`. `MIN_ITERS` is used to allow a minimum number of corrections to be completed before moving on to the next time step, and `MAX_ITERS` limits the total number of corrections performed, i.e. if `MIN_ITERS = 3` and `MAX_ITERS = 10`, then the solver will perform at least 3 corrections and at most 10 corrections per timestep.
+
+The `location` field is the location of the directory the files need to be stored at; the current implementation restricts the location to a simple format as given in the default value: `"./<foldername>"`. `alpha`, `zeta`, and `rho` are the model parameters; `p_MAX_RESIDUAL`, `h_MAX_RESIDUAL`, and `u_MAX_RESIDUAL` are the maximum allowed residuals in the solution of the pressure constraint equation, the thickness "continuity" equation, and the momentum equations.
 
 ### Differencing schemes
 
