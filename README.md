@@ -1,4 +1,4 @@
-# GlissADe
+# GlissADe.jl
 
 [![Stable Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://thealanjason.github.io/GlissADe.jl/stable)
 [![Development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://thealanjason.github.io/GlissADe.jl/dev)
@@ -27,10 +27,6 @@ If you use GlissADe.jl in your work, please cite using the reference given in [C
 ## Contributing
 
 If you want to make contributions of any kind, please first take a look into our [contributing guide directly on GitHub](docs/src/90-contributing.md) or the [contributing page on the website](https://thealanjason.github.io/GlissADe.jl/dev/90-contributing/)
-
-## Useful Links
-
-- [https://modernjuliaworkflows.github.io/](https://modernjuliaworkflows.github.io/) A non-exhaustive guide with best practices and useful tips for Julia-lang development
 
 ---
 
