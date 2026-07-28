@@ -39,6 +39,7 @@ jobs:
         with:
           version: ${{ inputs.version }}
           arch: ${{ inputs.arch }}
+          force-arch: ${{ inputs.os == 'macOS-latest' && inputs.arch == 'x64' }}
       - name: Use Julia cache
         uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
