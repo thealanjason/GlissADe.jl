@@ -7,7 +7,21 @@ Last Updated On: 12th January, 2025 11:35 UTC+5:30
 
 using WriteVTK
 
-export writeToVTK, writeFileToVTK, initWriter, saveSolution
+export writeToVTK, writeFileToVTK, initWriter, saveSolution, plotmesh
+
+"""
+    plotmesh(points, faces)
+    plotmesh(Cells::Vector{Cell})
+Render mesh geometry natively via Meshes.jl and a Makie backend, without any external tool.
+
+Accepts either the raw `(points, faces)` returned by [`parsemesh`](@ref), or a precomputed
+`Vector{Cell}` returned by [`preprocess`](@ref).
+
+Requires a Makie backend to be loaded (e.g. `using GLMakie`, `using WGLMakie`, or
+`using CairoMakie`). The implementation lives in the `GlissADeMakieExt` package extension and
+is not available otherwise.
+"""
+function plotmesh end
 
 """
     writeToVTK(location::String, sol, points, faces)
