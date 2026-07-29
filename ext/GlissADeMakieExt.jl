@@ -50,9 +50,50 @@ function GlissADe.plotmesh(points::AbstractVector, faces::AbstractVector{<:Abstr
     return Meshes.viz(mesh)
 end
 
-function GlissADe.plotmesh(cells::AbstractVector{<:Cell})
+"""
+    _fieldvalues(cells, field)
+Resolve `field` (see [`plotmesh`](@ref)) into a per-cell scalar `Vector`, or `nothing`.
+"""
+_fieldvalues(::AbstractVector{<:Cell}, ::Nothing) = nothing
+
+function _fieldvalues(cells::AbstractVector{<:Cell}, field::AbstractVector)
+    if length(field) != length(cells)
+        throw(ArgumentError(
+            "field length ($(length(field))) does not match the number of cells ($(length(cells)))",
+        ))
+    end
+    return collect(field)
+end
+
+function _fieldvalues(cells::AbstractVector{<:Cell}, field::Function)
+    return [field(cell) for cell in cells]
+end
+
+function _fieldvalues(cells::AbstractVector{<:Cell}, field::Symbol)
+    selector = if field === :h
+        cell -> cell.h
+    elseif field === :pb
+        cell -> cell.pb
+    elseif field === :U
+        cell -> cell.vel[1]
+    elseif field === :V
+        cell -> cell.vel[2]
+    elseif field === :W
+        cell -> cell.vel[3]
+    elseif field === :speed
+        cell -> GlissADe._mag(cell.vel)
+    else
+        throw(ArgumentError(
+            "unknown field :$field; expected one of :h, :pb, :U, :V, :W, :speed, a Vector, or a Function",
+        ))
+    end
+    return [selector(cell) for cell in cells]
+end
+
+function GlissADe.plotmesh(cells::AbstractVector{<:Cell}; field = nothing)
     mesh = _to_simplemesh(cells)
-    return Meshes.viz(mesh)
+    color = _fieldvalues(cells, field)
+    return color === nothing ? Meshes.viz(mesh) : Meshes.viz(mesh; color = color)
 end
 
 end # module GlissADeMakieExt

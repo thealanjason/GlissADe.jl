@@ -11,11 +11,18 @@ export writeToVTK, writeFileToVTK, initWriter, saveSolution, plotmesh
 
 """
     plotmesh(points, faces)
-    plotmesh(Cells::Vector{Cell})
+    plotmesh(Cells::Vector{Cell}; field = nothing)
 Render mesh geometry natively via Meshes.jl and a Makie backend, without any external tool.
 
 Accepts either the raw `(points, faces)` returned by [`parsemesh`](@ref), or a precomputed
 `Vector{Cell}` returned by [`preprocess`](@ref).
+
+For the `Vector{Cell}` form, `field` paints each face with a per-cell scalar color:
+- a `Vector` of scalars, one per cell (must satisfy `length(field) == length(Cells)`);
+- a `Symbol` selecting a cell field directly: `:h` (thickness), `:pb` (basal pressure), `:U`,
+  `:V`, `:W` (global velocity components), or `:speed` (velocity magnitude);
+- a `Function` applied to each `Cell` to produce its scalar value;
+- `nothing` (default) for bare geometry with no coloring.
 
 Requires a Makie backend to be loaded (e.g. `using GLMakie`, `using WGLMakie`, or
 `using CairoMakie`). The implementation lives in the `GlissADeMakieExt` package extension and
