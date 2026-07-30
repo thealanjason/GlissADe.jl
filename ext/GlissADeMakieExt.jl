@@ -9,7 +9,10 @@ using Meshes
     _to_simplemesh(points, faces)
 Build a `Meshes.SimpleMesh` from the raw global `points`/`faces` arrays.
 """
-function _to_simplemesh(points::AbstractVector, faces::AbstractVector{<:AbstractVector{<:Integer}})
+function _to_simplemesh(
+    points::AbstractVector,
+    faces::AbstractVector{<:AbstractVector{<:Integer}},
+)
     pts = [Meshes.Point(p[1], p[2], p[3]) for p in points]
     connec = [Meshes.connect(Tuple(f), Meshes.Ngon) for f in faces]
     return Meshes.SimpleMesh(pts, connec)
@@ -53,13 +56,16 @@ Matches the sign convention of `Cell.normal` (deliberately anti-parallel to grav
 `precomputations.jl`), verified to agree with the `Cell`-based average to within floating-point
 noise on both `simpleslope` and `wolfsgrube_mountain`.
 """
-function _average_normal(points::AbstractVector, faces::AbstractVector{<:AbstractVector{<:Integer}})
+function _average_normal(
+    points::AbstractVector,
+    faces::AbstractVector{<:AbstractVector{<:Integer}},
+)
     n = zeros(3)
     @inbounds for face in faces
         pts = points[face]
         np = length(pts)
         nx = ny = nz = 0.0
-        for i in 1:np
+        for i = 1:np
             p1 = pts[i]
             p2 = pts[mod1(i + 1, np)]
             nx += (p1[2] - p2[2]) * (p1[3] + p2[3])
@@ -118,9 +124,11 @@ _fieldvalues(::AbstractVector{<:Cell}, ::Nothing) = nothing
 
 function _fieldvalues(cells::AbstractVector{<:Cell}, field::AbstractVector)
     if length(field) != length(cells)
-        throw(ArgumentError(
-            "field length ($(length(field))) does not match the number of cells ($(length(cells)))",
-        ))
+        throw(
+            ArgumentError(
+                "field length ($(length(field))) does not match the number of cells ($(length(cells)))",
+            ),
+        )
     end
     return collect(field)
 end
@@ -143,14 +151,20 @@ function _fieldvalues(cells::AbstractVector{<:Cell}, field::Symbol)
     elseif field === :speed
         cell -> GlissADe._mag(cell.vel)
     else
-        throw(ArgumentError(
-            "unknown field :$field; expected one of :h, :pb, :U, :V, :W, :speed, a Vector, or a Function",
-        ))
+        throw(
+            ArgumentError(
+                "unknown field :$field; expected one of :h, :pb, :U, :V, :W, :speed, a Vector, or a Function",
+            ),
+        )
     end
     return [selector(cell) for cell in cells]
 end
 
-function GlissADe.plotmesh(cells::AbstractVector{<:Cell}; field = nothing, axis = NamedTuple())
+function GlissADe.plotmesh(
+    cells::AbstractVector{<:Cell};
+    field = nothing,
+    axis = NamedTuple(),
+)
     mesh = _to_simplemesh(cells)
     color = _fieldvalues(cells, field)
     resolved_axis = merge(_default_axis(_average_normal(cells)), axis)
