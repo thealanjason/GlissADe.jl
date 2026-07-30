@@ -45,9 +45,69 @@ function _to_simplemesh(cells::AbstractVector{<:Cell})
     return _to_simplemesh(points, faces)
 end
 
-function GlissADe.plotmesh(points::AbstractVector, faces::AbstractVector{<:AbstractVector{<:Integer}})
+"""
+    _average_normal(points, faces)
+Area-weighted average unit normal over all faces, via Newell's method per face.
+
+Matches the sign convention of `Cell.normal` (deliberately anti-parallel to gravity, see
+`precomputations.jl`), verified to agree with the `Cell`-based average to within floating-point
+noise on both `simpleslope` and `wolfsgrube_mountain`.
+"""
+function _average_normal(points::AbstractVector, faces::AbstractVector{<:AbstractVector{<:Integer}})
+    n = zeros(3)
+    @inbounds for face in faces
+        pts = points[face]
+        np = length(pts)
+        nx = ny = nz = 0.0
+        for i in 1:np
+            p1 = pts[i]
+            p2 = pts[mod1(i + 1, np)]
+            nx += (p1[2] - p2[2]) * (p1[3] + p2[3])
+            ny += (p1[3] - p2[3]) * (p1[1] + p2[1])
+            nz += (p1[1] - p2[1]) * (p1[2] + p2[2])
+        end
+        n .+= (nx, ny, nz) ./ 2
+    end
+    return n ./ sqrt(sum(abs2, n))
+end
+
+"""
+    _average_normal(Cells::Vector{<:Cell})
+Area-weighted average unit normal over all cells, using the precomputed `Cell.area`/`Cell.normal`.
+"""
+function _average_normal(cells::AbstractVector{<:Cell})
+    n = zeros(3)
+    @inbounds for cell in cells
+        n .+= cell.area .* cell.normal
+    end
+    return n ./ sqrt(sum(abs2, n))
+end
+
+"""
+    _default_axis(normal)
+Compute `Axis3` `azimuth`/`elevation` so the camera looks along the mesh's average surface
+normal, i.e. the average normal points toward the viewer.
+
+Without this, Makie's generic isometric default view shows a mesh that is flat (or close to
+it, like a mountainside) almost edge-on, since the default camera angle has no knowledge of the
+mesh's orientation.
+"""
+function _default_axis(normal)
+    eye = -normal # Cell.normal points into the terrain (anti-parallel to gravity), so the
+    # viewer should be on the opposite side, looking along the normal direction.
+    el = asin(clamp(eye[3], -1.0, 1.0))
+    az = atan(eye[2], eye[1])
+    return (type = Axis3, azimuth = az, elevation = el)
+end
+
+function GlissADe.plotmesh(
+    points::AbstractVector,
+    faces::AbstractVector{<:AbstractVector{<:Integer}};
+    axis = NamedTuple(),
+)
     mesh = _to_simplemesh(points, faces)
-    return Meshes.viz(mesh)
+    resolved_axis = merge(_default_axis(_average_normal(points, faces)), axis)
+    return Meshes.viz(mesh; axis = resolved_axis)
 end
 
 """
@@ -90,10 +150,12 @@ function _fieldvalues(cells::AbstractVector{<:Cell}, field::Symbol)
     return [selector(cell) for cell in cells]
 end
 
-function GlissADe.plotmesh(cells::AbstractVector{<:Cell}; field = nothing)
+function GlissADe.plotmesh(cells::AbstractVector{<:Cell}; field = nothing, axis = NamedTuple())
     mesh = _to_simplemesh(cells)
     color = _fieldvalues(cells, field)
-    return color === nothing ? Meshes.viz(mesh) : Meshes.viz(mesh; color = color)
+    resolved_axis = merge(_default_axis(_average_normal(cells)), axis)
+    return color === nothing ? Meshes.viz(mesh; axis = resolved_axis) :
+           Meshes.viz(mesh; color = color, axis = resolved_axis)
 end
 
 end # module GlissADeMakieExt
