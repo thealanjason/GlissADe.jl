@@ -12,4 +12,5 @@ include("testutils.jl")
     include("release_area_initialization_test.jl")
     include("solver_test.jl")
     include("solution_export_test.jl")
+    include("visualization_makie_test.jl")
 end

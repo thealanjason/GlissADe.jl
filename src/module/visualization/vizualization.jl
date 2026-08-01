@@ -7,7 +7,33 @@ Last Updated On: 12th January, 2025 11:35 UTC+5:30
 
 using WriteVTK
 
-export writeToVTK, writeFileToVTK, initWriter, saveSolution
+export writeToVTK, writeFileToVTK, initWriter, saveSolution, plotmesh
+
+"""
+    plotmesh(points, faces; axis = NamedTuple())
+    plotmesh(Cells::Vector{Cell}; field = nothing, axis = NamedTuple())
+Render mesh geometry natively via Meshes.jl and a Makie backend, without any external tool.
+
+Accepts either the raw `(points, faces)` returned by [`parsemesh`](@ref), or a precomputed
+`Vector{Cell}` returned by [`preprocess`](@ref).
+
+For the `Vector{Cell}` form, `field` paints each face with a per-cell scalar color:
+- a `Vector` of scalars, one per cell (must satisfy `length(field) == length(Cells)`);
+- a `Symbol` selecting a cell field directly: `:h` (thickness), `:pb` (basal pressure), `:U`,
+  `:V`, `:W` (global velocity components), or `:speed` (velocity magnitude);
+- a `Function` applied to each `Cell` to produce its scalar value;
+- `nothing` (default) for bare geometry with no coloring.
+
+The initial camera orientation defaults to looking along the mesh's area-weighted average
+surface normal, rather than Makie's generic isometric default, since a generic angle tends to
+show terrain-like meshes almost edge-on. Pass `axis` (e.g. `axis = (azimuth = ..., elevation =
+...)`) to override this default; any keys given there take priority over the computed default.
+
+Requires a Makie backend to be loaded (e.g. `using GLMakie`, `using WGLMakie`, or
+`using CairoMakie`). The implementation lives in the `GlissADeMakieExt` package extension and
+is not available otherwise.
+"""
+function plotmesh end
 
 """
     writeToVTK(location::String, sol, points, faces)
