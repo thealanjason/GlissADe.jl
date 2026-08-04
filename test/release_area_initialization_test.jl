@@ -98,4 +98,33 @@ using LinearAlgebra: dot
 
         resetCells(Cells)
     end
+
+    @testset "default u0 zeroes velocity" begin
+        resetCells(Cells)
+        polygon = findRegularPolygon(bounds, npoints = 6)
+        cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
+        rho = 1500.0
+
+        for idx in cells_inside
+            Cells[idx].vel .= [1.0, 2.0, 3.0]
+        end
+        # Omitting u0 defaults to `nothing`, which zeroes (rather than raises) velocity.
+        initializeGeometry(cells_inside, Cells, rho, h0 = 0.2)
+        @test all(i -> all(==(0.0), Cells[i].vel), cells_inside)
+
+        resetCells(Cells)
+    end
+
+    @testset "h0 = nothing leaves cells untouched (scalar and vector forms)" begin
+        resetCells(Cells)
+        rho = 1500.0
+
+        polygon = findRegularPolygon(bounds, npoints = 6)
+        cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
+        @test initializeGeometry(cells_inside, Cells, rho) === nothing
+        @test all(c -> c.h == 0.0 && all(==(0.0), c.vel) && c.pb == 0.0, Cells)
+
+        @test initializeGeometry(Cells, rho) === nothing
+        @test all(c -> c.h == 0.0 && all(==(0.0), c.vel) && c.pb == 0.0, Cells)
+    end
 end
