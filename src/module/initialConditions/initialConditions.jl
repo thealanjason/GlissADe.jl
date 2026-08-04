@@ -12,7 +12,8 @@ export findRegularPolygon,
     resetCells,
     EsriAsciiRaster,
     parseEsriAscii,
-    remapRasterToMesh
+    remapRasterToMesh,
+    verticalToNormalThickness
 
 
 # Better than angle summation and almost 60 times faster than angle summation
@@ -483,4 +484,14 @@ function remapRasterToMesh(raster::EsriAsciiRaster, Cells)
         h0_vertical[j] = volume / polygonArea(polygon)
     end
     return h0_vertical
+end
+
+"""
+    verticalToNormalThickness(h0_vertical, Cells)
+Converts a per-cell vertical depth (e.g. from [`remapRasterToMesh`](@ref)) into the
+slope-normal thickness convention `Cell.h` represents, using each mesh cell's surface normal:
+`h0_normal(j) = h0_vertical(j) * (Cell[j].normal · ẑ)`.
+"""
+function verticalToNormalThickness(h0_vertical, Cells)
+    return [h0_vertical[j] * Cells[j].normal[3] for j in eachindex(Cells)]
 end
