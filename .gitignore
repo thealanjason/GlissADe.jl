@@ -18,6 +18,7 @@ docs/build/
 env
 node_modules
 solution
+examples/**/*.png
 stored
 _docs/progress/progress.qmd
 *:Zone.Identifier
