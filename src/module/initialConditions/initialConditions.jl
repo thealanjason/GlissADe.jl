@@ -154,26 +154,65 @@ end
 # Pressure set to some initial value [general guess]
 # Add initial pressure computation inside solver
 """
+    _updateCellState!(cell, h0_val, u0, rho, W, apply)
+Applies a single release update to `cell`: when `apply` is `true`, raises `h` to at least
+`h0_val` and `vel` to at least `u0` (or zeroes it if `u0` is `nothing`); `pb` is always
+refreshed from the cell's (possibly just-updated) `h`. Shared by both `initializeGeometry`
+methods so the `h`/`vel`/`pb` semantics can't drift between the scalar and per-cell-vector
+forms.
+`INTERNAL`
+"""
+function _updateCellState!(cell, h0_val, u0, rho, W, apply)
+    global g
+    if apply
+        cell.h = max(cell.h, h0_val)
+        if isnothing(u0)
+            cell.vel .= zero(W)
+        else
+            cell.vel .= max.(cell.vel, u0)
+        end
+    end
+    cell.pb = dot(g, cell.normal) * cell.h * rho
+    return nothing
+end
+
+"""
     initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
 Initializes the faces in `cells_inside_polygon` to have a thickness `h0` and velocity `u0`. Pressure is initialized with a value used for flat surfaces.
 """
 function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
-    global threads, stats, g
+    global threads, stats
     if isnothing(h0)
         println("WARNING: h0 = 0. Faces left dry!")
         return
     end
     W = eltype(Cells[1].vel)
     @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
-        if idx in cells_inside_polygon
-            Cells[idx].h = max(Cells[idx].h, h0)
-            if isnothing(u0)
-                Cells[idx].vel .= zero(W)
-            else
-                Cells[idx].vel .= max.(Cells[idx].vel, u0)
-            end
-        end
-        Cells[idx].pb = dot(g, Cells[idx].normal) * Cells[idx].h * rho
+        _updateCellState!(Cells[idx], h0, u0, rho, W, idx in cells_inside_polygon)
+    end
+    return stats && println("Cells initialized.")
+end
+
+"""
+    initializeGeometry(Cells, rho; h0 = nothing, u0 = nothing)
+Initializes every cell to have a thickness of at least its own entry in the per-cell `h0`
+vector (e.g. from [`remapRasterToMesh`](@ref) + [`verticalToNormalThickness`](@ref)), with `0`
+entries left untouched. `u0`, when given, is applied the same way as the scalar-`h0` method,
+to every cell whose `h0` entry is non-zero. Pressure is initialized with a value used for flat
+surfaces.
+"""
+function initializeGeometry(Cells, rho; h0 = nothing, u0 = nothing)
+    global threads, stats
+    if isnothing(h0)
+        println("WARNING: h0 = 0. Faces left dry!")
+        return
+    end
+    length(h0) == length(Cells) || throw(
+        "h0 vector length $(length(h0)) does not match number of cells $(length(Cells))",
+    )
+    W = eltype(Cells[1].vel)
+    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
+        _updateCellState!(Cells[idx], h0[idx], u0, rho, W, !iszero(h0[idx]))
     end
     return stats && println("Cells initialized.")
 end
