@@ -6,7 +6,8 @@ The Polygon is generated inside a given rectangle bounded by x = [x_min, x_max] 
 Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
 
-export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon, resetCells
+export findRegularPolygon,
+    initializeGeometry, cellsInsideBoundingPolygon, resetCells, EsriAsciiRaster, parseEsriAscii
 
 
 # Better than angle summation and almost 60 times faster than angle summation
@@ -169,4 +170,157 @@ function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 =
         Cells[idx].pb = dot(g, Cells[idx].normal) * Cells[idx].h * rho
     end
     return stats && println("Cells initialized.")
+end
+
+#=
+Raster-based (ESRI ASCII) release areas.
+
+A release-depth raster gives arbitrary shape and spatially varying depth, which is remapped
+onto the mesh with a conservative area-weighted overlap (see `remapRasterToMesh`, added
+alongside this parser).
+=#
+
+"""
+    struct EsriAsciiRaster{T}
+A parsed ESRI ASCII grid: vertical depth values plus the raster's plan-view extent.
+
+## Fields
+- values::Matrix{T} - `nrows` x `ncols` grid of vertical depths. Row 1 is the northernmost
+  (maximum-y) row, column 1 is the westernmost (minimum-x) column, matching the row-major,
+  first-row-at-`y_max` convention of the ESRI ASCII format.
+- ncols::Int - Number of raster columns
+- nrows::Int - Number of raster rows
+- cellsize::T - Raster cell size (assumed square)
+- xllcorner::T - Real-world x-coordinate of the raster's lower-left corner
+- yllcorner::T - Real-world y-coordinate of the raster's lower-left corner
+"""
+struct EsriAsciiRaster{T}
+    values::Matrix{T}
+    ncols::Int
+    nrows::Int
+    cellsize::T
+    xllcorner::T
+    yllcorner::T
+end
+
+const ESRI_ASCII_HEADER_KEYS =
+    ("ncols", "nrows", "xllcorner", "yllcorner", "xllcenter", "yllcenter", "cellsize", "nodata_value")
+
+"""
+    parseEsriAscii(location)
+Parse an ESRI ASCII grid file at `location` into an [`EsriAsciiRaster`](@ref).
+
+Accepts either the `xllcorner`/`yllcorner` or `xllcenter`/`yllcenter` header convention; in
+both cases the returned raster's `xllcorner`/`yllcorner` refer to the lower-left *corner* of
+the grid. Cells equal to the header's `NODATA_value` are replaced with a vertical depth of
+`0`.
+"""
+function parseEsriAscii(location::String)
+    global FLOAT_TYPE, INT_TYPE
+    lines = open(location, "r") do f
+        readlines(f)
+    end
+
+    header = Dict{String,String}()
+    header_end = 0
+    for (i, line) in enumerate(lines)
+        tokens = split(strip(line))
+        isempty(tokens) && continue
+        key = lowercase(tokens[1])
+        if key in ESRI_ASCII_HEADER_KEYS
+            length(tokens) < 2 &&
+                throw("malformed ESRI ASCII header line $i: \"$line\"")
+            header[key] = tokens[2]
+            header_end = i
+        else
+            break
+        end
+    end
+
+    for required in ("ncols", "nrows", "cellsize", "nodata_value")
+        haskey(header, required) ||
+            throw("ESRI ASCII header missing required field: $required")
+    end
+    has_corner = haskey(header, "xllcorner") && haskey(header, "yllcorner")
+    has_center = haskey(header, "xllcenter") && haskey(header, "yllcenter")
+    (has_corner || has_center) || throw(
+        "ESRI ASCII header must specify either xllcorner/yllcorner or xllcenter/yllcenter",
+    )
+
+    ncols = parse(INT_TYPE[], header["ncols"])
+    nrows = parse(INT_TYPE[], header["nrows"])
+    cellsize = parse(FLOAT_TYPE[], header["cellsize"])
+    nodata = parse(FLOAT_TYPE[], header["nodata_value"])
+
+    xllcorner, yllcorner = if has_corner
+        parse(FLOAT_TYPE[], header["xllcorner"]), parse(FLOAT_TYPE[], header["yllcorner"])
+    else
+        parse(FLOAT_TYPE[], header["xllcenter"]) - cellsize / 2,
+        parse(FLOAT_TYPE[], header["yllcenter"]) - cellsize / 2
+    end
+
+    values = Matrix{FLOAT_TYPE[]}(undef, nrows, ncols)
+    row = 0
+    for line in @view lines[(header_end+1):end]
+        tokens = split(strip(line))
+        isempty(tokens) && continue
+        row += 1
+        row > nrows &&
+            throw("ESRI ASCII grid has more data rows than declared nrows=$nrows")
+        length(tokens) != ncols && throw(
+            "ESRI ASCII grid row $row has $(length(tokens)) values, expected ncols=$ncols",
+        )
+        @inbounds for col = 1:ncols
+            values[row, col] = parse(FLOAT_TYPE[], tokens[col])
+        end
+    end
+    row == nrows ||
+        throw("ESRI ASCII grid has $row data rows, expected nrows=$nrows")
+
+    @inbounds for i in eachindex(values)
+        if isapprox(values[i], nodata, atol = 1e-9 * max(abs(nodata), 1.0))
+            values[i] = zero(FLOAT_TYPE[])
+        end
+    end
+
+    return EsriAsciiRaster{FLOAT_TYPE[]}(values, ncols, nrows, cellsize, xllcorner, yllcorner)
+end
+
+"""
+    rasterCellBounds(raster, row, col)
+Returns `(xmin, xmax, ymin, ymax)`, the plan-view axis-aligned bounding square of raster cell
+`(row, col)` (1-indexed; `row = 1` is the northernmost/maximum-y row, `col = 1` the
+westernmost/minimum-x column).
+`INTERNAL`
+"""
+function rasterCellBounds(raster::EsriAsciiRaster, row::Integer, col::Integer)
+    xmin = raster.xllcorner + raster.cellsize * (col - 1)
+    xmax = xmin + raster.cellsize
+    ymax = raster.yllcorner + raster.cellsize * (raster.nrows - row + 1)
+    ymin = ymax - raster.cellsize
+    return xmin, xmax, ymin, ymax
+end
+
+"""
+    rasterIndexWindow(raster, xmin, xmax, ymin, ymax)
+Returns the inclusive raster `(row_min, row_max, col_min, col_max)` index range covering
+every raster cell that could possibly overlap the plan-view box `[xmin, xmax] x [ymin, ymax]`,
+clamped to the raster's extent. Empty (`row_min > row_max` or `col_min > col_max`) if the box
+does not intersect the raster at all.
+`INTERNAL`
+"""
+function rasterIndexWindow(raster::EsriAsciiRaster, xmin, xmax, ymin, ymax)
+    cs = raster.cellsize
+    x0, y0 = raster.xllcorner, raster.yllcorner
+    x1 = x0 + cs * raster.ncols
+    y1 = y0 + cs * raster.nrows
+    if xmax <= x0 || xmin >= x1 || ymax <= y0 || ymin >= y1
+        return 1, 0, 1, 0
+    end
+    tol = 1.0e-9 * cs
+    col_min = clamp(floor(Int, (xmin - x0 + tol) / cs) + 1, 1, raster.ncols)
+    col_max = clamp(ceil(Int, (xmax - x0 - tol) / cs), 1, raster.ncols)
+    row_min = clamp(floor(Int, (y1 - ymax + tol) / cs) + 1, 1, raster.nrows)
+    row_max = clamp(ceil(Int, (y1 - ymin - tol) / cs), 1, raster.nrows)
+    return row_min, row_max, col_min, col_max
 end
