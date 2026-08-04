@@ -1,7 +1,14 @@
 #=
-The INITIALCONDITIONS submodule is responsible for setting up the initial release area using a regular (n-) polygon.
+The INITIALCONDITIONS submodule sets up the initial release area, in one of two ways:
 
-The Polygon is generated inside a given rectangle bounded by x = [x_min, x_max] and y = [y_min, y_max].
+- A regular (n-)polygon, generated inside a given rectangle bounded by
+  x = [x_min, x_max] and y = [y_min, y_max], applying one uniform thickness to every
+  cell inside it.
+- An ESRI ASCII depth raster, conservatively remapped onto the mesh so each cell gets its
+  own thickness derived from the raster's footprint.
+
+Both produce a per-cell thickness that `initializeGeometry` applies to the mesh; either can be
+called multiple times, with overlapping areas keeping the largest value.
 
 Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
@@ -373,10 +380,12 @@ end
 #=
 Plan-view geometry utilities.
 
-Computing overlap areas between a mesh cell's plan-view
-(x-y projected) footprint and a raster cell's axis-aligned footprint requires projecting off
-z, a polygon-area formula, and a polygon clip. `Cell.area` (precomputations.jl) is the true 3D
-sloped surface area and must not be used here — see design.md.
+Computing overlap areas between a mesh cell's plan-view (x-y projected) footprint and a raster
+cell's axis-aligned footprint requires projecting off z, a polygon-area formula, and a polygon
+clip. `Cell.area` (precomputations.jl) is the true 3D sloped surface area, not a plan-view
+area, so it must not be used for this: on tilted terrain it is systematically larger than the
+plan-view footprint, which would under-report the raster-derived depth exactly where release
+areas tend to sit.
 =#
 
 """
@@ -494,8 +503,39 @@ plan-view area to get a vertical depth. Returns a per-cell `Vector` (one entry p
 `Cells`) of vertical depths, `0` for mesh cells the raster does not cover.
 
 The division uses the mesh cell's plan-view (x-y projected) area, not `Cell.area` (the 3D
-sloped surface area) — see design.md for why. The result is still a *vertical* depth; convert
-it to the slope-normal thickness `Cell.h` represents before using it to initialize state.
+sloped surface area, which would under-report thickness on tilted terrain). The result is
+still a *vertical* depth; convert it to the slope-normal thickness `Cell.h` represents with
+[`verticalToNormalThickness`](@ref) before using it to initialize state.
+
+```jldoctest
+julia> init(stats = false, threads = false, plots = false);
+
+julia> path = tempname();
+
+julia> write(path, "ncols 2\\nnrows 1\\nxllcorner 0.0\\nyllcorner 0.0\\ncellsize 2.0\\nNODATA_value -9999\\n1.0 3.0\\n");
+
+julia> raster = parseEsriAscii(path);
+
+julia> cell = Cell(
+           idx = 1, center = [2.0, 1.0, 0.0],
+           vertices = [[0.0, 0.0, 0.0], [4.0, 0.0, 0.0], [4.0, 2.0, 0.0], [0.0, 2.0, 0.0]],
+           edge_centers = Vector{Float64}[], edge_lengths = Float64[],
+           normal = [0.0, 0.0, 1.0], area = 8.0, edge_binormals = Vector{Float64}[],
+           transform = Matrix{Float64}[], transform2 = Matrix{Float64}[], neighbours = Int[],
+           h = 0.0, vel = [0.0, 0.0, 0.0], pb = 0.0,
+       );
+
+julia> h0_vertical = remapRasterToMesh(raster, [cell]) # cell spans both raster cells evenly
+1-element Vector{Float64}:
+ 2.0
+
+julia> h0_normal = verticalToNormalThickness(h0_vertical, [cell]); # flat cell: no change
+
+julia> initializeGeometry([cell], 1000.0, h0 = h0_normal, u0 = [0.0, 0.0, 0.0]);
+
+julia> cell.h
+2.0
+```
 """
 function remapRasterToMesh(raster::EsriAsciiRaster, Cells)
     T = eltype(Cells[1].center)
@@ -529,8 +569,15 @@ end
     verticalToNormalThickness(h0_vertical, Cells)
 Converts a per-cell vertical depth (e.g. from [`remapRasterToMesh`](@ref)) into the
 slope-normal thickness convention `Cell.h` represents, using each mesh cell's surface normal:
-`h0_normal(j) = h0_vertical(j) * (Cell[j].normal · ẑ)`.
+`h0_normal(j) = h0_vertical(j) * cos(θ(j))`, where `θ(j)` is the angle between `Cell[j].normal`
+and vertical.
+
+Uses `abs(Cell.normal[3])` rather than `Cell.normal[3] * ẑ` directly: `Cell.normal` is stored
+negative to align with gravity (see `precomputations.jl`), i.e. pointing down into the terrain
+rather than up away from it, so its raw z-component is negative for ordinary upward-facing
+terrain. A physical thickness can't be negative, and only the magnitude of the tilt (not which
+of the two opposite normal directions happens to be stored) is meaningful here.
 """
 function verticalToNormalThickness(h0_vertical, Cells)
-    return [h0_vertical[j] * Cells[j].normal[3] for j in eachindex(Cells)]
+    return [h0_vertical[j] * abs(Cells[j].normal[3]) for j in eachindex(Cells)]
 end
