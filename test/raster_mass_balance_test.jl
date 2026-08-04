@@ -59,18 +59,12 @@ clearing floating-point noise.
     ys = [0.0, 1.5, 4.0]
     slopes_deg = [10.0, 25.0, 40.0, 15.0, 30.0, 20.0]
     cell_specs = [
-        (x0 = xs[i], x1 = xs[i+1], y0 = ys[j], y1 = ys[j+1], slope = slopes_deg[(j-1)*3+i])
-        for j = 1:2 for i = 1:3
+        (x0 = xs[i], x1 = xs[i+1], y0 = ys[j], y1 = ys[j+1], slope = slopes_deg[(j-1)*3+i]) for j = 1:2 for i = 1:3
     ]
     cells = [
         make_cell(
             k,
-            [
-                [s.x0, s.y0, 0.0],
-                [s.x1, s.y0, 0.0],
-                [s.x1, s.y1, 0.0],
-                [s.x0, s.y1, 0.0],
-            ];
+            [[s.x0, s.y0, 0.0], [s.x1, s.y0, 0.0], [s.x1, s.y1, 0.0], [s.x0, s.y1, 0.0]];
             normal = [sind(s.slope), 0.0, cosd(s.slope)],
         ) for (k, s) in enumerate(cell_specs)
     ]
@@ -79,11 +73,7 @@ clearing floating-point noise.
     h0_vertical = remapRasterToMesh(raster, cells)
     mesh_volume = sum(h0_vertical .* planview_areas)
 
-    @test isapprox(
-        total_raster_volume - mesh_volume,
-        expected_discrepancy,
-        atol = 1.0e-8,
-    )
+    @test isapprox(total_raster_volume - mesh_volume, expected_discrepancy, atol = 1.0e-8)
 
     # Sanity check on the fixture itself: the discrepancy is exactly the excluded columns'
     # volume, not zero and not the whole raster (i.e. the test fixture is actually exercising

@@ -255,8 +255,16 @@ struct EsriAsciiRaster{T}
     yllcorner::T
 end
 
-const ESRI_ASCII_HEADER_KEYS =
-    ("ncols", "nrows", "xllcorner", "yllcorner", "xllcenter", "yllcenter", "cellsize", "nodata_value")
+const ESRI_ASCII_HEADER_KEYS = (
+    "ncols",
+    "nrows",
+    "xllcorner",
+    "yllcorner",
+    "xllcenter",
+    "yllcenter",
+    "cellsize",
+    "nodata_value",
+)
 
 """
     parseEsriAscii(location)
@@ -280,8 +288,7 @@ function parseEsriAscii(location::String)
         isempty(tokens) && continue
         key = lowercase(tokens[1])
         if key in ESRI_ASCII_HEADER_KEYS
-            length(tokens) < 2 &&
-                throw("malformed ESRI ASCII header line $i: \"$line\"")
+            length(tokens) < 2 && throw("malformed ESRI ASCII header line $i: \"$line\"")
             header[key] = tokens[2]
             header_end = i
         else
@@ -326,8 +333,7 @@ function parseEsriAscii(location::String)
             values[row, col] = parse(FLOAT_TYPE[], tokens[col])
         end
     end
-    row == nrows ||
-        throw("ESRI ASCII grid has $row data rows, expected nrows=$nrows")
+    row == nrows || throw("ESRI ASCII grid has $row data rows, expected nrows=$nrows")
 
     @inbounds for i in eachindex(values)
         if isapprox(values[i], nodata, atol = 1e-9 * max(abs(nodata), 1.0))
@@ -335,7 +341,14 @@ function parseEsriAscii(location::String)
         end
     end
 
-    return EsriAsciiRaster{FLOAT_TYPE[]}(values, ncols, nrows, cellsize, xllcorner, yllcorner)
+    return EsriAsciiRaster{FLOAT_TYPE[]}(
+        values,
+        ncols,
+        nrows,
+        cellsize,
+        xllcorner,
+        yllcorner,
+    )
 end
 
 """
