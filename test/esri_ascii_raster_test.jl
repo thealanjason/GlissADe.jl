@@ -1,14 +1,6 @@
 using Test
 using GlissADe
 
-function write_fixture(content)
-    path = tempname()
-    open(path, "w") do f
-        write(f, content)
-    end
-    return path
-end
-
 @testset "ESRI ASCII raster parsing" begin
     @testset "corner-referenced header" begin
         path = write_fixture(

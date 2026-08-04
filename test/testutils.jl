@@ -19,6 +19,15 @@ function extract_vtk_field(content, field)
     return parse.(Float64, split(strip(m.captures[1])))
 end
 
+# Writes `content` to a fresh temp file and returns its path.
+function write_fixture(content)
+    path = tempname()
+    open(path, "w") do f
+        write(f, content)
+    end
+    return path
+end
+
 # Builds a minimal synthetic Cell (bypassing preprocess/OpenFOAM parsing) for tests that only
 # exercise plan-view geometry (vertices) and/or the surface normal, not the full precomputed
 # geometry (edges, transforms, neighbours, ...), which are irrelevant to those code paths.

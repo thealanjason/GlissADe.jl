@@ -1,14 +1,6 @@
 using Test
 using GlissADe
 
-function write_fixture(content)
-    path = tempname()
-    open(path, "w") do f
-        write(f, content)
-    end
-    return path
-end
-
 @testset "conservative area-weighted raster remap" begin
     @testset "mesh cell fully inside one raster cell reduces to that cell's value" begin
         path = write_fixture(
