@@ -7,7 +7,12 @@ Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
 
 export findRegularPolygon,
-    initializeGeometry, cellsInsideBoundingPolygon, resetCells, EsriAsciiRaster, parseEsriAscii
+    initializeGeometry,
+    cellsInsideBoundingPolygon,
+    resetCells,
+    EsriAsciiRaster,
+    parseEsriAscii,
+    remapRasterToMesh
 
 
 # Better than angle summation and almost 60 times faster than angle summation
@@ -323,4 +328,159 @@ function rasterIndexWindow(raster::EsriAsciiRaster, xmin, xmax, ymin, ymax)
     row_min = clamp(floor(Int, (y1 - ymax + tol) / cs) + 1, 1, raster.nrows)
     row_max = clamp(ceil(Int, (y1 - ymin - tol) / cs), 1, raster.nrows)
     return row_min, row_max, col_min, col_max
+end
+
+#=
+Plan-view geometry utilities.
+
+Computing overlap areas between a mesh cell's plan-view
+(x-y projected) footprint and a raster cell's axis-aligned footprint requires projecting off
+z, a polygon-area formula, and a polygon clip. `Cell.area` (precomputations.jl) is the true 3D
+sloped surface area and must not be used here — see design.md.
+=#
+
+"""
+    planViewPolygon(vertices)
+Projects a mesh cell's 3D `vertices` (as stored on [`Cell`](@ref)) onto the x-y plane by
+dropping z, returning the ordered list of 2D plan-view vertices.
+`INTERNAL`
+"""
+function planViewPolygon(vertices)
+    return [[v[1], v[2]] for v in vertices]
+end
+
+"""
+    polygonArea(polygon)
+Returns the area of a simple (non-self-intersecting) 2D polygon given as an ordered list of
+vertices, via the shoelace formula. Orientation-independent (always non-negative). Returns `0`
+for a degenerate polygon (fewer than 3 vertices).
+`INTERNAL`
+"""
+function polygonArea(polygon)
+    n = length(polygon)
+    T = eltype(eltype(polygon))
+    n < 3 && return zero(T)
+    total = zero(T)
+    @inbounds for i = 1:n
+        j = i % n + 1
+        total += polygon[i][1] * polygon[j][2] - polygon[j][1] * polygon[i][2]
+    end
+    return abs(total) / 2
+end
+
+"""
+    clipPolygonHalfPlane(polygon, inside, intersect)
+Sutherland-Hodgman clip of `polygon` (ordered list of 2D vertices) against a single half-plane,
+where `inside(p)` tests whether vertex `p` satisfies the half-plane constraint and
+`intersect(a, b)` returns the point where edge `a -> b` crosses the half-plane's boundary line
+(only called on edges where `inside(a) != inside(b)`). Boundary points count as inside.
+`INTERNAL`
+"""
+function clipPolygonHalfPlane(polygon, inside, intersect)
+    n = length(polygon)
+    n == 0 && return polygon
+    output = Vector{eltype(polygon)}()
+    @inbounds for i = 1:n
+        cur = polygon[i]
+        prev = polygon[i==1 ? n : i-1]
+        cur_in = inside(cur)
+        prev_in = inside(prev)
+        if cur_in
+            prev_in || push!(output, intersect(prev, cur))
+            push!(output, cur)
+        elseif prev_in
+            push!(output, intersect(prev, cur))
+        end
+    end
+    return output
+end
+
+"""
+    clipPolygonToBox(polygon, xmin, xmax, ymin, ymax)
+Clips a simple 2D polygon (ordered list of vertices) against an axis-aligned box using the
+Sutherland-Hodgman algorithm (four successive half-plane clips). Returns the (possibly empty)
+list of vertices of the clipped polygon.
+`INTERNAL`
+"""
+function clipPolygonToBox(polygon, xmin, xmax, ymin, ymax)
+    clipped = clipPolygonHalfPlane(
+        polygon,
+        p -> p[1] >= xmin,
+        (a, b) -> [xmin, a[2]+(xmin-a[1])/(b[1]-a[1])*(b[2]-a[2])],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[1] <= xmax,
+        (a, b) -> [xmax, a[2]+(xmax-a[1])/(b[1]-a[1])*(b[2]-a[2])],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[2] >= ymin,
+        (a, b) -> [a[1]+(ymin-a[2])/(b[2]-a[2])*(b[1]-a[1]), ymin],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[2] <= ymax,
+        (a, b) -> [a[1]+(ymax-a[2])/(b[2]-a[2])*(b[1]-a[1]), ymax],
+    )
+    return clipped
+end
+
+"""
+    rasterCellFullyInside(polygon, xmin, xmax, ymin, ymax)
+Returns `true` iff all 4 corners of the axis-aligned raster cell `[xmin, xmax] x [ymin, ymax]`
+lie inside the plan-view mesh-cell polygon `polygon`. When `true`, the raster cell's full area
+can be used directly without exact polygon clipping (`clipPolygonToBox`).
+
+Uses [`testInside`](@ref), whose ray-casting boundary handling is not symmetric on exact edges
+or vertices: a corner lying exactly on the polygon's boundary may resolve to `false` (never
+falsely to `true` for a point genuinely outside). So this function can conservatively return
+`false` for a raster cell that is, geometrically, fully inside (its corners happen to touch the
+mesh cell's boundary) — that case simply falls through to the clip path, which computes the
+correct area regardless. It never returns `true` for a cell that isn't fully covered.
+`INTERNAL`
+"""
+function rasterCellFullyInside(polygon, xmin, xmax, ymin, ymax)
+    corners = ([xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax])
+    return all(c -> testInside(c, polygon), corners)
+end
+
+"""
+    remapRasterToMesh(raster, Cells)
+Conservatively remaps a release-depth raster onto the mesh. For each mesh cell, sums
+`overlap_area(mesh_cell, raster_cell_k) * h_raster_k` over every raster cell whose plan-view
+footprint intersects the mesh cell's plan-view footprint, then divides by the mesh cell's
+plan-view area to get a vertical depth. Returns a per-cell `Vector` (one entry per index into
+`Cells`) of vertical depths, `0` for mesh cells the raster does not cover.
+
+The division uses the mesh cell's plan-view (x-y projected) area, not `Cell.area` (the 3D
+sloped surface area) — see design.md for why. The result is still a *vertical* depth; convert
+it to the slope-normal thickness `Cell.h` represents before using it to initialize state.
+"""
+function remapRasterToMesh(raster::EsriAsciiRaster, Cells)
+    T = eltype(Cells[1].center)
+    h0_vertical = zeros(T, length(Cells))
+    @inbounds for j in eachindex(Cells)
+        polygon = planViewPolygon(Cells[j].vertices)
+        xs = [p[1] for p in polygon]
+        ys = [p[2] for p in polygon]
+        xmin, xmax = extrema(xs)
+        ymin, ymax = extrema(ys)
+        row_min, row_max, col_min, col_max =
+            rasterIndexWindow(raster, xmin, xmax, ymin, ymax)
+        volume = zero(T)
+        for row = row_min:row_max, col = col_min:col_max
+            h_k = raster.values[row, col]
+            h_k == 0 && continue
+            rxmin, rxmax, rymin, rymax = rasterCellBounds(raster, row, col)
+            area = if rasterCellFullyInside(polygon, rxmin, rxmax, rymin, rymax)
+                raster.cellsize^2
+            else
+                polygonArea(clipPolygonToBox(polygon, rxmin, rxmax, rymin, rymax))
+            end
+            volume += area * h_k
+        end
+        h0_vertical[j] = volume / polygonArea(polygon)
+    end
+    return h0_vertical
 end
