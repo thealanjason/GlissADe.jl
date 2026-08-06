@@ -1,12 +1,26 @@
 #=
-The INITIALCONDITIONS submodule is responsible for setting up the initial release area using a regular (n-) polygon.
+The INITIALCONDITIONS submodule sets up the initial release area, in one of two ways:
 
-The Polygon is generated inside a given rectangle bounded by x = [x_min, x_max] and y = [y_min, y_max].
+- A regular (n-)polygon, generated inside a given rectangle bounded by
+  x = [x_min, x_max] and y = [y_min, y_max], applying one uniform thickness to every
+  cell inside it.
+- An ESRI ASCII depth raster, conservatively remapped onto the mesh so each cell gets its
+  own thickness derived from the raster's footprint.
+
+Both produce a per-cell thickness that `initializeGeometry` applies to the mesh; either can be
+called multiple times, with overlapping areas keeping the largest value.
 
 Last Updated On: 12th January, 2025 09:33 UTC+5:30
 =#
 
-export findRegularPolygon, initializeGeometry, cellsInsideBoundingPolygon, resetCells
+export findRegularPolygon,
+    initializeGeometry,
+    cellsInsideBoundingPolygon,
+    resetCells,
+    EsriAsciiRaster,
+    parseEsriAscii,
+    remapRasterToMesh,
+    verticalToNormalThickness
 
 
 # Better than angle summation and almost 60 times faster than angle summation
@@ -147,26 +161,436 @@ end
 # Pressure set to some initial value [general guess]
 # Add initial pressure computation inside solver
 """
+    _updateCellState!(cell, h0_val, u0, rho, W, apply)
+Applies a single release update to `cell`: when `apply` is `true`, raises `h` to at least
+`h0_val` and `vel` to at least `u0` (or zeroes it if `u0` is `nothing`); `pb` is always
+refreshed from the cell's (possibly just-updated) `h`. Shared by both `initializeGeometry`
+methods so the `h`/`vel`/`pb` semantics can't drift between the scalar and per-cell-vector
+forms.
+`INTERNAL`
+"""
+function _updateCellState!(cell, h0_val, u0, rho, W, apply)
+    global g
+    if apply
+        cell.h = max(cell.h, h0_val)
+        if isnothing(u0)
+            cell.vel .= zero(W)
+        else
+            cell.vel .= max.(cell.vel, u0)
+        end
+    end
+    cell.pb = dot(g, cell.normal) * cell.h * rho
+    return nothing
+end
+
+"""
     initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
 Initializes the faces in `cells_inside_polygon` to have a thickness `h0` and velocity `u0`. Pressure is initialized with a value used for flat surfaces.
 """
 function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 = nothing)
-    global threads, stats, g
+    global threads, stats
     if isnothing(h0)
         println("WARNING: h0 = 0. Faces left dry!")
         return
     end
     W = eltype(Cells[1].vel)
     @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
-        if idx in cells_inside_polygon
-            Cells[idx].h = max(Cells[idx].h, h0)
-            if isnothing(u0)
-                Cells[idx].vel .= zero(W)
-            else
-                Cells[idx].vel .= max.(Cells[idx].vel, u0)
-            end
-        end
-        Cells[idx].pb = dot(g, Cells[idx].normal) * Cells[idx].h * rho
+        _updateCellState!(Cells[idx], h0, u0, rho, W, idx in cells_inside_polygon)
     end
     return stats && println("Cells initialized.")
+end
+
+"""
+    initializeGeometry(Cells, rho; h0 = nothing, u0 = nothing)
+Initializes every cell to have a thickness of at least its own entry in the per-cell `h0`
+vector (e.g. from [`remapRasterToMesh`](@ref) + [`verticalToNormalThickness`](@ref)), with `0`
+entries left untouched. `u0`, when given, is applied the same way as the scalar-`h0` method,
+to every cell whose `h0` entry is non-zero. Pressure is initialized with a value used for flat
+surfaces.
+"""
+function initializeGeometry(Cells, rho; h0 = nothing, u0 = nothing)
+    global threads, stats
+    if isnothing(h0)
+        println("WARNING: h0 = 0. Faces left dry!")
+        return
+    end
+    length(h0) == length(Cells) || throw(
+        "h0 vector length $(length(h0)) does not match number of cells $(length(Cells))",
+    )
+    W = eltype(Cells[1].vel)
+    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
+        _updateCellState!(Cells[idx], h0[idx], u0, rho, W, !iszero(h0[idx]))
+    end
+    return stats && println("Cells initialized.")
+end
+
+#=
+Raster-based (ESRI ASCII) release areas.
+
+A release-depth raster gives arbitrary shape and spatially varying depth, which is remapped
+onto the mesh with a conservative area-weighted overlap (see `remapRasterToMesh`, added
+alongside this parser).
+=#
+
+"""
+    struct EsriAsciiRaster{T}
+A parsed ESRI ASCII grid: vertical depth values plus the raster's plan-view extent.
+
+## Fields
+- values::Matrix{T} - `nrows` x `ncols` grid of vertical depths. Row 1 is the northernmost
+  (maximum-y) row, column 1 is the westernmost (minimum-x) column, matching the row-major,
+  first-row-at-`y_max` convention of the ESRI ASCII format.
+- ncols::Int - Number of raster columns
+- nrows::Int - Number of raster rows
+- cellsize::T - Raster cell size (assumed square)
+- xllcorner::T - Real-world x-coordinate of the raster's lower-left corner
+- yllcorner::T - Real-world y-coordinate of the raster's lower-left corner
+"""
+struct EsriAsciiRaster{T}
+    values::Matrix{T}
+    ncols::Int
+    nrows::Int
+    cellsize::T
+    xllcorner::T
+    yllcorner::T
+end
+
+const ESRI_ASCII_HEADER_KEYS = (
+    "ncols",
+    "nrows",
+    "xllcorner",
+    "yllcorner",
+    "xllcenter",
+    "yllcenter",
+    "cellsize",
+    "nodata_value",
+)
+
+"""
+    parseEsriAscii(location)
+Parse an ESRI ASCII grid file at `location` into an [`EsriAsciiRaster`](@ref).
+
+Accepts either the `xllcorner`/`yllcorner` or `xllcenter`/`yllcenter` header convention; in
+both cases the returned raster's `xllcorner`/`yllcorner` refer to the lower-left *corner* of
+the grid. Cells equal to the header's `NODATA_value` are replaced with a vertical depth of
+`0`.
+"""
+function parseEsriAscii(location::String)
+    global FLOAT_TYPE, INT_TYPE
+    lines = open(location, "r") do f
+        readlines(f)
+    end
+
+    header = Dict{String,String}()
+    header_end = 0
+    for (i, line) in enumerate(lines)
+        tokens = split(strip(line))
+        isempty(tokens) && continue
+        key = lowercase(tokens[1])
+        if key in ESRI_ASCII_HEADER_KEYS
+            length(tokens) < 2 && throw("malformed ESRI ASCII header line $i: \"$line\"")
+            header[key] = tokens[2]
+            header_end = i
+        else
+            break
+        end
+    end
+
+    for required in ("ncols", "nrows", "cellsize", "nodata_value")
+        haskey(header, required) ||
+            throw("ESRI ASCII header missing required field: $required")
+    end
+    has_corner = haskey(header, "xllcorner") && haskey(header, "yllcorner")
+    has_center = haskey(header, "xllcenter") && haskey(header, "yllcenter")
+    (has_corner || has_center) || throw(
+        "ESRI ASCII header must specify either xllcorner/yllcorner or xllcenter/yllcenter",
+    )
+
+    ncols = parse(INT_TYPE[], header["ncols"])
+    nrows = parse(INT_TYPE[], header["nrows"])
+    cellsize = parse(FLOAT_TYPE[], header["cellsize"])
+    nodata = parse(FLOAT_TYPE[], header["nodata_value"])
+
+    xllcorner, yllcorner = if has_corner
+        parse(FLOAT_TYPE[], header["xllcorner"]), parse(FLOAT_TYPE[], header["yllcorner"])
+    else
+        parse(FLOAT_TYPE[], header["xllcenter"]) - cellsize / 2,
+        parse(FLOAT_TYPE[], header["yllcenter"]) - cellsize / 2
+    end
+
+    values = Matrix{FLOAT_TYPE[]}(undef, nrows, ncols)
+    row = 0
+    for line in @view lines[(header_end+1):end]
+        tokens = split(strip(line))
+        isempty(tokens) && continue
+        row += 1
+        row > nrows &&
+            throw("ESRI ASCII grid has more data rows than declared nrows=$nrows")
+        length(tokens) != ncols && throw(
+            "ESRI ASCII grid row $row has $(length(tokens)) values, expected ncols=$ncols",
+        )
+        @inbounds for col = 1:ncols
+            values[row, col] = parse(FLOAT_TYPE[], tokens[col])
+        end
+    end
+    row == nrows || throw("ESRI ASCII grid has $row data rows, expected nrows=$nrows")
+
+    @inbounds for i in eachindex(values)
+        if isapprox(values[i], nodata, atol = 1e-9 * max(abs(nodata), 1.0))
+            values[i] = zero(FLOAT_TYPE[])
+        end
+    end
+
+    return EsriAsciiRaster{FLOAT_TYPE[]}(
+        values,
+        ncols,
+        nrows,
+        cellsize,
+        xllcorner,
+        yllcorner,
+    )
+end
+
+"""
+    rasterCellBounds(raster, row, col)
+Returns `(xmin, xmax, ymin, ymax)`, the plan-view axis-aligned bounding square of raster cell
+`(row, col)` (1-indexed; `row = 1` is the northernmost/maximum-y row, `col = 1` the
+westernmost/minimum-x column).
+`INTERNAL`
+"""
+function rasterCellBounds(raster::EsriAsciiRaster, row::Integer, col::Integer)
+    xmin = raster.xllcorner + raster.cellsize * (col - 1)
+    xmax = xmin + raster.cellsize
+    ymax = raster.yllcorner + raster.cellsize * (raster.nrows - row + 1)
+    ymin = ymax - raster.cellsize
+    return xmin, xmax, ymin, ymax
+end
+
+"""
+    rasterIndexWindow(raster, xmin, xmax, ymin, ymax)
+Returns the inclusive raster `(row_min, row_max, col_min, col_max)` index range covering
+every raster cell that could possibly overlap the plan-view box `[xmin, xmax] x [ymin, ymax]`,
+clamped to the raster's extent. Empty (`row_min > row_max` or `col_min > col_max`) if the box
+does not intersect the raster at all.
+`INTERNAL`
+"""
+function rasterIndexWindow(raster::EsriAsciiRaster, xmin, xmax, ymin, ymax)
+    cs = raster.cellsize
+    x0, y0 = raster.xllcorner, raster.yllcorner
+    x1 = x0 + cs * raster.ncols
+    y1 = y0 + cs * raster.nrows
+    if xmax <= x0 || xmin >= x1 || ymax <= y0 || ymin >= y1
+        return 1, 0, 1, 0
+    end
+    tol = 1.0e-9 * cs
+    col_min = clamp(floor(Int, (xmin - x0 + tol) / cs) + 1, 1, raster.ncols)
+    col_max = clamp(ceil(Int, (xmax - x0 - tol) / cs), 1, raster.ncols)
+    row_min = clamp(floor(Int, (y1 - ymax + tol) / cs) + 1, 1, raster.nrows)
+    row_max = clamp(ceil(Int, (y1 - ymin - tol) / cs), 1, raster.nrows)
+    return row_min, row_max, col_min, col_max
+end
+
+#=
+Plan-view geometry utilities.
+
+Computing overlap areas between a mesh cell's plan-view (x-y projected) footprint and a raster
+cell's axis-aligned footprint requires projecting off z, a polygon-area formula, and a polygon
+clip. `Cell.area` (precomputations.jl) is the true 3D sloped surface area, not a plan-view
+area, so it must not be used for this: on tilted terrain it is systematically larger than the
+plan-view footprint, which would under-report the raster-derived depth exactly where release
+areas tend to sit.
+=#
+
+"""
+    planViewPolygon(vertices)
+Projects a mesh cell's 3D `vertices` (as stored on [`Cell`](@ref)) onto the x-y plane by
+dropping z, returning the ordered list of 2D plan-view vertices.
+`INTERNAL`
+"""
+function planViewPolygon(vertices)
+    return [[v[1], v[2]] for v in vertices]
+end
+
+"""
+    polygonArea(polygon)
+Returns the area of a simple (non-self-intersecting) 2D polygon given as an ordered list of
+vertices, via the shoelace formula. Orientation-independent (always non-negative). Returns `0`
+for a degenerate polygon (fewer than 3 vertices).
+`INTERNAL`
+"""
+function polygonArea(polygon)
+    n = length(polygon)
+    T = eltype(eltype(polygon))
+    n < 3 && return zero(T)
+    total = zero(T)
+    @inbounds for i = 1:n
+        j = i % n + 1
+        total += polygon[i][1] * polygon[j][2] - polygon[j][1] * polygon[i][2]
+    end
+    return abs(total) / 2
+end
+
+"""
+    clipPolygonHalfPlane(polygon, inside, intersect)
+Sutherland-Hodgman clip of `polygon` (ordered list of 2D vertices) against a single half-plane,
+where `inside(p)` tests whether vertex `p` satisfies the half-plane constraint and
+`intersect(a, b)` returns the point where edge `a -> b` crosses the half-plane's boundary line
+(only called on edges where `inside(a) != inside(b)`). Boundary points count as inside.
+`INTERNAL`
+"""
+function clipPolygonHalfPlane(polygon, inside, intersect)
+    n = length(polygon)
+    n == 0 && return polygon
+    output = Vector{eltype(polygon)}()
+    @inbounds for i = 1:n
+        cur = polygon[i]
+        prev = polygon[i==1 ? n : i-1]
+        cur_in = inside(cur)
+        prev_in = inside(prev)
+        if cur_in
+            prev_in || push!(output, intersect(prev, cur))
+            push!(output, cur)
+        elseif prev_in
+            push!(output, intersect(prev, cur))
+        end
+    end
+    return output
+end
+
+"""
+    clipPolygonToBox(polygon, xmin, xmax, ymin, ymax)
+Clips a simple 2D polygon (ordered list of vertices) against an axis-aligned box using the
+Sutherland-Hodgman algorithm (four successive half-plane clips). Returns the (possibly empty)
+list of vertices of the clipped polygon.
+`INTERNAL`
+"""
+function clipPolygonToBox(polygon, xmin, xmax, ymin, ymax)
+    clipped = clipPolygonHalfPlane(
+        polygon,
+        p -> p[1] >= xmin,
+        (a, b) -> [xmin, a[2]+(xmin-a[1])/(b[1]-a[1])*(b[2]-a[2])],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[1] <= xmax,
+        (a, b) -> [xmax, a[2]+(xmax-a[1])/(b[1]-a[1])*(b[2]-a[2])],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[2] >= ymin,
+        (a, b) -> [a[1]+(ymin-a[2])/(b[2]-a[2])*(b[1]-a[1]), ymin],
+    )
+    clipped = clipPolygonHalfPlane(
+        clipped,
+        p -> p[2] <= ymax,
+        (a, b) -> [a[1]+(ymax-a[2])/(b[2]-a[2])*(b[1]-a[1]), ymax],
+    )
+    return clipped
+end
+
+"""
+    rasterCellFullyInside(polygon, xmin, xmax, ymin, ymax)
+Returns `true` iff all 4 corners of the axis-aligned raster cell `[xmin, xmax] x [ymin, ymax]`
+lie inside the plan-view mesh-cell polygon `polygon`. When `true`, the raster cell's full area
+can be used directly without exact polygon clipping (`clipPolygonToBox`).
+
+Uses [`testInside`](@ref), whose ray-casting boundary handling is not symmetric on exact edges
+or vertices: a corner lying exactly on the polygon's boundary may resolve to `false` (never
+falsely to `true` for a point genuinely outside). So this function can conservatively return
+`false` for a raster cell that is, geometrically, fully inside (its corners happen to touch the
+mesh cell's boundary) — that case simply falls through to the clip path, which computes the
+correct area regardless. It never returns `true` for a cell that isn't fully covered.
+`INTERNAL`
+"""
+function rasterCellFullyInside(polygon, xmin, xmax, ymin, ymax)
+    corners = ([xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax])
+    return all(c -> testInside(c, polygon), corners)
+end
+
+"""
+    remapRasterToMesh(raster, Cells)
+Conservatively remaps a release-depth raster onto the mesh. For each mesh cell, sums
+`overlap_area(mesh_cell, raster_cell_k) * h_raster_k` over every raster cell whose plan-view
+footprint intersects the mesh cell's plan-view footprint, then divides by the mesh cell's
+plan-view area to get a vertical depth. Returns a per-cell `Vector` (one entry per index into
+`Cells`) of vertical depths, `0` for mesh cells the raster does not cover.
+
+The division uses the mesh cell's plan-view (x-y projected) area, not `Cell.area` (the 3D
+sloped surface area, which would under-report thickness on tilted terrain). The result is
+still a *vertical* depth; convert it to the slope-normal thickness `Cell.h` represents with
+[`verticalToNormalThickness`](@ref) before using it to initialize state.
+
+```jldoctest
+julia> init(stats = false, threads = false, plots = false);
+
+julia> path = tempname();
+
+julia> write(path, "ncols 2\\nnrows 1\\nxllcorner 0.0\\nyllcorner 0.0\\ncellsize 2.0\\nNODATA_value -9999\\n1.0 3.0\\n");
+
+julia> raster = parseEsriAscii(path);
+
+julia> cell = Cell(
+           idx = 1, center = [2.0, 1.0, 0.0],
+           vertices = [[0.0, 0.0, 0.0], [4.0, 0.0, 0.0], [4.0, 2.0, 0.0], [0.0, 2.0, 0.0]],
+           edge_centers = Vector{Float64}[], edge_lengths = Float64[],
+           normal = [0.0, 0.0, 1.0], area = 8.0, edge_binormals = Vector{Float64}[],
+           transform = Matrix{Float64}[], transform2 = Matrix{Float64}[], neighbours = Int[],
+           h = 0.0, vel = [0.0, 0.0, 0.0], pb = 0.0,
+       );
+
+julia> h0_vertical = remapRasterToMesh(raster, [cell]) # cell spans both raster cells evenly
+1-element Vector{Float64}:
+ 2.0
+
+julia> h0_normal = verticalToNormalThickness(h0_vertical, [cell]); # flat cell: no change
+
+julia> initializeGeometry([cell], 1000.0, h0 = h0_normal, u0 = [0.0, 0.0, 0.0]);
+
+julia> cell.h
+2.0
+```
+"""
+function remapRasterToMesh(raster::EsriAsciiRaster, Cells)
+    T = eltype(Cells[1].center)
+    h0_vertical = zeros(T, length(Cells))
+    @inbounds for j in eachindex(Cells)
+        polygon = planViewPolygon(Cells[j].vertices)
+        xs = [p[1] for p in polygon]
+        ys = [p[2] for p in polygon]
+        xmin, xmax = extrema(xs)
+        ymin, ymax = extrema(ys)
+        row_min, row_max, col_min, col_max =
+            rasterIndexWindow(raster, xmin, xmax, ymin, ymax)
+        volume = zero(T)
+        for row = row_min:row_max, col = col_min:col_max
+            h_k = raster.values[row, col]
+            h_k == 0 && continue
+            rxmin, rxmax, rymin, rymax = rasterCellBounds(raster, row, col)
+            area = if rasterCellFullyInside(polygon, rxmin, rxmax, rymin, rymax)
+                raster.cellsize^2
+            else
+                polygonArea(clipPolygonToBox(polygon, rxmin, rxmax, rymin, rymax))
+            end
+            volume += area * h_k
+        end
+        h0_vertical[j] = volume / polygonArea(polygon)
+    end
+    return h0_vertical
+end
+
+"""
+    verticalToNormalThickness(h0_vertical, Cells)
+Converts a per-cell vertical depth (e.g. from [`remapRasterToMesh`](@ref)) into the
+slope-normal thickness convention `Cell.h` represents, using each mesh cell's surface normal:
+`h0_normal(j) = h0_vertical(j) * cos(θ(j))`, where `θ(j)` is the angle between `Cell[j].normal`
+and vertical.
+
+Uses `abs(Cell.normal[3])` rather than `Cell.normal[3] * ẑ` directly: `Cell.normal` is stored
+negative to align with gravity (see `precomputations.jl`), i.e. pointing down into the terrain
+rather than up away from it, so its raw z-component is negative for ordinary upward-facing
+terrain. A physical thickness can't be negative, and only the magnitude of the tilt (not which
+of the two opposite normal directions happens to be stored) is meaningful here.
+"""
+function verticalToNormalThickness(h0_vertical, Cells)
+    return [h0_vertical[j] * abs(Cells[j].normal[3]) for j in eachindex(Cells)]
 end
