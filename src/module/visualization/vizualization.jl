@@ -7,7 +7,7 @@ Last Updated On: 12th January, 2025 11:35 UTC+5:30
 
 using WriteVTK
 
-export writeToVTK, writeFileToVTK, initWriter, saveSolution, plotmesh
+export writeToVTK, writeFileToVTK, initWriter, saveSolution, plotmesh, animatemesh
 
 """
     plotmesh(points, faces; axis = NamedTuple())
@@ -34,6 +34,51 @@ Requires a Makie backend to be loaded (e.g. `using GLMakie`, `using WGLMakie`, o
 is not available otherwise.
 """
 function plotmesh end
+
+"""
+    animatemesh(Cells::Vector{Cell}, time_steps, sol;
+        field = :h, dry_threshold = 0.0, filename = nothing, framerate = 24,
+        axis = NamedTuple(), colorbar = true, decorations = false)
+Animate a per-cell scalar field over the solver's saved timesteps, reusing the same mesh
+geometry and camera defaults as [`plotmesh`](@ref).
+
+`Cells` and `time_steps`, `sol` are exactly what [`preprocess`](@ref)/[`solve`](@ref) return.
+`field` selects what is colored on each frame, resolved against `sol`'s DOF layout (thickness at
+`sol[k][5*i-4]`, velocity at `sol[k][5*i-3:5*i-1]`, pressure at `sol[k][5*i]`) rather than
+`Cells`' own (non-time-varying) stored fields:
+- a `Symbol`: `:h`, `:pb`, `:U`, `:V`, `:W`, or `:speed` (default `:h`);
+- a `Function` called as `field(sol_k, i)` for a timestep's DOF vector `sol_k` and cell index
+  `i`, for per-cell derived scalars with no cross-cell dependency (e.g. kinetic energy);
+- a `Vector{<:AbstractVector}`, one pre-resolved scalar vector per saved timestep (each matching
+  `Cells` in length), for fields the caller computes once per frame over the whole array (e.g. a
+  neighbor-smoothed field or a spatial gradient).
+
+The color scale is fixed across every frame, computed once from the field's global minimum and
+maximum over all saved timesteps, so that a shrinking or thinning flow reads as an actual change
+in magnitude rather than a rescaled color range. A `Colorbar` legend for this fixed range is shown
+beside the plot by default (`colorbar = true`).
+
+Any cell whose thickness `h` is at or below `dry_threshold` (default `0.0`; pass the solver's own
+`h_min` for a mask consistent with what the solver treats as dry) is rendered in a fixed neutral
+color instead of the colormap, regardless of what `field` displays for that cell — this keeps the
+flow's visible footprint anchored to `h` even when animating a different field.
+
+Axis3 decorations (ticks, grid lines, bounding box) are hidden by default (`decorations = false`),
+keeping the mesh as a true 3D surface without the chrome competing with the moving colored
+surface. Pass `axis` to override the initial camera angle, as in [`plotmesh`](@ref).
+
+Pass `filename` (extension determines format: `.mp4`, `.gif`, `.webm`) to write the animation
+directly to a file via `Makie.record`. Leave `filename` as `nothing` (the default) to instead play
+the animation live in an interactive window at `framerate` frames per second — only available
+under a backend that provides one (GLMakie's native window or WGLMakie's browser canvas); standard
+`Axis3` rotate/zoom interaction remains available while playback is in progress. Requesting live
+playback under a file-only backend such as CairoMakie raises an error.
+
+Requires a Makie backend to be loaded (e.g. `using GLMakie`, `using WGLMakie`, or
+`using CairoMakie`). The implementation lives in the `GlissADeMakieExt` package extension and
+is not available otherwise.
+"""
+function animatemesh end
 
 """
     writeToVTK(location::String, sol, points, faces)

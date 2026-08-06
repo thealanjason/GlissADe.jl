@@ -172,4 +172,180 @@ function GlissADe.plotmesh(
            Meshes.viz(mesh; color = color, axis = resolved_axis)
 end
 
+const _DRY_COLOR = Makie.RGBAf(0.55, 0.55, 0.55, 1.0)
+
+"""
+    _animdofselector(field::Symbol)
+Map a `field` symbol to a `(sol_k, i) -> scalar` selector against `sol[k]`'s flat DOF layout
+(thickness at `5i-4`, velocity at `5i-3:5i-1`, pressure at `5i`), mirroring
+`writeFileToVTK`'s indexing. `GlissADe.value` unwraps `ForwardDiff.Dual`, matching
+`writeFileToVTK`'s own handling of a possibly-differentiated `sol`.
+"""
+function _animdofselector(field::Symbol)
+    return if field === :h
+        (sol_k, i) -> GlissADe.value(sol_k[5i-4])
+    elseif field === :pb
+        (sol_k, i) -> GlissADe.value(sol_k[5i])
+    elseif field === :U
+        (sol_k, i) -> GlissADe.value(sol_k[5i-3])
+    elseif field === :V
+        (sol_k, i) -> GlissADe.value(sol_k[5i-2])
+    elseif field === :W
+        (sol_k, i) -> GlissADe.value(sol_k[5i-1])
+    elseif field === :speed
+        (sol_k, i) -> GlissADe._mag(GlissADe.value.(sol_k[5i-3:5i-1]))
+    else
+        throw(
+            ArgumentError(
+                "unknown field :$field; expected one of :h, :pb, :U, :V, :W, :speed, a Function, or a Vector",
+            ),
+        )
+    end
+end
+
+"""
+    _animframevalues(cells, sol, field)
+Resolve `field` into one scalar `Vector` per saved timestep in `sol`. `field` may be a `Symbol`
+(the same vocabulary as [`plotmesh`](@ref)), a `Function` called as `field(sol_k, i)`, or a
+`Vector{<:AbstractVector}` of caller-precomputed per-timestep values (one entry per saved
+timestep, each matching `cells` in length).
+"""
+function _animframevalues(cells::AbstractVector{<:Cell}, sol, field::Symbol)
+    selector = _animdofselector(field)
+    n = length(cells)
+    return [[selector(sol_k, i) for i = 1:n] for sol_k in sol]
+end
+
+function _animframevalues(cells::AbstractVector{<:Cell}, sol, field::Function)
+    n = length(cells)
+    return [[field(sol_k, i) for i = 1:n] for sol_k in sol]
+end
+
+function _animframevalues(
+    cells::AbstractVector{<:Cell},
+    sol,
+    field::AbstractVector{<:AbstractVector},
+)
+    n = length(cells)
+    if length(field) != length(sol)
+        throw(
+            ArgumentError(
+                "field has $(length(field)) frames, but sol has $(length(sol)) saved timesteps",
+            ),
+        )
+    end
+    for (k, frame) in enumerate(field)
+        if length(frame) != n
+            throw(
+                ArgumentError(
+                    "field[$k] has length $(length(frame)), expected $n (number of cells)",
+                ),
+            )
+        end
+    end
+    return [collect(frame) for frame in field]
+end
+
+"""
+    _framecolors(values, dry_mask, vmin, vmax, colormap)
+Map `values` through `colormap` over the fixed `(vmin, vmax)` range, then override every
+`dry_mask[i] == true` entry with the fixed neutral dry color, independent of what `values[i]`
+is.
+"""
+function _framecolors(values, dry_mask, vmin, vmax, colormap)
+    cg = Makie.cgrad(colormap)
+    span = vmax - vmin
+    colors = if span == 0
+        [cg[0.5] for _ in values]
+    else
+        [cg[clamp((v - vmin) / span, 0.0, 1.0)] for v in values]
+    end
+    @inbounds for i in eachindex(colors)
+        if dry_mask[i]
+            colors[i] = _DRY_COLOR
+        end
+    end
+    return colors
+end
+
+"""
+    _supports_live_display()
+Whether the active Makie backend provides an interactive window/canvas (GLMakie, WGLMakie), as
+opposed to a static/file-only backend (CairoMakie).
+"""
+function _supports_live_display()
+    return nameof(Makie.current_backend()) in (:GLMakie, :WGLMakie)
+end
+
+function GlissADe.animatemesh(
+    cells::AbstractVector{<:Cell},
+    time_steps,
+    sol;
+    field = :h,
+    dry_threshold = 0.0,
+    filename = nothing,
+    framerate = 24,
+    axis = NamedTuple(),
+    colorbar = true,
+    decorations = false,
+    colormap = :viridis,
+)
+    n = length(cells)
+    if isempty(sol) || length(sol[1]) != 5 * n
+        throw(
+            ArgumentError(
+                "Cells has $n cells, but sol's DOF layout does not match (expected length(sol[k]) == $(5n))",
+            ),
+        )
+    end
+
+    h_per_frame = _animframevalues(cells, sol, :h)
+    values_per_frame = field === :h ? h_per_frame : _animframevalues(cells, sol, field)
+    dry_masks = [[h <= dry_threshold for h in frame] for frame in h_per_frame]
+
+    vmin, vmax = extrema(Iterators.flatten(values_per_frame))
+
+    mesh = _to_simplemesh(cells)
+    resolved_axis = merge(_default_axis(_average_normal(cells)), axis)
+
+    colors = Makie.Observable(_framecolors(values_per_frame[1], dry_masks[1], vmin, vmax, colormap))
+    result = Meshes.viz(mesh; color = colors, axis = resolved_axis)
+    fig, ax = result.figure, result.axis
+
+    if !decorations
+        Makie.hidedecorations!(ax)
+        Makie.hidespines!(ax)
+    end
+    if colorbar
+        label = field isa Symbol ? String(field) : "field"
+        Makie.Colorbar(fig[1, 2]; colormap = colormap, colorrange = (vmin, vmax), label = label)
+    end
+
+    update_frame! =
+        k -> (colors[] = _framecolors(values_per_frame[k], dry_masks[k], vmin, vmax, colormap))
+
+    if filename !== nothing
+        Makie.record(fig, filename, eachindex(sol); framerate = framerate) do k
+            update_frame!(k)
+        end
+        return filename
+    end
+
+    if !_supports_live_display()
+        throw(
+            ArgumentError(
+                "live playback requires an interactive Makie backend (GLMakie or WGLMakie); " *
+                "the active backend ($(nameof(Makie.current_backend()))) is file-only. " *
+                "Pass `filename` to save an animation to a file instead.",
+            ),
+        )
+    end
+    Makie.display(fig)
+    for k in eachindex(sol)
+        update_frame!(k)
+        sleep(1 / framerate)
+    end
+    return fig
+end
+
 end # module GlissADeMakieExt
