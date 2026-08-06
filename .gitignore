@@ -19,6 +19,9 @@ env
 node_modules
 solution
 examples/**/*.png
+examples/**/*.mp4
+examples/**/*.gif
+examples/**/*.webm
 stored
 _docs/progress/progress.qmd
 *:Zone.Identifier
