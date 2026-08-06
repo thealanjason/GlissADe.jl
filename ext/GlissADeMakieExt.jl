@@ -193,7 +193,7 @@ function _animdofselector(field::Symbol)
     elseif field === :W
         (sol_k, i) -> GlissADe.value(sol_k[5i-1])
     elseif field === :speed
-        (sol_k, i) -> GlissADe._mag(GlissADe.value.(sol_k[5i-3:5i-1]))
+        (sol_k, i) -> GlissADe._mag(GlissADe.value.(sol_k[(5i-3):(5i-1)]))
     else
         throw(
             ArgumentError(
@@ -269,6 +269,12 @@ function _framecolors(values, dry_mask, vmin, vmax, colormap)
 end
 
 """
+    _drymask(h_frame, dry_threshold)
+Per-cell dry/wet mask for one frame's thickness values, `true` where `h <= dry_threshold`.
+"""
+_drymask(h_frame, dry_threshold) = [h <= dry_threshold for h in h_frame]
+
+"""
     _supports_live_display()
 Whether the active Makie backend provides an interactive window/canvas (GLMakie, WGLMakie), as
 opposed to a static/file-only backend (CairoMakie).
@@ -301,14 +307,16 @@ function GlissADe.animatemesh(
 
     h_per_frame = _animframevalues(cells, sol, :h)
     values_per_frame = field === :h ? h_per_frame : _animframevalues(cells, sol, field)
-    dry_masks = [[h <= dry_threshold for h in frame] for frame in h_per_frame]
+    dry_masks = [_drymask(frame, dry_threshold) for frame in h_per_frame]
 
     vmin, vmax = extrema(Iterators.flatten(values_per_frame))
 
     mesh = _to_simplemesh(cells)
     resolved_axis = merge(_default_axis(_average_normal(cells)), axis)
 
-    colors = Makie.Observable(_framecolors(values_per_frame[1], dry_masks[1], vmin, vmax, colormap))
+    colors = Makie.Observable(
+        _framecolors(values_per_frame[1], dry_masks[1], vmin, vmax, colormap),
+    )
     result = Meshes.viz(mesh; color = colors, axis = resolved_axis)
     fig, ax = result.figure, result.axis
 
@@ -318,11 +326,19 @@ function GlissADe.animatemesh(
     end
     if colorbar
         label = field isa Symbol ? String(field) : "field"
-        Makie.Colorbar(fig[1, 2]; colormap = colormap, colorrange = (vmin, vmax), label = label)
+        Makie.Colorbar(
+            fig[1, 2];
+            colormap = colormap,
+            colorrange = (vmin, vmax),
+            label = label,
+        )
     end
 
     update_frame! =
-        k -> (colors[] = _framecolors(values_per_frame[k], dry_masks[k], vmin, vmax, colormap))
+        k -> (
+            colors[] =
+                _framecolors(values_per_frame[k], dry_masks[k], vmin, vmax, colormap)
+        )
 
     if filename !== nothing
         Makie.record(fig, filename, eachindex(sol); framerate = framerate) do k

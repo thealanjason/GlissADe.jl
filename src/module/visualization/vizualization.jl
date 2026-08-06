@@ -60,7 +60,7 @@ beside the plot by default (`colorbar = true`).
 
 Any cell whose thickness `h` is at or below `dry_threshold` (default `0.0`; pass the solver's own
 `h_min` for a mask consistent with what the solver treats as dry) is rendered in a fixed neutral
-color instead of the colormap, regardless of what `field` displays for that cell — this keeps the
+color instead of the colormap, regardless of what `field` displays for that cell, keeping the
 flow's visible footprint anchored to `h` even when animating a different field.
 
 Axis3 decorations (ticks, grid lines, bounding box) are hidden by default (`decorations = false`),
@@ -69,7 +69,7 @@ surface. Pass `axis` to override the initial camera angle, as in [`plotmesh`](@r
 
 Pass `filename` (extension determines format: `.mp4`, `.gif`, `.webm`) to write the animation
 directly to a file via `Makie.record`. Leave `filename` as `nothing` (the default) to instead play
-the animation live in an interactive window at `framerate` frames per second — only available
+the animation live in an interactive window at `framerate` frames per second, only available
 under a backend that provides one (GLMakie's native window or WGLMakie's browser canvas); standard
 `Axis3` rotate/zoom interaction remains available while playback is in progress. Requesting live
 playback under a file-only backend such as CairoMakie raises an error.
