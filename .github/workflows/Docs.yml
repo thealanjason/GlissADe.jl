@@ -28,6 +28,8 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    env:
+      JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
@@ -51,7 +53,6 @@ jobs:
       - name: Generate and deploy documentation
         run: julia --project=docs docs/make.jl
         env:
-          JULIA_PKG_SERVER: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
           GKSwstype: "100" # https://discourse.julialang.org/t/generation-of-documentation-fails-qt-qpa-xcb-could-not-connect-to-display/60988

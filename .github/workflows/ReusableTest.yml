@@ -32,6 +32,8 @@ jobs:
     name: Julia ${{ inputs.version }} - ${{ inputs.os }} - ${{ inputs.arch }} - ${{ github.event_name }}
     runs-on: ${{ inputs.os }}
     continue-on-error: ${{ inputs.allow_failure }}
+    env:
+      JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
 
     steps:
       - uses: actions/checkout@v7

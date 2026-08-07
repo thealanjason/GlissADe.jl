@@ -18,6 +18,8 @@ jobs:
   lint:
     name: Linting
     runs-on: ubuntu-latest
+    env:
+      JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
     steps:
       - name: Clone
         uses: actions/checkout@v7

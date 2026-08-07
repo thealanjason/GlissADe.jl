@@ -9,6 +9,7 @@ exclude = [
   "^https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff$",
   "^https://github.com/thealanjason/GlissADe.jl/compare/v.*\\.\\.\\.HEAD$",
   "^https://blog.esciencecenter.nl", # due to a certificate error (cf. #556)
+  "^https://pipx.pypa.io", # frequently rate-limits lychee's CI requests with 429s
   "zenodo.org/badge/DOI/FIXME$"
 ]
 
