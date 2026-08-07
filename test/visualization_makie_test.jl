@@ -86,6 +86,23 @@ end
         @test ext._animframevalues(Cells2, sol2, precomputed) == precomputed
     end
 
+    @testset "field resolver: remaining Symbol selectors" begin
+        for field in (:pb, :V, :W, :speed)
+            frames = ext._animframevalues(Cells2, sol2, field)
+            @test frames isa Vector{Vector{Float64}}
+            @test length(frames) == length(sol2)
+        end
+    end
+
+    @testset "unknown field symbol throws" begin
+        @test_throws ArgumentError ext._animframevalues(Cells2, sol2, :not_a_field)
+    end
+
+    @testset "field as Vector: frame count / length mismatches throw" begin
+        @test_throws ArgumentError ext._animframevalues(Cells2, sol2, [[1.0, 2.0]])
+        @test_throws ArgumentError ext._animframevalues(Cells2, sol2, [[1.0], [2.0]])
+    end
+
     @testset "Cells/sol length mismatch throws" begin
         @test_throws ArgumentError animatemesh(Cells2, [0.0], [zeros(7)])
     end
@@ -102,6 +119,12 @@ end
         ]
         @test colors[1][2] == colors[2][2] == colors[3][2]
         @test colors[1][1] != colors[3][1]
+    end
+
+    @testset "zero-span value range falls back to the midpoint color" begin
+        colors = ext._framecolors([1.0, 1.0], fill(false, 2), 1.0, 1.0, :viridis)
+        mid = Makie.cgrad(:viridis)[0.5]
+        @test colors[1] == colors[2] == mid
     end
 
     @testset "dry-cell masking independent of displayed field" begin
