@@ -6,6 +6,7 @@
 [![Coverage](https://codecov.io/gh/thealanjason/GlissADe.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/thealanjason/GlissADe.jl)
 [![Lint workflow Status](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Lint.yml/badge.svg?branch=main)](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Lint.yml?query=branch%3Amain)
 [![Docs workflow Status](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Docs.yml/badge.svg?branch=main)](https://github.com/thealanjason/GlissADe.jl/actions/workflows/Docs.yml?query=branch%3Amain)
+[![JuliaCon26 Presentation](https://img.shields.io/badge/JuliaCon26-Presentation-9558B2)](https://thealanjason.github.io/GlissADe.jl/presentation/)
 [![DOI](https://zenodo.org/badge/DOI/FIXME)](https://doi.org/FIXME)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![All Contributors](https://img.shields.io/github/all-contributors/thealanjason/GlissADe.jl?labelColor=5e1ec7&color=c0ffee&style=flat-square)](#contributors)

@@ -1,6 +1,6 @@
 project:
   title: "Example Presentation"
-  output-dir: ./../../_output-presentation
+  output-dir: ./../_output-presentation
 
 
 
