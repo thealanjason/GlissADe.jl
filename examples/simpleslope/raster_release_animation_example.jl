@@ -6,16 +6,24 @@ using CairoMakie # any Makie backend works; CairoMakie renders headlessly to a f
 
 ## What does this code do? ##
 # Initializes a release area from a synthetic depth raster (see raster_release_example.jl for the
-# same workflow on a single static frame), runs a solve long enough for the mass to visibly slide
-# downslope, and animates the thickness field evolving over the saved timesteps to a video file.
+# same workflow on a single static frame), runs the full 30s simulation (matching simpleslope.jl's
+# own full run), and animates the thickness field evolving over the saved timesteps to a video
+# file.
 #
 # Uses release_depth_narrow.asc rather than release_depth.asc (the wide, whole-mesh-covering
 # raster the static example uses): that wide raster wets ~92% of the mesh (8816/9600 cells), so
-# every SIMPLE iteration solves a implicit system nearly as large as the full mesh, and a horizon
-# long enough to see real downslope motion (t of order 10-30s) does not finish in demo time.
-# release_depth_narrow.asc is a tighter Gaussian (sigma=0.55m vs 3.5m) wetting ~412 cells,
-# comparable to the small polygon release solver_test.jl solves quickly, cheap enough to run out
-# to several seconds of simulated time. See docs/src/20-how-to/animating-mass-flow.md.
+# every SIMPLE iteration solves an implicit system nearly as large as the full mesh, and a horizon
+# long enough to see real downslope motion does not finish in demo time. release_depth_narrow.asc
+# is a tighter Gaussian (sigma=0.55m vs 3.5m) wetting ~412 cells, comparable to the small polygon
+# release simpleslope.jl itself uses, and the solver settings below (Cₘ, MAX_ITERS, MIN_ITERS,
+# p_MAX_RESIDUAL) match simpleslope.jl's own proven 30s configuration rather than the smaller,
+# faster settings solver_test.jl uses for its short (<1s) sanity checks. See
+# docs/src/20-how-to/animating-mass-flow.md.
+#
+# Expect this to take on the order of 3 hours single-threaded on a modern laptop: solving out to
+# t=30s at this resolution is genuinely expensive, not a bug. Not something to run casually; if
+# you just want to see animatemesh work, reduce the tspan passed to solve() below (e.g. a few
+# seconds) for a fast sanity check instead.
 
 init(threads = false, stats = false, plots = false)
 
@@ -38,11 +46,11 @@ solution = Solution(
     alpha_p = 0.5,
     alpha_u = 0.5,
     alpha_h = 0.5,
-    p_MAX_RESIDUAL = 1e-4,
+    p_MAX_RESIDUAL = 1e-5,
     h_MAX_RESIDUAL = 5e-1,
     u_MAX_RESIDUAL = 5e-1,
-    MAX_ITERS = 60,
-    MIN_ITERS = 50,
+    MAX_ITERS = 250,
+    MIN_ITERS = 200,
     h_clip = 0.0,
     h_min = 1e-3,
     Cells = Cells,
@@ -51,7 +59,7 @@ solution = Solution(
     faces = faces,
 )
 solver = Solver(solution)
-time_steps, sol = solve(solver, (0.0, 3.0), saveat = 0.25, Cₘ = 0.9)
+time_steps, sol = solve(solver, (0.0, 30.0), saveat = 0.2, Cₘ = 4.5, rtol = 1e-4)
 
 animatemesh(
     Cells,
@@ -59,5 +67,5 @@ animatemesh(
     sol;
     field = :h,
     filename = "./examples/simpleslope/raster_release_animation_h.mp4",
-    framerate = 4,
+    framerate = 15,
 )
