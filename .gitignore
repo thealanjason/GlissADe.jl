@@ -22,6 +22,8 @@ examples/**/*.png
 examples/**/*.mp4
 examples/**/*.gif
 examples/**/*.webm
+presentation/images/*.avi
+presentation/images/*.mp4
 stored
 _docs/progress/progress.qmd
 *:Zone.Identifier
