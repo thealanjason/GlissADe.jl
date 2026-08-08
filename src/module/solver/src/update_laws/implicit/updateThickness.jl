@@ -43,12 +43,11 @@ function updateThickness!(
 
     # ## ASSEMBLY ##
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids, params_upwind, params_central, vars_vec, vec_e, vel_i, vel_n = cache
         if (checkDry(solver, ids, i)) # Skip if a cell and all its neighbours are dry. Force them to be dry, i.e. h = 0
             Ah[i, i] = one(W)
             Bh[i] = zero(W)
-            put!(caches, cache)
             continue
         end
         area = Cells[i].area
@@ -91,7 +90,6 @@ function updateThickness!(
                 Ah[i, n] += flux_edge * Lₑ * params_upwind[2]
             end
         end
-        put!(caches, cache)
     end
     ## Diagonal Scaling the Matrix ##                               ## Is that what the diagonal preconditioning will do? ##
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)

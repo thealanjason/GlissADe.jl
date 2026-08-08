@@ -22,7 +22,7 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
     updatePressure!(solver, p, p, vel, h, caches)
 
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids,
         params_central,
         params_upwind,
@@ -40,7 +40,6 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
             du_dt[3*i-2] = zero(W)
             du_dt[3*i-1] = zero(W)
             du_dt[3*i] = zero(W)
-            put!(caches, cache)
             continue
         end
 
@@ -160,8 +159,6 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
         du_dt[3*i-2] = (F_adv1 + F_press1 + F_grav1 + F_basal1) * h_i_inv * area_inv
         du_dt[3*i-1] = (F_adv2 + F_press2 + F_grav2 + F_basal2) * h_i_inv * area_inv
         du_dt[3*i] = (F_adv3 + F_press3 + F_grav3 + F_basal3) * h_i_inv * area_inv
-
-        put!(caches, cache)
     end
 
     return nothing
