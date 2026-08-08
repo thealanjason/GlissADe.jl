@@ -1,30 +1,27 @@
-import FASolverAvalanche as FAS
+using GlissADe
 import ForwardDiff
 import LinearAlgebra
 
 ## HOW TO RUN THIS FILE? ##
-# Ensure that you're in the root folder "<something>/internship-tj
-# Run from terminal: "julia --project -t <num_threads> ./examples/wolfsgrube_mountain/wolfsgrube_mountain_diff.jl
-# Or Run from REPL as usual. If file not found error occurs, check if the file paths are correct.
+# From the project root: julia --project examples/wolfsgrube_mountain/wolfsgrube_mountain_diff.jl
 
 ## What does this file do? ##
 # This will showcase the library's forward mode automatic differentiation capabilities and
 # compare it with finite difference approximations for measuring sensitivity with initial conditions.
 
 function testDifferentiability(x)
-    process = FAS.Process(threads = true, stats = true, plots = false, INT_TYPE = Int64)
-    FAS.init(process)
-    points, faces = FAS.parsemesh(
+    init(threads = true, stats = false, plots = false, int_type = Int64)
+    points, faces = parsemesh(
         "./examples/wolfsgrube_mountain/wolfsgrube_mountain/points",
         "./examples/wolfsgrube_mountain/wolfsgrube_mountain/faces",
         "./examples/wolfsgrube_mountain/wolfsgrube_mountain/faceLabels",
     )
-    Cells = FAS.preprocess(points, faces, eltype(x), comp_neighbours = false)
-    FAS.meshbounds(Cells)
-    polygon = FAS.findRegularPolygon([1300.0, 1500.0, 0.0, 500.0], npoints = 6)
-    cells_inside = FAS.cellsInsideBoundingPolygon(polygon, Cells)
-    FAS.initializeGeometry(cells_inside, Cells, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
-    solution = FAS.Solution(
+    Cells = preprocess(points, faces, eltype(x), comp_neighbours = false)
+    meshbounds(Cells)
+    polygon = findRegularPolygon([1300.0, 1500.0, 0.0, 500.0], npoints = 6)
+    cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
+    initializeGeometry(cells_inside, Cells, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
+    solution = Solution(
         alpha = 0.5,
         zeta = 1.0,
         rho = 1500.0,
@@ -43,9 +40,9 @@ function testDifferentiability(x)
         points = points,
         faces = faces,
     )
-    solver = FAS.Solver(solution)
-    time_steps, sol = FAS.solve(solver, (0.0, 750.0), saveat = 0.2, Cₘ = 0.13)
-    FAS.resetCells(Cells)
+    solver = Solver(solution)
+    time_steps, sol = solve(solver, (0.0, 750.0), saveat = 0.2, Cₘ = 0.13)
+    resetCells(Cells)
     h = [sol[end][5*i-4] for i in eachindex(Cells)]
     return LinearAlgebra.norm2(h)/sqrt(length(h))
 end

@@ -467,9 +467,10 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
                     value(resi) / (sqrt(length(Cells)) * (value(factor) + 1.0e-6))
                 )
             stats && println("Pressure Constraint Residual: ", resi_scaled)
-            println("Average Pressure: ", value(norm2(p)) / value(sqrt(length(p))))
-            println("Average Thickness: ", value(norm2(h)) / value(sqrt(length(h))))
-            println("Max Velocity: ", value(maximum(vel)))
+            stats && println("Average Pressure: ", value(norm2(p)) / value(sqrt(length(p))))
+            stats &&
+                println("Average Thickness: ", value(norm2(h)) / value(sqrt(length(h))))
+            stats && println("Max Velocity: ", value(maximum(vel)))
 
             ## Exit Conditions
             final = (
@@ -503,7 +504,7 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         if (t >= tspan[2])
             updateSol!(sol, iter, Cells)
         end
-        println("solver time: ", t)
+        stats && println("solver time: ", t)
         # sleep(0.1) # RELAXATION?
         if (saveat != zero(FLOAT_TYPE[]) && t >= nextTimeStep)
             iter_sa += one(INT_TYPE[])
@@ -533,7 +534,7 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         PyPlot.close()
         PyPlot.close()
     end
-    println("SIMULATION COMPLETE!")
+    stats && println("SIMULATION COMPLETE!")
     if (saveat != zero(FLOAT_TYPE[]))
         return saveAt(time_steps, sol, tspan, saveat)
     else
