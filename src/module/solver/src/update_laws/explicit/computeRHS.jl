@@ -130,9 +130,8 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
             # Continuity flux: h_edge * flux_edge * L_e
             flux_sum_h += flux_edge * hₑ * Lₑ
 
-            # Momentum advection flux (using upwind velocity)
-            upwindInterpolate!(Cells, i, j, cache, flux_edge, scalar = false)
-            vel_adv = vec_e[1]
+            # Momentum advection flux (using global upwind velocity)
+            vel_adv = (flux_edge >= zero(W)) ? vel_i : vel_n
             adv_contrib1 =
                 Iₛ[1, 1] * vel_adv[1] + Iₛ[1, 2] * vel_adv[2] + Iₛ[1, 3] * vel_adv[3]
             adv_contrib2 =
