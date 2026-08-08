@@ -43,4 +43,34 @@ time_steps, sol = solve(solver, (0.0, 30.0), saveat = 0.2, Cₘ = 0.9)
 
 `saveat` sets the uniform interval at which the (adaptively time-stepped) solution is saved, and `Cₘ` caps the Courant number used to control step sizes.
 
+## Selecting explicit time integration
+
+By default, GlissADe uses an implicit coupled solver (`implicit = true`). To use explicit time integration instead, pass `implicit = false` to [`init`](@ref) along with your choice of `explicit_method`:
+
+```julia
+init(threads = true, stats = true, implicit = false, explicit_method = :rk4)
+```
+
+Available explicit methods include:
+- `:rk4` — Classical 4th-order Runge-Kutta (default). Recommended for general high-fidelity solves.
+- `:rk45` — Adaptive 5(4) Dormand-Prince method with local error control.
+- `:ssprk3` — 3rd-order Strong Stability Preserving Runge-Kutta. Great for flows with sharp fronts.
+- `:rk2` — 2nd-order Runge-Kutta / Heun's method.
+- `:euler` — 1st-order Forward Euler method.
+
+You can also specify `explicit_method` when constructing a [`Solution`](@ref):
+
+```julia
+solution = Solution(
+    alpha = 0.5,
+    zeta = 1.25,
+    rho = 1500.0,
+    Cells = Cells,
+    location = "./solution",
+    points = points,
+    faces = faces,
+    explicit_method = :rk4,
+)
+```
+
 See [How does the library work?](../30-explanation/numerics.md#Solving-the-equations) for how the solution process handles pressure, momentum, and thickness, and [Getting Started](../10-tutorials/getting-started.md#Using-custom-rheology-models) for how to supply a custom `basal_stress` rheology model.
