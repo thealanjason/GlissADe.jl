@@ -35,6 +35,7 @@ include("./src/linear_system/generateLinearSystem.jl")
 include("./src/update_laws/implicit/updateMomentum.jl")
 include("./src/update_laws/implicit/updateThickness.jl")
 include("./src/update_laws/implicit/updatePressure.jl")
+include("./src/update_laws/explicit/computeRHS.jl")
 
 export solve
 
