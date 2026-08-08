@@ -194,7 +194,7 @@ function initializeGeometry(cells_inside_polygon, Cells, rho; h0 = nothing, u0 =
         return
     end
     W = eltype(Cells[1].vel)
-    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for idx in eachindex(Cells)
         _updateCellState!(Cells[idx], h0, u0, rho, W, idx in cells_inside_polygon)
     end
     return stats && println("Cells initialized.")
@@ -218,7 +218,7 @@ function initializeGeometry(Cells, rho; h0 = nothing, u0 = nothing)
         "h0 vector length $(length(h0)) does not match number of cells $(length(Cells))",
     )
     W = eltype(Cells[1].vel)
-    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for idx in eachindex(Cells)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for idx in eachindex(Cells)
         _updateCellState!(Cells[idx], h0[idx], u0, rho, W, !iszero(h0[idx]))
     end
     return stats && println("Cells initialized.")

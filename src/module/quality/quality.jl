@@ -16,7 +16,7 @@ function MeshQuality(Cells)
     πᵢ = (1 / π)
     T = eltype(Cells[1].center)
     @inbounds quality = zeros(T, length(Cells))
-    @inbounds @maybe_threads Threads.nthreads == 1 || !threads for i in eachindex(Cells)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
         lᵢ = (1.0 / length(Cells[i].neighbours))
         @inbounds for j in eachindex(Cells[i].neighbours)
             n = (Cells[i].neighbours[j] <= 0) ? i : Cells[i].neighbours[j]
