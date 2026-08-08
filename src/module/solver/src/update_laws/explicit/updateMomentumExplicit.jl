@@ -22,7 +22,7 @@ function updateMomentumExplicit!(solver, dt, t, vel, h0, vel0, p0, caches)
     return @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(
         solver.Cells,
     )
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids,
         params_central,
         params_upwind,
@@ -40,7 +40,6 @@ function updateMomentumExplicit!(solver, dt, t, vel, h0, vel0, p0, caches)
             vel[3*i-2] = zero(W)
             vel[3*i-1] = zero(W)
             vel[3*i] = zero(W)
-            put!(caches, cache)
             continue
         end
 
@@ -49,8 +48,5 @@ function updateMomentumExplicit!(solver, dt, t, vel, h0, vel0, p0, caches)
         computeSurfaceGrad!(Iₛ, nₚ)
 
         # RK4 Setup
-
-
-        put!(caches, cache)
     end
 end

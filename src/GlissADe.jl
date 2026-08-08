@@ -8,6 +8,7 @@ const INT_TYPE = Ref{DataType}(Int64)
 const THREADS = Ref{Bool}(true)
 const STATS = Ref{Bool}(true)
 const PLOTS = Ref{Bool}(false)
+const THREADING_BACKEND = Ref{Symbol}(:polyester_thread)
 
 global const g = [0.0, 0.0, -9.81]
 
@@ -21,6 +22,7 @@ import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv
 import ForwardDiff.Dual, ForwardDiff.Partials, ForwardDiff.value
 import JLD2: load_object, save_object
+import Polyester
 
 ## UTILS SUBMODULE ##
 include("./module/utils/utils.jl")

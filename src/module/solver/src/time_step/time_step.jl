@@ -9,7 +9,7 @@ Multithreading auxillary for computeTimeStep
 """
 function compute_chunk_edge_velocity(solver, caches, chunk)
     global g
-    cache = take!(caches)
+    cache = _get_cache(caches)
     @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
     Cells = solver.Cells
     @inbounds W = typeof(Cells[1].h)
@@ -54,7 +54,6 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
         end
     end
-    put!(caches, cache)
     return cₑ
 end
 
@@ -70,7 +69,7 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     if (Threads.nthreads() == 1) || !threads
         cₑ = zero(W)
         nₑ = zeros(W, 3)
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
         for i in eachindex(Cells)
             checkDry(solver, ids, i) && continue # Skip Dry Cells
@@ -118,7 +117,6 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
             end
         end
-        put!(caches, cache)
     else
         chunks =
             Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
