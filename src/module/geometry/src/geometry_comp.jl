@@ -51,7 +51,7 @@ function _edge_lengths(points, faces)
     T = eltype(points[1]) # Should be Float or Dual
     edge_lengths = [Vector{T}() for _ in eachindex(faces)]
     STATS[] && println("Computing Edge Lengths...")
-    @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         @inbounds for j in eachindex(faces[i])
             e = j % length(faces[i]) + 1
             push!(edge_lengths[i], _mag2(points[faces[i][e]], points[faces[i][j]]))
@@ -71,7 +71,7 @@ Returns the edge centers for all edges of all faces of a mesh.
 function _edge_centers(points, faces)
     T = eltype(points[1]) # Should be Float or Dual
     edge_centers = [Vector{Vector{T}}() for _ in eachindex(faces)]
-    @maybe_threads Threads.nthreads == 1 || !THREADS[] for j in eachindex(faces) # reduce threads overhead
+    @maybe_threads Threads.nthreads() == 1 || !THREADS[] for j in eachindex(faces) # reduce threads overhead
         @inbounds for i in eachindex(faces[j])
             ii = i % length(faces[j]) + 1
             push!(edge_centers[j], 0.5 .* (points[faces[j][i]] .+ points[faces[j][ii]]))
@@ -93,7 +93,7 @@ function _areas(points, faces, centers)
     T = eltype(points[1]) # Should be Float or Dual
     areas = Vector{T}(undef, length(faces))
     STATS[] && println("Computing face areas...")
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         area = zero(T)
         center = centers[i]
         @inbounds for j in eachindex(faces[i])
@@ -125,7 +125,7 @@ function _bi_transforms(centers, edge_centers, normals, points, faces, neighbour
     edge_binormals = [Vector{Vector{T}}() for _ in eachindex(faces)]
     transforms = [Vector{Matrix{T}}() for _ in eachindex(faces)]
     transforms2 = [Vector{Matrix{T}}() for _ in eachindex(faces)]
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         edges_i = faces[i]
         edge_centers_i = edge_centers[i]
         center = centers[i]
@@ -190,7 +190,7 @@ function _normals(points, faces)
     T = eltype(points) # Should be Vector{FLOAT} or Vector{Dual}
     normals_centers = Vector{Vector{T}}(undef, length(faces))
     STATS[] && println("Calculating normals...")
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         center_i = _center(points, faces[i])
         normal = _ncentroid(points[faces[i][1]], center_i, points[faces[i][2]])
         normals_centers[i] = [center_i, normal]

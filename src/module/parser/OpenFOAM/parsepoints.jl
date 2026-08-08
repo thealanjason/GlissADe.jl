@@ -20,7 +20,7 @@ function _parsepoints_openfoam(location_points::String)
 
     STATS[] && println("Reading point cloud...")
     points = Vector{Vector{FLOAT_TYPE[]}}(undef, length(s_points))
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in
                                                                      eachindex(s_points)
         s = split(strip(s_points[i], ('(', ')')))
         points[i] = [

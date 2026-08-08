@@ -32,7 +32,7 @@ function _meshcomputations(points, faces, neighbours, W)
     # Construct Mesh Cells [Initialize to Zero]
     T = eltype(points[1])
     Cells = Vector{Cell{T,INT_TYPE[],W}}(undef, length(faces))
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         Cells[i] = Cell{T,INT_TYPE[],W}(
             i,
             cell_centroids[i],

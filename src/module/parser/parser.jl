@@ -38,7 +38,7 @@ function parsemesh(
     faces_remapped = Vector{Vector{INT_TYPE[]}}(undef, length(faces))
     @inbounds points_remapped = points[points_idx]
 
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(faces)
         l = length(faces[i])
         faces_remapped[i] = [global_surface_idx_map[j] for j in faces[i]]
     end
