@@ -23,7 +23,7 @@ function updateThicknessExplicit!(solver, dt, t, h, h0, vel0, p0, caches)
 
     return @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in
                                                                             eachindex(Cells)
-        cache = take!(caches)
+        cache = _get_cache(caches)
 
         @unpack ids,
         params_upwind,
@@ -37,13 +37,9 @@ function updateThicknessExplicit!(solver, dt, t, h, h0, vel0, p0, caches)
         # Skip Dry cells with Dry neighbours
         if (checkDry(solver, ids, i))
             h[i] = zero(W)
-            put!(caches, cache)
             continue
         end
 
         area = Cells[i].area
-
-
-        put!(caches, cache)
     end
 end

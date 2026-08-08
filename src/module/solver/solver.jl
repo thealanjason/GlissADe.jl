@@ -72,11 +72,8 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
     W = typeof(Cells[1].h) # Datatype for fields
 
     ## FIELD UPDATE CACHE ##
-    nthreads = Threads.nthreads()
-    caches = Channel{Cache{T,INT_TYPE[],W}}(sizeof(Cache{T,INT_TYPE[],W}) * nthreads * 2) # Allocate Cache for Each threads
-    for _ = 1:nthreads
-        put!(caches, Cache{T,INT_TYPE[],W}())
-    end
+    caches = [Cache{T,INT_TYPE[],W}() for _ = 1:Threads.nthreads()]
+
 
     ## INTEGRATOR ##
     t = tspan[1] # Integrator Time

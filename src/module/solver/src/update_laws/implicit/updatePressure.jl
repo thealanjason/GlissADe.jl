@@ -14,7 +14,7 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
 
         ## UNLOAD CACHE ##
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids, vars_sca, vars_vec, sca_e, vec_e = cache # Interpolation for faces
         @unpack vel_i, vel_n = cache # Floats used for calculations
 
@@ -80,7 +80,6 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
             p[i] -= rho * area_inv * zeta * flux_edge * flux_surface * hₑ * Lₑ
         end
         p[i] = max(p[i], limit) # Constrain Pressure
-        put!(caches, cache) # Return to Channel
     end
     relax!(p, p0, alpha_p) # Under relax pressure
     return nothing
