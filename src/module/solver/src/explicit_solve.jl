@@ -21,12 +21,9 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     T = eltype(Cells[1].center)
     W = typeof(Cells[1].h)
 
-    # Thread Caches
-    nthreads = Threads.nthreads()
-    caches = Channel{Cache{T,INT_TYPE[],W}}(sizeof(Cache{T,INT_TYPE[],W}) * nthreads * 2)
-    for _ = 1:nthreads
-        put!(caches, Cache{T,INT_TYPE[],W}())
-    end
+    # Thread Caches (Lock-Free Thread-Indexed Array)
+    caches = [Cache{T,INT_TYPE[],W}() for _ = 1:Threads.nthreads()]
+
 
     # Integrator State
     t = tspan[1]

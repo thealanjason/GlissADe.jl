@@ -16,7 +16,7 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
     res1 = zero(W)
     rho_inv = (1.0 / rho)
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids, vars_sca, vars_vec, sca_e, vec_e = cache
 
         ## Edge Free Terms ##
@@ -77,7 +77,6 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
         end
         res += res1 * res1
         res1 = zero(W)
-        put!(caches, cache)
     end
     return sqrt(res)
 end
