@@ -24,7 +24,8 @@ function _parsefaces_openfoam(location_faces::String)
 
     STATS[] && println("Reading face information...")
     faces = Vector{Vector{INT_TYPE[]}}(undef, length(s_faces))
-    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in eachindex(s_faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i in
+                                                                       eachindex(s_faces)
         line = s_faces[i]
         parts = split(line, '(')
         # n = parse(INT_TYPE[], strip(parts[1]))  # Number of points in the face Check: Length(numbers) == n. Not required, In Openfoam we trust!
