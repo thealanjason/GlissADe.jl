@@ -42,7 +42,7 @@ function updateMomentum!(
 
     ## ASSEMBLY ##
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in eachindex(Cells)
-        cache = take!(caches)
+        cache = _get_cache(caches)
         @unpack ids,
         params_central,
         params_upwind,
@@ -61,7 +61,6 @@ function updateMomentum!(
             Bv[3*i-2] = zero(W)
             Bv[3*i-1] = zero(W)
             Bv[3*i] = zero(W)
-            put!(caches, cache)
             continue
         end
         nₚ = Cells[i].normal
@@ -199,7 +198,6 @@ function updateMomentum!(
                 end
             end
         end
-        put!(caches, cache)
     end
     ## Make Matrix fully ranked. If a cell is dry, it shouldn't have any velocity ##
     dryCells = zero(INT_TYPE[])

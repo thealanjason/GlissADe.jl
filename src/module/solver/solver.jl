@@ -35,6 +35,8 @@ include("./src/linear_system/generateLinearSystem.jl")
 include("./src/update_laws/implicit/updateMomentum.jl")
 include("./src/update_laws/implicit/updateThickness.jl")
 include("./src/update_laws/implicit/updatePressure.jl")
+include("./src/update_laws/explicit/computeRHS.jl")
+include("./src/explicit_solve.jl")
 
 export solve
 
@@ -70,11 +72,8 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
     W = typeof(Cells[1].h) # Datatype for fields
 
     ## FIELD UPDATE CACHE ##
-    nthreads = Threads.nthreads()
-    caches = Channel{Cache{T,INT_TYPE[],W}}(sizeof(Cache{T,INT_TYPE[],W}) * nthreads * 2) # Allocate Cache for Each threads
-    for _ = 1:nthreads
-        put!(caches, Cache{T,INT_TYPE[],W}())
-    end
+    caches = [Cache{T,INT_TYPE[],W}() for _ = 1:Threads.nthreads()]
+
 
     ## INTEGRATOR ##
     t = tspan[1] # Integrator Time
@@ -559,10 +558,7 @@ function solve(solver, tspan; Cₘ = 0.9, saveat = 0.0, rtol = 0.01)
     global implicit
     if implicit
         return implicit_solve(solver, tspan, Cₘ, saveat, rtol)
+    else
+        return explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     end
-
-    # Still under work :(
-    # else
-    #     return explicit_solve(solver, tspan, Cₘ, saveat, rtol)
-    # end
 end

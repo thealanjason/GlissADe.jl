@@ -46,6 +46,7 @@ A Structure containing information to for solution process
     MIN_ITERS = nothing
     h_clip = nothing
     h_min = nothing
+    explicit_method = nothing
     Cells = nothing # Discrete Geometry
     location::String = "./solution"
     points = nothing

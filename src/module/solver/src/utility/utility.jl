@@ -21,6 +21,14 @@ Check if the face at index `idx` and it's neighbours are dry.
 end
 
 """
+    _get_cache(caches)
+Thread-safe, lock-free access to pre-allocated thread cache. `INTERNAL`
+"""
+@inline function _get_cache(caches)
+    @inbounds return caches[min(Int(Threads.threadid()), length(caches))]
+end
+
+"""
 Expands to dot(mₑ, vel_edge).
 """
 @inline function computeFlux(mₑ, vel_edge)

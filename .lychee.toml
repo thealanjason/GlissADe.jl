@@ -5,6 +5,7 @@ exclude = [
   "^https://doi.org/FIXME$",
   "^https://thealanjason.github.io/GlissADe.jl/stable$",
   "^https://thealanjason.github.io/GlissADe.jl/dev",
+  "^https://thealanjason.github.io/GlissADe.jl/presentation",
   "^https://github.com/thealanjason/GlissADe.jl/actions/workflows/.*/badge.svg",
   "^https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff$",
   "^https://github.com/thealanjason/GlissADe.jl/compare/v.*\\.\\.\\.HEAD$",

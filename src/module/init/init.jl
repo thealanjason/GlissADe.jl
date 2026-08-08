@@ -27,7 +27,13 @@ function init(;
     float_type = Float64,
     int_type = Int64,
     implicit = true,
+    explicit_method = :rk4,
 )
+    explicit_method in (:euler, :rk2, :ssprk3, :rk4, :rk45) || throw(
+        ArgumentError(
+            "Invalid explicit_method: $explicit_method. Choose from :euler, :rk2, :ssprk3, :rk4, :rk45.",
+        ),
+    )
     if (plots)
         @eval begin
             using Plots, PyPlot # Initialize for plotting
@@ -46,6 +52,7 @@ function init(;
     @eval global stats = $stats
     @eval global plots = $plots
     @eval global implicit = $implicit
+    @eval global explicit_method = $(QuoteNode(explicit_method))
     STATS[] && println("Library Initialized!")
     return nothing
 end
