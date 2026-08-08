@@ -17,7 +17,7 @@ function _neighbours(l, faces)
     t_start = time()
     point_face_map = [Vector{INT_TYPE[]}() for _ = 1:l]
     STATS[] && println("Computing point face map...")
-    if Threads.nthreads == 1 || !THREADS[]
+    if Threads.nthreads() == 1 || !THREADS[]
         for i = 1:l # Reduce Threads overhead
             @inbounds for j in eachindex(faces)
                 if i in faces[j]
@@ -37,7 +37,7 @@ function _neighbours(l, faces)
     t1 = time()
     STATS[] && println("Computing point face map took: ", t1 - t_start, " seconds") # Status Update
     neighbours = [Vector{INT_TYPE[]}() for _ in eachindex(faces)]
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for j in eachindex(faces)
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for j in eachindex(faces)
         count = 0
         @inbounds for v in eachindex(faces[j])
             e = (v) % length(faces[j]) + 1
