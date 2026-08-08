@@ -52,6 +52,7 @@ init(threads = true, stats = true, implicit = false, explicit_method = :rk4)
 ```
 
 Available explicit methods include:
+
 - `:rk4` - Classical 4th-order Runge-Kutta (default). Recommended for general high-fidelity solves.
 - `:rk45` - Adaptive 5(4) Dormand-Prince method with local error control.
 - `:ssprk3` - 3rd-order Strong Stability Preserving Runge-Kutta. Great for flows with sharp fronts.
