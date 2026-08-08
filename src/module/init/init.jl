@@ -29,9 +29,9 @@ function init(;
     implicit = true,
     explicit_method = :rk4,
 )
-    explicit_method in (:euler, :rk2, :ssprk3, :rk4) || throw(
+    explicit_method in (:euler, :rk2, :ssprk3, :rk4, :rk45) || throw(
         ArgumentError(
-            "Invalid explicit_method: $explicit_method. Choose from :euler, :rk2, :ssprk3, :rk4.",
+            "Invalid explicit_method: $explicit_method. Choose from :euler, :rk2, :ssprk3, :rk4, :rk45.",
         ),
     )
     if (plots)
