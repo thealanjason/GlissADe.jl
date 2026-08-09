@@ -24,7 +24,8 @@ Cells = preprocess(points, faces, Float64, comp_neighbours = true)
 polygon = findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6)
 cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
 
-tspan = (0.0, 30.0)
+# tspan = (0.0, 30.0)
+tspan = (0.0, 0.1)
 saveat = 0.2
 C_m_imp = 4.5
 C_m_exp = 0.5

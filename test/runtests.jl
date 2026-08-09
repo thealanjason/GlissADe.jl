@@ -19,5 +19,7 @@ include("testutils.jl")
     include("explicit_test.jl")
     include("explicit_vs_implicit_test.jl")
     include("solution_export_test.jl")
+    include("quality_test.jl")
+    include("reordering_test.jl")
     include("visualization_makie_test.jl")
 end

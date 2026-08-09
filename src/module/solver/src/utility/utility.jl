@@ -20,6 +20,17 @@ Check if the face at index `idx` and it's neighbours are dry.
     return dry
 end
 
+@inline function checkDry(h::AbstractVector, Cells, ids, idx, h_min)
+    @inbounds dry = (h[idx] <= h_min)
+    @inbounds for j in eachindex(Cells[idx].neighbours)
+        (Cells[idx].neighbours[j] <= 0) && continue
+        getIds!(ids, Cells, idx, j)
+        dry = dry && (h[ids[2]] <= h_min)
+    end
+    return dry
+end
+
+
 @inline function checkDry(dry_mask::BitVector, Cells, ids, idx)
     @inbounds dry = dry_mask[idx]
     @inbounds for j in eachindex(Cells[idx].neighbours)

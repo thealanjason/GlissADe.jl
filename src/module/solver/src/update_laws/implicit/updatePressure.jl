@@ -22,7 +22,7 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
         nₚ = Cells[i].normal
         area = Cells[i].area
         area_inv = (1.0 / area)
-        gravityFlux = computeFlux(nₚ, g)
+        gravityFlux = -computeFlux(nₚ, g)
         limit = rho * h_clip * gravityFlux
         p[i] = rho * h0[i] * gravityFlux
         ## NEIGHBOUR COUPLING ##

@@ -70,7 +70,8 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
         p0[i] = Cells[i].pb
         dry_mask[i] = (h0[i] <= solver.h_min)
     end
-    updatePressure!(solver, p0, p0, vel0, h0, caches)
+    p_in = copy(p0)
+    updatePressure!(solver, p0, p_in, vel0, h0, caches)
     h .= h0
     vel .= vel0
     p .= p0
@@ -90,6 +91,13 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     err_prev = one(W)
 
     while t < tspan[2]
+        # Sync live state to Cells so computeTimeStep reads correct h and vel
+        @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
+            Cells[i].h = h[i]
+            Cells[i].vel[1] = vel[3*i-2]
+            Cells[i].vel[2] = vel[3*i-1]
+            Cells[i].vel[3] = vel[3*i]
+        end
         # 1. Compute CFL-restricted timestep
         dt_cfl = computeTimeStep(solver, Cₘ, Δₑ, caches)
         if method in (:rk4, :ssprk3)
@@ -104,7 +112,7 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
         if method == :rk45
             dt =
-                (dt_adaptive == zero(W)) ? min(dt_cfl, tspan[2] - t) :
+                (dt_adaptive == zero(W)) ? min(0.1 * dt_cfl, tspan[2] - t) :
                 min(dt_adaptive, dt_cfl, tspan[2] - t)
         else
             dt = min(dt_cfl, tspan[2] - t)
@@ -119,126 +127,221 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
         # 2. Stage Execution Loop
         if method == :euler
             # --- Forward Euler (1 Stage) ---
-            computeRHS!(solver, kh1, ku1, h, vel, p, caches)
+            computeRHS!(solver, kh1, ku1, h, vel, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h[i] = max(zero(W), h[i] + dt * kh1[i])
-                vel[3*i-2] += dt * ku1[3*i-2]
-                vel[3*i-1] += dt * ku1[3*i-1]
-                vel[3*i] += dt * ku1[3*i]
+                if h[i] <= solver.h_min
+                    vel[3*i-2] = zero(W)
+                    vel[3*i-1] = zero(W)
+                    vel[3*i] = zero(W)
+                else
+                    vel[3*i-2] += dt * ku1[3*i-2]
+                    vel[3*i-1] += dt * ku1[3*i-1]
+                    vel[3*i] += dt * ku1[3*i]
+                end
             end
 
         elseif method == :rk2
             # --- Heun / Explicit RK2 (2 Stages) ---
-            computeRHS!(solver, kh1, ku1, h, vel, p, caches)
+            computeRHS!(solver, kh1, ku1, h, vel, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + dt * kh1[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + dt * ku1[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + dt * ku1[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + dt * ku1[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + dt * ku1[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + dt * ku1[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + dt * ku1[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h[i] = max(zero(W), h[i] + 0.5 * dt * (kh1[i] + kh2[i]))
-                vel[3*i-2] += 0.5 * dt * (ku1[3*i-2] + ku2[3*i-2])
-                vel[3*i-1] += 0.5 * dt * (ku1[3*i-1] + ku2[3*i-1])
-                vel[3*i] += 0.5 * dt * (ku1[3*i] + ku2[3*i])
+                if h[i] <= solver.h_min
+                    vel[3*i-2] = zero(W)
+                    vel[3*i-1] = zero(W)
+                    vel[3*i] = zero(W)
+                else
+                    vel[3*i-2] += 0.5 * dt * (ku1[3*i-2] + ku2[3*i-2])
+                    vel[3*i-1] += 0.5 * dt * (ku1[3*i-1] + ku2[3*i-1])
+                    vel[3*i] += 0.5 * dt * (ku1[3*i] + ku2[3*i])
+                end
             end
 
         elseif method == :ssprk3
             # --- Strong Stability Preserving RK3 (3 Stages) ---
-            computeRHS!(solver, kh1, ku1, h, vel, p, caches)
+            computeRHS!(solver, kh1, ku1, h, vel, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + dt * kh1[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + dt * ku1[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + dt * ku1[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + dt * ku1[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + dt * ku1[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + dt * ku1[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + dt * ku1[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), 0.75 * h[i] + 0.25 * h_tmp[i] + 0.25 * dt * kh2[i])
-                vel_tmp[3*i-2] =
-                    0.75 * vel[3*i-2] + 0.25 * vel_tmp[3*i-2] + 0.25 * dt * ku2[3*i-2]
-                vel_tmp[3*i-1] =
-                    0.75 * vel[3*i-1] + 0.25 * vel_tmp[3*i-1] + 0.25 * dt * ku2[3*i-1]
-                vel_tmp[3*i] = 0.75 * vel[3*i] + 0.25 * vel_tmp[3*i] + 0.25 * dt * ku2[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        0.75 * vel[3*i-2] + 0.25 * vel_tmp[3*i-2] + 0.25 * dt * ku2[3*i-2]
+                    vel_tmp[3*i-1] =
+                        0.75 * vel[3*i-1] + 0.25 * vel_tmp[3*i-1] + 0.25 * dt * ku2[3*i-1]
+                    vel_tmp[3*i] =
+                        0.75 * vel[3*i] + 0.25 * vel_tmp[3*i] + 0.25 * dt * ku2[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h[i] = max(
                     zero(W),
                     (1.0 / 3.0) * h[i] + (2.0 / 3.0) * h_tmp[i] + (2.0 / 3.0) * dt * kh3[i],
                 )
-                vel[3*i-2] =
-                    (1.0 / 3.0) * vel[3*i-2] +
-                    (2.0 / 3.0) * vel_tmp[3*i-2] +
-                    (2.0 / 3.0) * dt * ku3[3*i-2]
-                vel[3*i-1] =
-                    (1.0 / 3.0) * vel[3*i-1] +
-                    (2.0 / 3.0) * vel_tmp[3*i-1] +
-                    (2.0 / 3.0) * dt * ku3[3*i-1]
-                vel[3*i] =
-                    (1.0 / 3.0) * vel[3*i] +
-                    (2.0 / 3.0) * vel_tmp[3*i] +
-                    (2.0 / 3.0) * dt * ku3[3*i]
+                if h[i] <= solver.h_min
+                    vel[3*i-2] = zero(W)
+                    vel[3*i-1] = zero(W)
+                    vel[3*i] = zero(W)
+                else
+                    vel[3*i-2] =
+                        (1.0 / 3.0) * vel[3*i-2] +
+                        (2.0 / 3.0) * vel_tmp[3*i-2] +
+                        (2.0 / 3.0) * dt * ku3[3*i-2]
+                    vel[3*i-1] =
+                        (1.0 / 3.0) * vel[3*i-1] +
+                        (2.0 / 3.0) * vel_tmp[3*i-1] +
+                        (2.0 / 3.0) * dt * ku3[3*i-1]
+                    vel[3*i] =
+                        (1.0 / 3.0) * vel[3*i] +
+                        (2.0 / 3.0) * vel_tmp[3*i] +
+                        (2.0 / 3.0) * dt * ku3[3*i]
+                end
             end
 
         elseif method == :rk4
             # --- Classical RK4 (4 Stages) ---
-            computeRHS!(solver, kh1, ku1, h, vel, p, caches)
+            computeRHS!(solver, kh1, ku1, h, vel, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + 0.5 * dt * kh1[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + 0.5 * dt * ku1[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + 0.5 * dt * ku1[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + 0.5 * dt * ku1[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + 0.5 * dt * ku1[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + 0.5 * dt * ku1[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + 0.5 * dt * ku1[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + 0.5 * dt * kh2[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + 0.5 * dt * ku2[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + 0.5 * dt * ku2[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + 0.5 * dt * ku2[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + 0.5 * dt * ku2[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + 0.5 * dt * ku2[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + 0.5 * dt * ku2[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + dt * kh3[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + dt * ku3[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + dt * ku3[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + dt * ku3[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + dt * ku3[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + dt * ku3[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + dt * ku3[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
 
-            computeRHS!(solver, kh4, ku4, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh4, ku4, h_tmp, vel_tmp, p, caches, dt)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h[i] = max(
                     zero(W),
                     h[i] + (dt / 6.0) * (kh1[i] + 2.0 * kh2[i] + 2.0 * kh3[i] + kh4[i]),
                 )
-                vel[3*i-2] +=
-                    (dt / 6.0) *
-                    (ku1[3*i-2] + 2.0 * ku2[3*i-2] + 2.0 * ku3[3*i-2] + ku4[3*i-2])
-                vel[3*i-1] +=
-                    (dt / 6.0) *
-                    (ku1[3*i-1] + 2.0 * ku2[3*i-1] + 2.0 * ku3[3*i-1] + ku4[3*i-1])
-                vel[3*i] +=
-                    (dt / 6.0) * (ku1[3*i] + 2.0 * ku2[3*i] + 2.0 * ku3[3*i] + ku4[3*i])
+                if h[i] <= solver.h_min
+                    vel[3*i-2] = zero(W)
+                    vel[3*i-1] = zero(W)
+                    vel[3*i] = zero(W)
+                else
+                    vel[3*i-2] +=
+                        (dt / 6.0) *
+                        (ku1[3*i-2] + 2.0 * ku2[3*i-2] + 2.0 * ku3[3*i-2] + ku4[3*i-2])
+                    vel[3*i-1] +=
+                        (dt / 6.0) *
+                        (ku1[3*i-1] + 2.0 * ku2[3*i-1] + 2.0 * ku3[3*i-1] + ku4[3*i-1])
+                    vel[3*i] +=
+                        (dt / 6.0) * (ku1[3*i] + 2.0 * ku2[3*i] + 2.0 * ku3[3*i] + ku4[3*i])
+                end
             end
 
         elseif method == :rk45
             # --- Adaptive Dormand-Prince DP54 (7 Stages) ---
-            computeRHS!(solver, kh1, ku1, h, vel, p, caches)
+            computeRHS!(solver, kh1, ku1, h, vel, p, caches, dt)
 
             # Stage 2
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
                 h_tmp[i] = max(zero(W), h[i] + dt * (1.0 / 5.0) * kh1[i])
-                vel_tmp[3*i-2] = vel[3*i-2] + dt * (1.0 / 5.0) * ku1[3*i-2]
-                vel_tmp[3*i-1] = vel[3*i-1] + dt * (1.0 / 5.0) * ku1[3*i-1]
-                vel_tmp[3*i] = vel[3*i] + dt * (1.0 / 5.0) * ku1[3*i]
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] = vel[3*i-2] + dt * (1.0 / 5.0) * ku1[3*i-2]
+                    vel_tmp[3*i-1] = vel[3*i-1] + dt * (1.0 / 5.0) * ku1[3*i-1]
+                    vel_tmp[3*i] = vel[3*i] + dt * (1.0 / 5.0) * ku1[3*i]
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh2, ku2, h_tmp, vel_tmp, p, caches, dt)
 
             # Stage 3
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
@@ -246,16 +349,26 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                     zero(W),
                     h[i] + dt * ((3.0 / 40.0) * kh1[i] + (9.0 / 40.0) * kh2[i]),
                 )
-                vel_tmp[3*i-2] =
-                    vel[3*i-2] +
-                    dt * ((3.0 / 40.0) * ku1[3*i-2] + (9.0 / 40.0) * ku2[3*i-2])
-                vel_tmp[3*i-1] =
-                    vel[3*i-1] +
-                    dt * ((3.0 / 40.0) * ku1[3*i-1] + (9.0 / 40.0) * ku2[3*i-1])
-                vel_tmp[3*i] =
-                    vel[3*i] + dt * ((3.0 / 40.0) * ku1[3*i] + (9.0 / 40.0) * ku2[3*i])
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        vel[3*i-2] +
+                        dt * ((3.0 / 40.0) * ku1[3*i-2] + (9.0 / 40.0) * ku2[3*i-2])
+                    vel_tmp[3*i-1] =
+                        vel[3*i-1] +
+                        dt * ((3.0 / 40.0) * ku1[3*i-1] + (9.0 / 40.0) * ku2[3*i-1])
+                    vel_tmp[3*i] =
+                        vel[3*i] + dt * ((3.0 / 40.0) * ku1[3*i] + (9.0 / 40.0) * ku2[3*i])
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh3, ku3, h_tmp, vel_tmp, p, caches, dt)
 
             # Stage 4
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
@@ -267,26 +380,36 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                         (32.0 / 9.0) * kh3[i]
                     ),
                 )
-                vel_tmp[3*i-2] =
-                    vel[3*i-2] +
-                    dt * (
-                        (44.0 / 45.0) * ku1[3*i-2] - (56.0 / 15.0) * ku2[3*i-2] +
-                        (32.0 / 9.0) * ku3[3*i-2]
-                    )
-                vel_tmp[3*i-1] =
-                    vel[3*i-1] +
-                    dt * (
-                        (44.0 / 45.0) * ku1[3*i-1] - (56.0 / 15.0) * ku2[3*i-1] +
-                        (32.0 / 9.0) * ku3[3*i-1]
-                    )
-                vel_tmp[3*i] =
-                    vel[3*i] +
-                    dt * (
-                        (44.0 / 45.0) * ku1[3*i] - (56.0 / 15.0) * ku2[3*i] +
-                        (32.0 / 9.0) * ku3[3*i]
-                    )
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        vel[3*i-2] +
+                        dt * (
+                            (44.0 / 45.0) * ku1[3*i-2] - (56.0 / 15.0) * ku2[3*i-2] +
+                            (32.0 / 9.0) * ku3[3*i-2]
+                        )
+                    vel_tmp[3*i-1] =
+                        vel[3*i-1] +
+                        dt * (
+                            (44.0 / 45.0) * ku1[3*i-1] - (56.0 / 15.0) * ku2[3*i-1] +
+                            (32.0 / 9.0) * ku3[3*i-1]
+                        )
+                    vel_tmp[3*i] =
+                        vel[3*i] +
+                        dt * (
+                            (44.0 / 45.0) * ku1[3*i] - (56.0 / 15.0) * ku2[3*i] +
+                            (32.0 / 9.0) * ku3[3*i]
+                        )
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh4, ku4, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh4, ku4, h_tmp, vel_tmp, p, caches, dt)
 
             # Stage 5
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
@@ -298,26 +421,36 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                         (64448.0 / 6561.0) * kh3[i] - (212.0 / 729.0) * kh4[i]
                     ),
                 )
-                vel_tmp[3*i-2] =
-                    vel[3*i-2] +
-                    dt * (
-                        (19372.0 / 6561.0) * ku1[3*i-2] - (25360.0 / 2187.0) * ku2[3*i-2] +
-                        (64448.0 / 6561.0) * ku3[3*i-2] - (212.0 / 729.0) * ku4[3*i-2]
-                    )
-                vel_tmp[3*i-1] =
-                    vel[3*i-1] +
-                    dt * (
-                        (19372.0 / 6561.0) * ku1[3*i-1] - (25360.0 / 2187.0) * ku2[3*i-1] +
-                        (64448.0 / 6561.0) * ku3[3*i-1] - (212.0 / 729.0) * ku4[3*i-1]
-                    )
-                vel_tmp[3*i] =
-                    vel[3*i] +
-                    dt * (
-                        (19372.0 / 6561.0) * ku1[3*i] - (25360.0 / 2187.0) * ku2[3*i] +
-                        (64448.0 / 6561.0) * ku3[3*i] - (212.0 / 729.0) * ku4[3*i]
-                    )
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        vel[3*i-2] +
+                        dt * (
+                            (19372.0 / 6561.0) * ku1[3*i-2] - (25360.0 / 2187.0) * ku2[3*i-2] +
+                            (64448.0 / 6561.0) * ku3[3*i-2] - (212.0 / 729.0) * ku4[3*i-2]
+                        )
+                    vel_tmp[3*i-1] =
+                        vel[3*i-1] +
+                        dt * (
+                            (19372.0 / 6561.0) * ku1[3*i-1] - (25360.0 / 2187.0) * ku2[3*i-1] +
+                            (64448.0 / 6561.0) * ku3[3*i-1] - (212.0 / 729.0) * ku4[3*i-1]
+                        )
+                    vel_tmp[3*i] =
+                        vel[3*i] +
+                        dt * (
+                            (19372.0 / 6561.0) * ku1[3*i] - (25360.0 / 2187.0) * ku2[3*i] +
+                            (64448.0 / 6561.0) * ku3[3*i] - (212.0 / 729.0) * ku4[3*i]
+                        )
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh5, ku5, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh5, ku5, h_tmp, vel_tmp, p, caches, dt)
 
             # Stage 6
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
@@ -330,29 +463,39 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                         (49.0 / 176.0) * kh4[i] - (5103.0 / 18656.0) * kh5[i]
                     ),
                 )
-                vel_tmp[3*i-2] =
-                    vel[3*i-2] +
-                    dt * (
-                        (9017.0 / 3168.0) * ku1[3*i-2] - (355.0 / 33.0) * ku2[3*i-2] +
-                        (46732.0 / 5247.0) * ku3[3*i-2] +
-                        (49.0 / 176.0) * ku4[3*i-2] - (5103.0 / 18656.0) * ku5[3*i-2]
-                    )
-                vel_tmp[3*i-1] =
-                    vel[3*i-1] +
-                    dt * (
-                        (9017.0 / 3168.0) * ku1[3*i-1] - (355.0 / 33.0) * ku2[3*i-1] +
-                        (46732.0 / 5247.0) * ku3[3*i-1] +
-                        (49.0 / 176.0) * ku4[3*i-1] - (5103.0 / 18656.0) * ku5[3*i-1]
-                    )
-                vel_tmp[3*i] =
-                    vel[3*i] +
-                    dt * (
-                        (9017.0 / 3168.0) * ku1[3*i] - (355.0 / 33.0) * ku2[3*i] +
-                        (46732.0 / 5247.0) * ku3[3*i] +
-                        (49.0 / 176.0) * ku4[3*i] - (5103.0 / 18656.0) * ku5[3*i]
-                    )
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        vel[3*i-2] +
+                        dt * (
+                            (9017.0 / 3168.0) * ku1[3*i-2] - (355.0 / 33.0) * ku2[3*i-2] +
+                            (46732.0 / 5247.0) * ku3[3*i-2] +
+                            (49.0 / 176.0) * ku4[3*i-2] - (5103.0 / 18656.0) * ku5[3*i-2]
+                        )
+                    vel_tmp[3*i-1] =
+                        vel[3*i-1] +
+                        dt * (
+                            (9017.0 / 3168.0) * ku1[3*i-1] - (355.0 / 33.0) * ku2[3*i-1] +
+                            (46732.0 / 5247.0) * ku3[3*i-1] +
+                            (49.0 / 176.0) * ku4[3*i-1] - (5103.0 / 18656.0) * ku5[3*i-1]
+                        )
+                    vel_tmp[3*i] =
+                        vel[3*i] +
+                        dt * (
+                            (9017.0 / 3168.0) * ku1[3*i] - (355.0 / 33.0) * ku2[3*i] +
+                            (46732.0 / 5247.0) * ku3[3*i] +
+                            (49.0 / 176.0) * ku4[3*i] - (5103.0 / 18656.0) * ku5[3*i]
+                        )
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh6, ku6, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh6, ku6, h_tmp, vel_tmp, p, caches, dt)
 
             # Stage 7 (FSAL)
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
@@ -366,38 +509,52 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                         (11.0 / 84.0) * kh6[i]
                     ),
                 )
-                vel_tmp[3*i-2] =
-                    vel[3*i-2] +
-                    dt * (
-                        (35.0 / 384.0) * ku1[3*i-2] +
-                        (500.0 / 1113.0) * ku3[3*i-2] +
-                        (125.0 / 192.0) * ku4[3*i-2] - (2187.0 / 6784.0) * ku5[3*i-2] +
-                        (11.0 / 84.0) * ku6[3*i-2]
-                    )
-                vel_tmp[3*i-1] =
-                    vel[3*i-1] +
-                    dt * (
-                        (35.0 / 384.0) * ku1[3*i-1] +
-                        (500.0 / 1113.0) * ku3[3*i-1] +
-                        (125.0 / 192.0) * ku4[3*i-1] - (2187.0 / 6784.0) * ku5[3*i-1] +
-                        (11.0 / 84.0) * ku6[3*i-1]
-                    )
-                vel_tmp[3*i] =
-                    vel[3*i] +
-                    dt * (
-                        (35.0 / 384.0) * ku1[3*i] +
-                        (500.0 / 1113.0) * ku3[3*i] +
-                        (125.0 / 192.0) * ku4[3*i] - (2187.0 / 6784.0) * ku5[3*i] +
-                        (11.0 / 84.0) * ku6[3*i]
-                    )
+                if h_tmp[i] <= solver.h_min
+                    vel_tmp[3*i-2] = zero(W)
+                    vel_tmp[3*i-1] = zero(W)
+                    vel_tmp[3*i] = zero(W)
+                else
+                    vel_tmp[3*i-2] =
+                        vel[3*i-2] +
+                        dt * (
+                            (35.0 / 384.0) * ku1[3*i-2] +
+                            (500.0 / 1113.0) * ku3[3*i-2] +
+                            (125.0 / 192.0) * ku4[3*i-2] - (2187.0 / 6784.0) * ku5[3*i-2] +
+                            (11.0 / 84.0) * ku6[3*i-2]
+                        )
+                    vel_tmp[3*i-1] =
+                        vel[3*i-1] +
+                        dt * (
+                            (35.0 / 384.0) * ku1[3*i-1] +
+                            (500.0 / 1113.0) * ku3[3*i-1] +
+                            (125.0 / 192.0) * ku4[3*i-1] - (2187.0 / 6784.0) * ku5[3*i-1] +
+                            (11.0 / 84.0) * ku6[3*i-1]
+                        )
+                    vel_tmp[3*i] =
+                        vel[3*i] +
+                        dt * (
+                            (35.0 / 384.0) * ku1[3*i] +
+                            (500.0 / 1113.0) * ku3[3*i] +
+                            (125.0 / 192.0) * ku4[3*i] - (2187.0 / 6784.0) * ku5[3*i] +
+                            (11.0 / 84.0) * ku6[3*i]
+                        )
+                end
+                Cells[i].h = h_tmp[i]
+                Cells[i].vel[1] = vel_tmp[3*i-2]
+                Cells[i].vel[2] = vel_tmp[3*i-1]
+                Cells[i].vel[3] = vel_tmp[3*i]
             end
-            computeRHS!(solver, kh7, ku7, h_tmp, vel_tmp, p, caches)
+            computeRHS!(solver, kh7, ku7, h_tmp, vel_tmp, p, caches, dt)
 
-            # Error estimation for step control using (atol + rtol * |y|) scaling
-            atol = 1e-4 * one(W)
-            tol_r = max(rtol, 1e-4) * one(W)
+            # Error estimation for step control using physical (atol + rtol * |y|) scaling
+            atol_h = 1e-3 * one(W)
+            atol_u = 1e-2 * one(W)
+            tol_r = max(rtol, 1e-3) * one(W)
             err_sum = zero(W)
+            n_wet = 0
             @inbounds for i = 1:N
+                h[i] <= solver.h_min && continue
+                n_wet += 1
                 eh =
                     dt * (
                         (71.0 / 5760.0) * kh1[i] - (71.0 / 16695.0) * kh3[i] +
@@ -422,15 +579,15 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                         (71.0 / 1920.0) * ku4[3*i] - (17253.0 / 339200.0) * ku5[3*i] +
                         (22.0 / 525.0) * ku6[3*i] - (1.0 / 40.0) * ku7[3*i]
                     )
-                sc_h = atol + tol_r * abs(h[i])
-                sc_u1 = atol + tol_r * abs(vel[3*i-2])
-                sc_u2 = atol + tol_r * abs(vel[3*i-1])
-                sc_u3 = atol + tol_r * abs(vel[3*i])
+                sc_h = atol_h + tol_r * abs(h[i])
+                sc_u1 = atol_u + tol_r * abs(vel[3*i-2])
+                sc_u2 = atol_u + tol_r * abs(vel[3*i-1])
+                sc_u3 = atol_u + tol_r * abs(vel[3*i])
 
                 err_sum +=
                     (eh / sc_h)^2 + (eu1 / sc_u1)^2 + (eu2 / sc_u2)^2 + (eu3 / sc_u3)^2
             end
-            err_norm = sqrt(err_sum / (4.0 * N))
+            err_norm = n_wet > 0 ? sqrt(err_sum / (4.0 * n_wet)) : zero(W)
 
             q1 = 0.14
             q2 = 0.08
@@ -450,6 +607,10 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                 step_accepted = false
                 fac = min(1.0, max(fac_min, safety * (e1^q1)))
                 dt_adaptive = max(dt * fac, 1e-6)
+                if stats
+                    println("  [RK45 Step Rejected] err_norm = ", round(err_norm, digits=3), " | Reducing dt: ", round(dt, digits=6), " -> ", round(dt_adaptive, digits=6))
+                    flush(stdout)
+                end
             end
         end
 
@@ -492,6 +653,7 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                     " m/s | Dry Cells: ",
                     n_dry,
                 )
+                flush(stdout)
             end
 
             if saveat != zero(FLOAT_TYPE[]) && t >= nextTimeStep

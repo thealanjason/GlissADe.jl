@@ -200,7 +200,7 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         end
 
         ### COMPUTE TIMESTEP ###
-        dt = computeTimeStep(solver, Cₘ, Δₑ, caches)
+        dt = computeTimeStep(solver, Cₘ, Δₑ, caches) * 0.4
         if typeof(dt) <: FLOAT_TYPE[]
             stats && println("dt: ", dt)
         else

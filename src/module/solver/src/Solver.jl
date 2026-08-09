@@ -110,7 +110,7 @@ function Solver(solution::Solution)
 
     # UNDER - RELAXATION #
     if isnothing(alpha_p)
-        alpha_p = 0.5 * one(FLOAT_TYPE[])
+        alpha_p = implicit ? 0.5 * one(FLOAT_TYPE[]) : 1.0 * one(FLOAT_TYPE[])
     end
     if isnothing(alpha_h)
         alpha_h = 0.5 * one(FLOAT_TYPE[])

@@ -50,8 +50,8 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
                 scalar = true,
             )
             h_edge = sca_e[1]
-            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
-            cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+            g_n = max(zero(W), -dot(nₑ, g)) # Normal gravity component (always positive: g opposes outward normal)
+            cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * g_n))
         end
     end
     return cₑ
@@ -113,8 +113,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                     scalar = true,
                 )
                 h_edge = sca_e[1]
-                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * dot(nₑ, g)))
-                cₑ = max(cₑ, abs(flux_edge) - sqrt(h_edge * dot(nₑ, g)))
+                g_n = max(zero(W), -dot(nₑ, g)) # Normal gravity component (always positive: g opposes outward normal)
+                cₑ = max(cₑ, abs(flux_edge) + sqrt(h_edge * g_n))
             end
         end
     else
@@ -129,6 +129,12 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
             chunk -> compute_chunk_edge_velocity(solver, caches, chunk)
         )
     end
-    dt = (Cₘ * Δₑ / cₑ) * 0.4 # Some Factor to reduce the maximum time-step.
+    # Fallback: if no wet edges contributed (e.g. first timestep with all-zero velocity),
+    # use the gravity wave speed at h_min to produce a conservative finite dt.
+    g_mag = sqrt(dot(g, g))
+    if cₑ == zero(W)
+        cₑ = sqrt(solver.h_min * g_mag) + 1e-6
+    end
+    dt = Cₘ * Δₑ / cₑ
     return dt
 end
