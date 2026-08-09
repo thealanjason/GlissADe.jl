@@ -11,7 +11,16 @@ export computeRHS!
     computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
 Compute the spatial right-hand side rates `dh_dt` and `du_dt` for thickness and velocity. `INTERNAL`
 """
-function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches, dt::W = zero(eltype(h))) where {W}
+function computeRHS!(
+    solver,
+    dh_dt,
+    du_dt,
+    h,
+    vel,
+    p,
+    caches,
+    dt::W = zero(eltype(h)),
+) where {W}
     global threads, rho, alpha, zeta, g, INT_TYPE, FLOAT_TYPE
 
     Cells = solver.Cells
@@ -116,19 +125,34 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches, dt::W = zero(eltyp
             # Momentum advection flux in non-conservative form (u_edge - u_i) to ensure Galilean invariance and prevent h_e/h_i front amplification
             if flux_edge >= zero(W)
                 centralInterpolateParams!(params_central, Cells, i, j, ids)
-                v_adv1 = muladd(params_central[1], vel_i[1], params_central[2] * vel_n[1]) - vel_i[1]
-                v_adv2 = muladd(params_central[1], vel_i[2], params_central[2] * vel_n[2]) - vel_i[2]
-                v_adv3 = muladd(params_central[1], vel_i[3], params_central[2] * vel_n[3]) - vel_i[3]
+                v_adv1 =
+                    muladd(params_central[1], vel_i[1], params_central[2] * vel_n[1]) -
+                    vel_i[1]
+                v_adv2 =
+                    muladd(params_central[1], vel_i[2], params_central[2] * vel_n[2]) -
+                    vel_i[2]
+                v_adv3 =
+                    muladd(params_central[1], vel_i[3], params_central[2] * vel_n[3]) -
+                    vel_i[3]
             else
                 upwindParams!(params_upwind, flux_edge)
-                v_adv1 = muladd(params_upwind[1], vel_i[1], params_upwind[2] * vel_n[1]) - vel_i[1]
-                v_adv2 = muladd(params_upwind[1], vel_i[2], params_upwind[2] * vel_n[2]) - vel_i[2]
-                v_adv3 = muladd(params_upwind[1], vel_i[3], params_upwind[2] * vel_n[3]) - vel_i[3]
+                v_adv1 =
+                    muladd(params_upwind[1], vel_i[1], params_upwind[2] * vel_n[1]) -
+                    vel_i[1]
+                v_adv2 =
+                    muladd(params_upwind[1], vel_i[2], params_upwind[2] * vel_n[2]) -
+                    vel_i[2]
+                v_adv3 =
+                    muladd(params_upwind[1], vel_i[3], params_upwind[2] * vel_n[3]) -
+                    vel_i[3]
             end
 
-            adv_contrib1 = muladd(Iₛ[1, 1], v_adv1, muladd(Iₛ[1, 2], v_adv2, Iₛ[1, 3] * v_adv3))
-            adv_contrib2 = muladd(Iₛ[2, 1], v_adv1, muladd(Iₛ[2, 2], v_adv2, Iₛ[2, 3] * v_adv3))
-            adv_contrib3 = muladd(Iₛ[3, 1], v_adv1, muladd(Iₛ[3, 2], v_adv2, Iₛ[3, 3] * v_adv3))
+            adv_contrib1 =
+                muladd(Iₛ[1, 1], v_adv1, muladd(Iₛ[1, 2], v_adv2, Iₛ[1, 3] * v_adv3))
+            adv_contrib2 =
+                muladd(Iₛ[2, 1], v_adv1, muladd(Iₛ[2, 2], v_adv2, Iₛ[2, 3] * v_adv3))
+            adv_contrib3 =
+                muladd(Iₛ[3, 1], v_adv1, muladd(Iₛ[3, 2], v_adv2, Iₛ[3, 3] * v_adv3))
 
             factor_adv = zeta * flux_edge * hₑ * Lₑ
             F_adv1 = muladd(-factor_adv, adv_contrib1, F_adv1)
@@ -136,9 +160,12 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches, dt::W = zero(eltyp
             F_adv3 = muladd(-factor_adv, adv_contrib3, F_adv3)
 
             # Momentum pressure gradient contribution
-            press_contrib1 = muladd(Iₛ[1, 1], mₑ[1], muladd(Iₛ[1, 2], mₑ[2], Iₛ[1, 3] * mₑ[3]))
-            press_contrib2 = muladd(Iₛ[2, 1], mₑ[1], muladd(Iₛ[2, 2], mₑ[2], Iₛ[2, 3] * mₑ[3]))
-            press_contrib3 = muladd(Iₛ[3, 1], mₑ[1], muladd(Iₛ[3, 2], mₑ[2], Iₛ[3, 3] * mₑ[3]))
+            press_contrib1 =
+                muladd(Iₛ[1, 1], mₑ[1], muladd(Iₛ[1, 2], mₑ[2], Iₛ[1, 3] * mₑ[3]))
+            press_contrib2 =
+                muladd(Iₛ[2, 1], mₑ[1], muladd(Iₛ[2, 2], mₑ[2], Iₛ[2, 3] * mₑ[3]))
+            press_contrib3 =
+                muladd(Iₛ[3, 1], mₑ[1], muladd(Iₛ[3, 2], mₑ[2], Iₛ[3, 3] * mₑ[3]))
             factor_press = rho_inv * alpha * hₑ * pₑ * Lₑ
             F_press1 = muladd(-factor_press, press_contrib1, F_press1)
             F_press2 = muladd(-factor_press, press_contrib2, F_press2)

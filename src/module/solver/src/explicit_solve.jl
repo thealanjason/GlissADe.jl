@@ -429,13 +429,15 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                     vel_tmp[3*i-2] =
                         vel[3*i-2] +
                         dt * (
-                            (19372.0 / 6561.0) * ku1[3*i-2] - (25360.0 / 2187.0) * ku2[3*i-2] +
+                            (19372.0 / 6561.0) * ku1[3*i-2] -
+                            (25360.0 / 2187.0) * ku2[3*i-2] +
                             (64448.0 / 6561.0) * ku3[3*i-2] - (212.0 / 729.0) * ku4[3*i-2]
                         )
                     vel_tmp[3*i-1] =
                         vel[3*i-1] +
                         dt * (
-                            (19372.0 / 6561.0) * ku1[3*i-1] - (25360.0 / 2187.0) * ku2[3*i-1] +
+                            (19372.0 / 6561.0) * ku1[3*i-1] -
+                            (25360.0 / 2187.0) * ku2[3*i-1] +
                             (64448.0 / 6561.0) * ku3[3*i-1] - (212.0 / 729.0) * ku4[3*i-1]
                         )
                     vel_tmp[3*i] =
@@ -608,7 +610,14 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                 fac = min(1.0, max(fac_min, safety * (e1^q1)))
                 dt_adaptive = max(dt * fac, 1e-6)
                 if stats
-                    println("  [RK45 Step Rejected] err_norm = ", round(err_norm, digits=3), " | Reducing dt: ", round(dt, digits=6), " -> ", round(dt_adaptive, digits=6))
+                    println(
+                        "  [RK45 Step Rejected] err_norm = ",
+                        round(err_norm, digits = 3),
+                        " | Reducing dt: ",
+                        round(dt, digits = 6),
+                        " -> ",
+                        round(dt_adaptive, digits = 6),
+                    )
                     flush(stdout)
                 end
             end

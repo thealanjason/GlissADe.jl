@@ -9,9 +9,9 @@ using GlissADe
         "./examples/simpleslope/simpleslope/faceLabels",
     )
     Cells = preprocess(points, faces, Float64, comp_neighbours = true)
-    
+
     qual = GlissADe.MeshQuality(Cells)
-    
+
     @test length(qual) == length(Cells)
     @test all(isfinite, qual)
     # Orthogonal mesh quality is bounded in (0, 1]
