@@ -35,8 +35,18 @@ jobs:
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
-      - name: Use Julia cache
-        uses: julia-actions/cache@v3
+      - name: Cache Julia environment and precompiled packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.julia/artifacts
+            ~/.julia/compiled
+            ~/.julia/packages
+            ~/.julia/registries
+          key: ${{ runner.os }}-x64-julia-1-docs-${{ hashFiles('**/Project.toml', '**/Manifest.toml', 'docs/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-x64-julia-1-docs-
+            ${{ runner.os }}-x64-julia-1-
       - name: Instantiate environment with development version of the package
         run: |
           julia --project=docs -e '
