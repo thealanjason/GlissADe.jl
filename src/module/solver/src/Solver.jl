@@ -53,6 +53,9 @@ export Solver
     h_clip::W
     h_min::W
 
+    # EXPLICIT METHOD #
+    explicit_method::Symbol
+
     # Discretized Precomputed Geometry
     Cells::Vector{Cell{T,S,W}} # Precomputed discretized geometry
     points::Vector{Vector{W}} # Coordinates of vertices of the mesh
@@ -76,6 +79,7 @@ function Solver(solution::Solution)
     MIN_ITERS,
     h_clip,
     h_min,
+    explicit_method,
     Cells,
     location,
     points,
@@ -142,6 +146,18 @@ function Solver(solution::Solution)
         h_min = 1.0e-3 * one(W)
     end
 
+    # EXPLICIT METHOD #
+    if isnothing(explicit_method)
+        if isdefined(@__MODULE__, :explicit_method) &&
+           getfield(@__MODULE__, :explicit_method) !== nothing
+            explicit_method_val = getfield(@__MODULE__, :explicit_method)
+        else
+            explicit_method_val = :rk4
+        end
+    else
+        explicit_method_val = explicit_method
+    end
+
     if isnothing(Cells)
         throw("Cells field shouldn't be empty")
     end
@@ -159,6 +175,7 @@ function Solver(solution::Solution)
         alpha_h = alpha_h,
         h_clip = h_clip,
         h_min = h_min,
+        explicit_method = explicit_method_val,
         Cells = Cells,
         p_MAX_RESIDUAL = p_MAX_RESIDUAL,
         location = location,

@@ -35,6 +35,8 @@ include("./src/linear_system/generateLinearSystem.jl")
 include("./src/update_laws/implicit/updateMomentum.jl")
 include("./src/update_laws/implicit/updateThickness.jl")
 include("./src/update_laws/implicit/updatePressure.jl")
+include("./src/update_laws/explicit/computeRHS.jl")
+include("./src/explicit_solve.jl")
 
 export solve
 
@@ -559,10 +561,7 @@ function solve(solver, tspan; Cₘ = 0.9, saveat = 0.0, rtol = 0.01)
     global implicit
     if implicit
         return implicit_solve(solver, tspan, Cₘ, saveat, rtol)
+    else
+        return explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     end
-
-    # Still under work :(
-    # else
-    #     return explicit_solve(solver, tspan, Cₘ, saveat, rtol)
-    # end
 end

@@ -22,7 +22,7 @@ function _parsefacelabels_openfoam(
     facelabels = Vector{INT_TYPE[]}(undef, n_facelabels)
     s_facelabels = @view s_facelabels_file[22:(22+n_facelabels-1)]
     STATS[] && println("Reading face labels...")
-    @inbounds @maybe_threads Threads.nthreads == 1 || !THREADS[] for i = 1:n_facelabels
+    @inbounds @maybe_threads Threads.nthreads() == 1 || !THREADS[] for i = 1:n_facelabels
         facelabels[i] = parse(INT_TYPE[], s_facelabels[i]) + 1 + correction_factor
     end
     return facelabels
