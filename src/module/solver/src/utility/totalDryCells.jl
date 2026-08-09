@@ -29,6 +29,12 @@ function totalDryCells(solver)
         eachindex(Cells),
         max(1, div(length(Cells), Threads.nthreads())),
     )
-    n_dry = @maybe_spawn(serial, +, zero(INT_TYPE[]), chunks, chunk -> sum_dry(Cells, solver.h_min, chunk))
+    n_dry = @maybe_spawn(
+        serial,
+        +,
+        zero(INT_TYPE[]),
+        chunks,
+        chunk -> sum_dry(Cells, solver.h_min, chunk)
+    )
     return n_dry
 end
