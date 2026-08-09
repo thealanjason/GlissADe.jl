@@ -69,7 +69,7 @@ function computeRHS!(
         F_grav1 = zero(W)
         F_grav2 = zero(W)
         F_grav3 = zero(W)
-        @fastmath @inbounds for i2 = 1:3
+        @inbounds for i2 = 1:3
             g_i2 = g[i2]
             F_grav1 = muladd(Iₛ[1, i2], g_i2, F_grav1)
             F_grav2 = muladd(Iₛ[2, i2], g_i2, F_grav2)
@@ -88,7 +88,7 @@ function computeRHS!(
         F_press2 = zero(W)
         F_press3 = zero(W)
 
-        @fastmath @inbounds for j in eachindex(Cells[i].neighbours)
+        @inbounds for j in eachindex(Cells[i].neighbours)
             Lₑ = Cells[i].edge_lengths[j]
             mₑ = Cells[i].edge_binormals[j]
             getIds!(ids, Cells, i, j)

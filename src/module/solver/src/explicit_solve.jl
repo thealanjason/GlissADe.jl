@@ -87,8 +87,10 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
     stats && println("Starting explicit solve using method: :", method)
 
-    dt_adaptive = zero(W)
-    err_prev = one(W)
+    # Step-control scalars are always Float64 regardless of W (field type).
+    # Using zero(W)/one(W) when W=Dual contaminates dt → t → push!(time_steps) crash.
+    dt_adaptive = 0.0
+    err_prev = 1.0
 
     while t < tspan[2]
         # Sync live state to Cells so computeTimeStep reads correct h and vel
@@ -112,13 +114,13 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
         if method == :rk45
             dt =
-                (dt_adaptive == zero(W)) ? min(0.1 * dt_cfl, tspan[2] - t) :
+                (dt_adaptive == 0.0) ? min(0.1 * dt_cfl, tspan[2] - t) :
                 min(dt_adaptive, dt_cfl, tspan[2] - t)
         else
             dt = min(dt_cfl, tspan[2] - t)
         end
 
-        if dt <= zero(W)
+        if dt <= 0.0
             break
         end
 
@@ -548,11 +550,11 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
             end
             computeRHS!(solver, kh7, ku7, h_tmp, vel_tmp, p, caches, dt)
 
-            # Error estimation for step control using physical (atol + rtol * |y|) scaling
-            atol_h = 1e-3 * one(W)
-            atol_u = 1e-2 * one(W)
-            tol_r = max(rtol, 1e-3) * one(W)
-            err_sum = zero(W)
+            # Error estimation tolerances: always Float64 (stripped to float in step control anyway)
+            atol_h = 1e-3
+            atol_u = 1e-2
+            tol_r = max(rtol, 1e-3)
+            err_sum = zero(W)  # W-typed: accumulates Dual² terms before value() extraction
             n_wet = 0
             @inbounds for i = 1:N
                 h[i] <= solver.h_min && continue
@@ -589,30 +591,32 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                 err_sum +=
                     (eh / sc_h)^2 + (eu1 / sc_u1)^2 + (eu2 / sc_u2)^2 + (eu3 / sc_u3)^2
             end
-            err_norm = n_wet > 0 ? sqrt(err_sum / (4.0 * n_wet)) : zero(W)
+            # Strip Dual from err_norm: step-size is a control variable, not part of AD graph.
+            # value() is already imported via `import ForwardDiff.value` in GlissADe.jl.
+            err_f64 = n_wet > 0 ? sqrt(max(value(err_sum) / (4.0 * n_wet), 0.0)) : 0.0
 
             q1 = 0.14
             q2 = 0.08
             safety = 0.85
             fac_max = 1.5
             fac_min = 0.2
-            e1 = 1.0 / max(err_norm, 1e-6)
+            e1 = 1.0 / max(err_f64, 1e-6)
             e2 = 1.0 / max(err_prev, 1e-6)
-            if err_norm <= one(W) || dt <= 1e-6
+            if err_f64 <= 1.0 || dt <= 1e-6
                 step_accepted = true
                 h .= h_tmp
                 vel .= vel_tmp
                 fac = min(fac_max, max(fac_min, safety * (e1^q1) * (e2^-q2)))
-                dt_adaptive = min(dt_cfl, dt * fac)
-                err_prev = max(err_norm, 1e-4)
+                dt_adaptive = min(dt_cfl, dt * fac)  # Float64 * Float64 = Float64
+                err_prev = max(err_f64, 1e-4)
             else
                 step_accepted = false
                 fac = min(1.0, max(fac_min, safety * (e1^q1)))
-                dt_adaptive = max(dt * fac, 1e-6)
+                dt_adaptive = max(dt * fac, 1e-6)  # Float64
                 if stats
                     println(
                         "  [RK45 Step Rejected] err_norm = ",
-                        round(err_norm, digits = 3),
+                        round(err_f64, digits = 3),
                         " | Reducing dt: ",
                         round(dt, digits = 6),
                         " -> ",
@@ -641,31 +645,31 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
             end
 
             t += dt
-            push!(time_steps, t)
+            push!(time_steps, value(t))
             push!(sol, zeros(W, 5 * N))
             iter += 1
             updateSol!(sol, iter, Cells)
 
             if stats
                 avg_h = sum(h) / N
-                max_u = maximum(sqrt(vel[3*i-2]^2 + vel[3*i-1]^2 + vel[3*i]^2) for i = 1:N)
+                max_u = maximum(sqrt(max(vel[3*i-2]^2 + vel[3*i-1]^2 + vel[3*i]^2, zero(W))) for i = 1:N)
                 n_dry = count(dry_mask)
                 println(
                     "Time: ",
-                    round(t, digits = 4),
+                    round(value(t), digits = 4),
                     " s | dt: ",
-                    round(dt, digits = 6),
+                    round(value(dt), digits = 6),
                     " s | Avg h: ",
-                    round(avg_h, digits = 4),
+                    round(value(avg_h), digits = 4),
                     " m | Max Vel: ",
-                    round(max_u, digits = 4),
+                    round(value(max_u), digits = 4),
                     " m/s | Dry Cells: ",
                     n_dry,
                 )
                 flush(stdout)
             end
 
-            if saveat != zero(FLOAT_TYPE[]) && t >= nextTimeStep
+            if saveat != zero(FLOAT_TYPE[]) && value(t) >= nextTimeStep
                 iter_sa += one(INT_TYPE[])
                 saveSolution(
                     solver.location,
@@ -681,14 +685,14 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
                 iter_sa += one(INT_TYPE[])
                 saveSolution(
                     solver.location,
-                    t,
+                    value(t),
                     time_steps,
                     sol,
                     iter_sa,
                     points_mat,
                     cells,
                 )
-                nextTimeStep = t
+                nextTimeStep = value(t)
             end
         end
     end
