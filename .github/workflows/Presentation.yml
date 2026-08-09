@@ -1,0 +1,33 @@
+name: Presentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "presentation/**"
+  workflow_dispatch:
+
+concurrency:
+  group: presentation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  presentation:
+    name: Render and deploy presentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: quarto-dev/quarto-actions/setup@v2
+      - name: Render presentation
+        run: quarto render presentation/presentation.qmd
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _output-presentation
+          destination_dir: presentation
+          keep_files: true

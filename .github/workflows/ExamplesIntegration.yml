@@ -1,0 +1,41 @@
+name: Examples integration
+
+on:
+  push:
+    tags: ["*"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  plane-sample:
+    name: examples/plane_sample/plane.jl
+    runs-on: ubuntu-latest
+    env:
+      JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run plane.jl
+        run: julia --project examples/plane_sample/plane.jl
+
+  simpleslope-diff:
+    name: examples/simpleslope/simpleslope_diff.jl
+    runs-on: ubuntu-latest
+    env:
+      JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: "1"
+      - uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run simpleslope_diff.jl
+        run: julia --project examples/simpleslope/simpleslope_diff.jl
