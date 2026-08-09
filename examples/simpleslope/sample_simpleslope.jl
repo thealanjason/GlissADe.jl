@@ -24,9 +24,10 @@ Cells = preprocess(points, faces, Float64, comp_neighbours = true)
 polygon = findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6)
 cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
 
-tspan = (0.0, 2.0)
-saveat = 0.1
-C_m = 0.9
+tspan = (0.0, 30.0)
+saveat = 0.2
+C_m_imp = 4.5
+C_m_exp = 0.5
 
 println("=========================================================")
 println("   GlissADe.jl: Implicit vs Explicit Solver Comparison   ")
@@ -51,8 +52,8 @@ sol_obj_imp = Solution(
     p_MAX_RESIDUAL = 1e-4,
     h_MAX_RESIDUAL = 5e-1,
     u_MAX_RESIDUAL = 5e-1,
-    MAX_ITERS = 150,
-    MIN_ITERS = 100,
+    MAX_ITERS = 250,
+    MIN_ITERS = 200,
     h_clip = 0.0,
     h_min = 1e-3,
     Cells = Cells,
@@ -63,7 +64,7 @@ sol_obj_imp = Solution(
 
 solver_imp = Solver(sol_obj_imp)
 t_start_imp = time()
-time_steps_imp, sol_imp = solve(solver_imp, tspan, saveat = saveat, Cₘ = C_m)
+time_steps_imp, sol_imp = solve(solver_imp, tspan, saveat = saveat, Cₘ = C_m_imp)
 t_elapsed_imp = time() - t_start_imp
 
 vol_imp_init = sum(sol_imp[1][5*i-4] * Cells[i].area for i in eachindex(Cells))
@@ -97,7 +98,7 @@ sol_obj_exp = Solution(
 
 solver_exp = Solver(sol_obj_exp)
 t_start_exp = time()
-time_steps_exp, sol_exp = solve(solver_exp, tspan, saveat = saveat, Cₘ = C_m)
+time_steps_exp, sol_exp = solve(solver_exp, tspan, saveat = saveat, Cₘ = C_m_exp)
 t_elapsed_exp = time() - t_start_exp
 
 vol_exp_init = sum(sol_exp[1][5*i-4] * Cells[i].area for i in eachindex(Cells))
