@@ -54,7 +54,7 @@ export Solver
     h_min::W
 
     # EXPLICIT METHOD #
-    explicit_method::Symbol = :rk4
+    explicit_method::Symbol
 
     # Discretized Precomputed Geometry
     Cells::Vector{Cell{T,S,W}} # Precomputed discretized geometry

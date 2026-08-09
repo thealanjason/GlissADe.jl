@@ -66,7 +66,7 @@ using GlissADe
                 sum(sol[k][5*i-4] * Cells[i].area for i in eachindex(Cells)) for
                 k in eachindex(sol)
             ]
-            @test isapprox(volumes[1], volumes[end], rtol = 0.05)
+            @test isapprox(volumes[1], volumes[end], rtol = 0.005)
 
             rm("./test_solution_explicit_$method", recursive = true, force = true)
         end
