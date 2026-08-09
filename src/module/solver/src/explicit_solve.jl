@@ -652,7 +652,10 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
 
             if stats
                 avg_h = sum(h) / N
-                max_u = maximum(sqrt(max(vel[3*i-2]^2 + vel[3*i-1]^2 + vel[3*i]^2, zero(W))) for i = 1:N)
+                max_u = maximum(
+                    sqrt(max(vel[3*i-2]^2 + vel[3*i-1]^2 + vel[3*i]^2, zero(W))) for
+                    i = 1:N
+                )
                 n_dry = count(dry_mask)
                 println(
                     "Time: ",

@@ -47,11 +47,23 @@ end
         points, faces, Cells, cells_inside = _load_simpleslope()
         initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
         solution = Solution(
-            alpha = 0.5, zeta = 1.25, rho = 1500.0,
-            alpha_p = 0.5, alpha_u = 0.5, alpha_h = 0.5,
-            p_MAX_RESIDUAL = 1e-4, h_MAX_RESIDUAL = 5e-1, u_MAX_RESIDUAL = 5e-1,
-            MAX_ITERS = 60, MIN_ITERS = 50, h_clip = 0.0, h_min = 1e-3,
-            Cells = Cells, location = "./test_solution_impl", points = points, faces = faces,
+            alpha = 0.5,
+            zeta = 1.25,
+            rho = 1500.0,
+            alpha_p = 0.5,
+            alpha_u = 0.5,
+            alpha_h = 0.5,
+            p_MAX_RESIDUAL = 1e-4,
+            h_MAX_RESIDUAL = 5e-1,
+            u_MAX_RESIDUAL = 5e-1,
+            MAX_ITERS = 60,
+            MIN_ITERS = 50,
+            h_clip = 0.0,
+            h_min = 1e-3,
+            Cells = Cells,
+            location = "./test_solution_impl",
+            points = points,
+            faces = faces,
         )
         solver = Solver(solution)
         time_steps, sol = solve(solver, (0.0, 0.3), saveat = 0.1, Cₘ = 0.9)
@@ -80,12 +92,25 @@ end
 
     # ─── Explicit RK4 end-to-end + golden regression ────────────────────────
     @testset "explicit RK4: end-to-end + golden regression" begin
-        init(threads = false, stats = true, plots = false, implicit = false, explicit_method = :rk4)
+        init(
+            threads = false,
+            stats = true,
+            plots = false,
+            implicit = false,
+            explicit_method = :rk4,
+        )
         points, faces, Cells, cells_inside = _load_simpleslope()
         initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
         solution = Solution(
-            alpha = 0.5, zeta = 1.25, rho = 1500.0, h_clip = 0.0, h_min = 1e-3,
-            Cells = Cells, location = "./test_solution_exp_rk4", points = points, faces = faces,
+            alpha = 0.5,
+            zeta = 1.25,
+            rho = 1500.0,
+            h_clip = 0.0,
+            h_min = 1e-3,
+            Cells = Cells,
+            location = "./test_solution_exp_rk4",
+            points = points,
+            faces = faces,
             explicit_method = :rk4,
         )
         solver = Solver(solution)
@@ -98,19 +123,26 @@ end
         @test all(>=(-1e-10), h_all)
 
         # Velocity bounded: t=0.3s, simpleslope => u_max < 4 m/s
-        u_mags = [sqrt(sol[end][5*i-3]^2 + sol[end][5*i-2]^2 + sol[end][5*i-1]^2) for i in eachindex(Cells)]
+        u_mags = [
+            sqrt(sol[end][5*i-3]^2 + sol[end][5*i-2]^2 + sol[end][5*i-1]^2) for
+            i in eachindex(Cells)
+        ]
         @test maximum(u_mags) < 4.0
         @test maximum(u_mags) > 0.1
 
         # Center of mass descends +x downhill
         x_com = [
             sum(sol[k][5*i-4] * Cells[i].center[1] for i in eachindex(Cells)) /
-            max(sum(sol[k][5*i-4] for i in eachindex(Cells)), 1e-10) for k in eachindex(sol)
+            max(sum(sol[k][5*i-4] for i in eachindex(Cells)), 1e-10) for
+            k in eachindex(sol)
         ]
         @test issorted(x_com)
 
         # Mass conservation: explicit finite-volume scheme <0.3% drift over 0.3s
-        volumes = [sum(sol[k][5*i-4] * Cells[i].area for i in eachindex(Cells)) for k in eachindex(sol)]
+        volumes = [
+            sum(sol[k][5*i-4] * Cells[i].area for i in eachindex(Cells)) for
+            k in eachindex(sol)
+        ]
         @test isapprox(volumes[1], volumes[end], rtol = 0.03)
 
         # Golden regression against explicit reference
@@ -168,11 +200,21 @@ end
                 "./examples/simpleslope/simpleslope/faceLabels",
             )
             Cs = preprocess(pts, fs, eltype(x), comp_neighbours = true)
-            ci = cellsInsideBoundingPolygon(findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6), Cs)
+            ci = cellsInsideBoundingPolygon(
+                findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6),
+                Cs,
+            )
             initializeGeometry(ci, Cs, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
             sol_obj = Solution(
-                alpha = 0.5, zeta = 1.25, rho = 1500.0, h_clip = 0.0, h_min = 1e-3,
-                Cells = Cs, location = "./test_diff_exp", points = pts, faces = fs,
+                alpha = 0.5,
+                zeta = 1.25,
+                rho = 1500.0,
+                h_clip = 0.0,
+                h_min = 1e-3,
+                Cells = Cs,
+                location = "./test_diff_exp",
+                points = pts,
+                faces = fs,
                 explicit_method = :rk4,
             )
             _, sol = solve(Solver(sol_obj), (0.0, 0.1), saveat = 0.0, Cₘ = 0.5)
@@ -181,7 +223,13 @@ end
             return norm2(h) / sqrt(length(h))
         end
 
-        init(threads = false, stats = true, plots = false, implicit = false, explicit_method = :rk4)
+        init(
+            threads = false,
+            stats = true,
+            plots = false,
+            implicit = false,
+            explicit_method = :rk4,
+        )
         h0, ε = 0.15, 1e-4
         fd = (avgThickness_explicit([h0 + ε]) - avgThickness_explicit([h0 - ε])) / (2ε)
         ad = ForwardDiff.gradient(avgThickness_explicit, [h0])[1]

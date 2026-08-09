@@ -26,13 +26,13 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             n = ids[2]
 
             # Normal at edge (geometry: always Float64 via T param)
-            Pe  = _mag2(Cells[i].center, Cells[i].edge_centers[j])
+            Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
             Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
             frac = one(W) - Pe / Pen
             nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
 
             # Velocity interpolation (W-typed cache, then strip via value())
-            mul!(vars_vec[1], Cells[i].transform[j],  Cells[i].vel)
+            mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
             mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
             centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
             flux_edge = value(computeFlux(mₑ, vec_e[1]))  # Float64
@@ -41,11 +41,16 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             vars_sca[1] = Cells[i].h
             vars_sca[2] = Cells[n].h
             centralInterpolate!(
-                Cells, i, j, cache,
-                IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true,
+                Cells,
+                i,
+                j,
+                cache,
+                IDS_PRECOMPUTED = true,
+                PARAMS_PRECOMPUTED = true,
+                scalar = true,
             )
             h_edge_f64 = value(sca_e[1])  # Float64 primal
-            g_n_f64    = max(0.0, -dot(nₑ, g))  # Float64: nₑ and g are geometry (T=Float64)
+            g_n_f64 = max(0.0, -dot(nₑ, g))  # Float64: nₑ and g are geometry (T=Float64)
             wave_speed = sqrt(max(h_edge_f64 * g_n_f64, 0.0))
             cₑ = max(cₑ, abs(flux_edge) + wave_speed)
         end
@@ -78,16 +83,21 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 n = ids[2]
 
                 # Normal at edge
-                Pe  = _mag2(Cells[i].center, Cells[i].edge_centers[j])
+                Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
                 Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
                 frac = one(W) - Pe / Pen
                 nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
 
                 # Velocity interpolation
-                mul!(vars_vec[1], Cells[i].transform[j],  Cells[i].vel)
+                mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
                 mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
                 centralInterpolate!(
-                    Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false,
+                    Cells,
+                    i,
+                    j,
+                    cache,
+                    IDS_PRECOMPUTED = true,
+                    scalar = false,
                 )
                 flux_edge = value(computeFlux(mₑ, vec_e[1]))  # Float64
 
@@ -95,17 +105,23 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 vars_sca[1] = Cells[i].h
                 vars_sca[2] = Cells[n].h
                 centralInterpolate!(
-                    Cells, i, j, cache,
-                    IDS_PRECOMPUTED = true, PARAMS_PRECOMPUTED = true, scalar = true,
+                    Cells,
+                    i,
+                    j,
+                    cache,
+                    IDS_PRECOMPUTED = true,
+                    PARAMS_PRECOMPUTED = true,
+                    scalar = true,
                 )
                 h_edge_f64 = value(sca_e[1])  # Float64 primal
-                g_n_f64    = max(0.0, -dot(nₑ, g))
+                g_n_f64 = max(0.0, -dot(nₑ, g))
                 wave_speed = sqrt(max(h_edge_f64 * g_n_f64, 0.0))
                 cₑ = max(cₑ, abs(flux_edge) + wave_speed)
             end
         end
     else
-        chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+        chunks =
+            Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         serial = (Threads.nthreads() == 1) || !threads
         cₑ = @maybe_spawn(
             serial,
