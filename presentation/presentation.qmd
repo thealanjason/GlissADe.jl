@@ -84,6 +84,50 @@ Flash Floods
 - What they can't do well: tell you how sensitive their prediction is to a parameter you're unsure about, or fit that parameter to observed data, without brute-forcing it one run at a time.
 :::
 
+## The Challenge
+
+Uncertainty Informed Predictions
+
+::: {.columns .challenge-row}
+
+::: {.column width="45%"}
+::: {.challenge-flow}
+<img src="./images/challenge_flow.gif">
+<img class="challenge-house" src="./images/house_icon.svg">
+:::
+<p style="font-size: 0.5em; opacity: 0.7;">OpenFOAM-Avalanche [@rauter2018]</p>
+:::
+
+::: {.column width="55%"}
+::: {.challenge-box-flex}
+::: {.challenge-box .fragment}
+::: {.challenge-header .header-blue}
+Monte-Carlo (MC) Method
+:::
+::: {.challenge-body}
+- [-]{.neg} Arbitrary input distributions
+- [-]{.neg} Curse of dimensionality
+- [-]{.neg} Multiple simulation runs required
+- [-]{.neg} Resource and time intensive
+:::
+:::
+
+::: {.challenge-box .fragment}
+::: {.challenge-header .header-purple}
+Surrogate Model
+:::
+::: {.challenge-body}
+- [+]{.pos} Reduced resource usage & time
+- [-]{.neg} Parametrized by few inputs
+- [-]{.neg} New geometry requires retraining
+- [-]{.neg} Infeasible to fully parametrize
+:::
+:::
+:::
+:::
+
+:::
+
 ## The gap: gradients
 
 - Sensitivity analysis, calibration, and inverse problems all come down to the same question: how does the output change if I nudge an input?
