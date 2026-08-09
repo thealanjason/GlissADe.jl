@@ -24,18 +24,11 @@ Compute the total number of dry cells at any time step. See also: [`checkDry`](@
 function totalDryCells(solver)
     global INT_TYPE, threads
     Cells = solver.Cells
-    if threads && (Threads.nthreads() != 1)
-        chunks =
-            Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-            Threads.@spawn sum_dry(Cells, solver.h_min, chunk)
-        end
-        n_dry = mapreduce(fetch, +, tasks; init = zero(INT_TYPE[]))
-    else
-        n_dry = zero(INT_TYPE[])
-        @inbounds for i in eachindex(Cells)
-            n_dry += (Cells[i].h <= solver.h_min) ? 1 : 0
-        end
-    end
+    serial = !threads || (Threads.nthreads() == 1)
+    chunks = Iterators.partition(
+        eachindex(Cells),
+        max(1, div(length(Cells), Threads.nthreads())),
+    )
+    n_dry = @maybe_spawn(serial, +, zero(INT_TYPE[]), chunks, chunk -> sum_dry(Cells, solver.h_min, chunk))
     return n_dry
 end

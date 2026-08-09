@@ -9,13 +9,16 @@ const THREADS = Ref{Bool}(true)
 const STATS = Ref{Bool}(true)
 const PLOTS = Ref{Bool}(false)
 const THREADING_BACKEND = Ref{Symbol}(:polyester_thread)
+const EXPLICIT_METHOD = Ref{Symbol}(:rk4)
+const IMPLICIT = Ref{Bool}(true)
+
 
 global const g = [0.0, 0.0, -9.81]
 
 # Dependencies
 import LinearAlgebra.mul!
 import LinearAlgebra.I as identity
-import LinearAlgebra: norm2, dot
+import LinearAlgebra: norm2, dot, BLAS
 import Interpolations: linear_interpolation
 import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
 import SparseArrays: SparseMatrixCSC

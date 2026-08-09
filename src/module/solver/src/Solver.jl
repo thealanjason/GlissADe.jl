@@ -147,16 +147,7 @@ function Solver(solution::Solution)
     end
 
     # EXPLICIT METHOD #
-    if isnothing(explicit_method)
-        if isdefined(@__MODULE__, :explicit_method) &&
-           getfield(@__MODULE__, :explicit_method) !== nothing
-            explicit_method_val = getfield(@__MODULE__, :explicit_method)
-        else
-            explicit_method_val = :rk4
-        end
-    else
-        explicit_method_val = explicit_method
-    end
+    explicit_method_val = isnothing(explicit_method) ? EXPLICIT_METHOD[] : explicit_method
 
     if isnothing(Cells)
         throw("Cells field shouldn't be empty")
