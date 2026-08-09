@@ -121,7 +121,13 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
         chunks =
             Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
         serial = (Threads.nthreads() == 1) || !threads
-        cₑ = @maybe_spawn(serial, max, zero(W), chunks, chunk -> compute_chunk_edge_velocity(solver, caches, chunk))
+        cₑ = @maybe_spawn(
+            serial,
+            max,
+            zero(W),
+            chunks,
+            chunk -> compute_chunk_edge_velocity(solver, caches, chunk)
+        )
     end
     dt = (Cₘ * Δₑ / cₑ) * 0.4 # Some Factor to reduce the maximum time-step.
     return dt
