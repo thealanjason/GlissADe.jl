@@ -117,7 +117,7 @@ function findRegularPolygon(coord_limits; npoints = 4, epsilon = 1.0e-1)
         # ↓ This evaluates to polygon_points[1]*1.0 + rotation_matrix*vector_to_be_rotated*1.0
         mul!(polygon_points[i], rotation_matrix, vector_to_be_rotated, 1.0, 1.0)
     end
-    stats && println("Computed Regular Polygon.")
+    (@isdefined(stats) ? stats : false) && println("Computed Regular Polygon.")
     return polygon_points
 end
 

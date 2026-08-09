@@ -10,6 +10,8 @@ using GLMakie
 # It evaluates execution time, mass volume conservation, and uses GLMakie's `animatemesh`
 # to render and save 3D flow animation files (MP4) for both solvers.
 
+init(threads = false, stats = false, plots = false)
+
 # 1. Parse Mesh and Precompute Geometry
 points, faces = parsemesh(
     "./examples/simpleslope/simpleslope/points",
@@ -37,7 +39,7 @@ println("\n[1/2] Running Implicit Solver (SIMPLE)...")
 resetCells(Cells)
 initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
 
-init(threads = false, stats = false, plots = false, implicit = true)
+init(threads = false, stats = true, plots = false, implicit = true)
 
 sol_obj_imp = Solution(
     alpha = 0.5,
@@ -78,7 +80,7 @@ println("\n[2/2] Running Explicit Solver (:rk4)...")
 resetCells(Cells)
 initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
 
-init(threads = false, stats = false, plots = false, implicit = false, explicit_method = :rk4)
+init(threads = false, stats = true, plots = false, implicit = false, explicit_method = :rk4)
 
 sol_obj_exp = Solution(
     alpha = 0.5,
