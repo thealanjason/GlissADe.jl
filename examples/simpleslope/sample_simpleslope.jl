@@ -34,50 +34,40 @@ println("   GlissADe.jl: Implicit vs Explicit Solver Comparison   ")
 println("=========================================================")
 
 # -----------------------------------------------------------------
-# --- A. IMPLICIT SOLVE (SIMPLE Algorithm) ---
+# --- A. IMPLICIT SOLVE (SIMPLE Algorithm) [COMMENTED OUT] ---
 # -----------------------------------------------------------------
-println("\n[1/2] Running Implicit Solver (SIMPLE)...")
-resetCells(Cells)
-initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
-
-init(threads = false, stats = true, plots = false, implicit = true)
-
-sol_obj_imp = Solution(
-    alpha = 0.5,
-    zeta = 1.25,
-    rho = 1500.0,
-    alpha_p = 0.5,
-    alpha_u = 0.5,
-    alpha_h = 0.5,
-    p_MAX_RESIDUAL = 1e-4,
-    h_MAX_RESIDUAL = 5e-1,
-    u_MAX_RESIDUAL = 5e-1,
-    MAX_ITERS = 250,
-    MIN_ITERS = 200,
-    h_clip = 0.0,
-    h_min = 1e-3,
-    Cells = Cells,
-    location = "./examples/simpleslope/sample_solution_implicit",
-    points = points,
-    faces = faces,
-)
-
-solver_imp = Solver(sol_obj_imp)
-t_start_imp = time()
-time_steps_imp, sol_imp = solve(solver_imp, tspan, saveat = saveat, Cₘ = C_m_imp)
-t_elapsed_imp = time() - t_start_imp
-
-vol_imp_init = sum(sol_imp[1][5*i-4] * Cells[i].area for i in eachindex(Cells))
-vol_imp_final = sum(sol_imp[end][5*i-4] * Cells[i].area for i in eachindex(Cells))
-
-println("  ✓ Implicit Solve Completed in ", round(t_elapsed_imp, digits = 3), " seconds")
-println("  ✓ Initial Volume: ", round(vol_imp_init, digits = 4), " m³")
-println("  ✓ Final Volume:   ", round(vol_imp_final, digits = 4), " m³")
+# println("\n[1/2] Running Implicit Solver (SIMPLE)...")
+# resetCells(Cells)
+# initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
+# init(threads = false, stats = true, plots = false, implicit = true)
+# sol_obj_imp = Solution(
+#     alpha = 0.5,
+#     zeta = 1.25,
+#     rho = 1500.0,
+#     alpha_p = 0.5,
+#     alpha_u = 0.5,
+#     alpha_h = 0.5,
+#     p_MAX_RESIDUAL = 1e-4,
+#     h_MAX_RESIDUAL = 5e-1,
+#     u_MAX_RESIDUAL = 5e-1,
+#     MAX_ITERS = 250,
+#     MIN_ITERS = 200,
+#     h_clip = 0.0,
+#     h_min = 1e-3,
+#     Cells = Cells,
+#     location = "./examples/simpleslope/sample_solution_implicit",
+#     points = points,
+#     faces = faces,
+# )
+# solver_imp = Solver(sol_obj_imp)
+# t_start_imp = time()
+# time_steps_imp, sol_imp = solve(solver_imp, tspan, saveat = saveat, Cₘ = C_m_imp)
+# t_elapsed_imp = time() - t_start_imp
 
 # -----------------------------------------------------------------
 # --- B. EXPLICIT SOLVE (Runge-Kutta 4th-Order :rk4) ---
 # -----------------------------------------------------------------
-println("\n[2/2] Running Explicit Solver (:rk4)...")
+println("\nRunning Explicit Solver (:rk4)...")
 resetCells(Cells)
 initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
 
@@ -108,28 +98,12 @@ println("  ✓ Explicit Solve Completed in ", round(t_elapsed_exp, digits = 3), 
 println("  ✓ Initial Volume: ", round(vol_exp_init, digits = 4), " m³")
 println("  ✓ Final Volume:   ", round(vol_exp_final, digits = 4), " m³")
 
-speedup = t_elapsed_imp / t_elapsed_exp
-println("\n---------------------------------------------------------")
-println(" Performance Speedup (Explicit vs Implicit): ", round(speedup, digits = 2), "x")
-println("---------------------------------------------------------")
-
 # -----------------------------------------------------------------
 # --- C. ANIMATION GENERATION (GLMakie animatemesh) ---
 # -----------------------------------------------------------------
-println("\nRendering GLMakie flow animations...")
+println("\nRendering GLMakie flow animation...")
 
-file_imp_mp4 = "./examples/simpleslope/sample_simpleslope_implicit.mp4"
 file_exp_mp4 = "./examples/simpleslope/sample_simpleslope_explicit.mp4"
-
-animatemesh(
-    Cells,
-    time_steps_imp,
-    sol_imp;
-    field = :h,
-    filename = file_imp_mp4,
-    framerate = 10,
-)
-println("  ✓ Saved Implicit Animation -> ", file_imp_mp4)
 
 animatemesh(
     Cells,
@@ -141,4 +115,4 @@ animatemesh(
 )
 println("  ✓ Saved Explicit Animation -> ", file_exp_mp4)
 
-println("\nSample simulation comparison complete!")
+println("\nExplicit sample simulation complete!")

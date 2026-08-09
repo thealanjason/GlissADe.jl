@@ -476,6 +476,24 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
             iter += 1
             updateSol!(sol, iter, Cells)
 
+            if stats
+                avg_h = sum(h) / N
+                max_u = maximum(sqrt(vel[3*i-2]^2 + vel[3*i-1]^2 + vel[3*i]^2) for i = 1:N)
+                n_dry = count(dry_mask)
+                println(
+                    "Time: ",
+                    round(t, digits = 4),
+                    " s | dt: ",
+                    round(dt, digits = 6),
+                    " s | Avg h: ",
+                    round(avg_h, digits = 4),
+                    " m | Max Vel: ",
+                    round(max_u, digits = 4),
+                    " m/s | Dry Cells: ",
+                    n_dry,
+                )
+            end
+
             if saveat != zero(FLOAT_TYPE[]) && t >= nextTimeStep
                 iter_sa += one(INT_TYPE[])
                 saveSolution(
