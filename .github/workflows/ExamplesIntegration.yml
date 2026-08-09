@@ -15,8 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+      JULIA_NUM_THREADS: "auto"
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
@@ -41,8 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+      JULIA_NUM_THREADS: "auto"
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
