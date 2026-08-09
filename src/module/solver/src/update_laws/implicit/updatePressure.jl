@@ -40,7 +40,7 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
             vel_n .= @view vel0[(3*n-2):(3*n)]
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+            centralInterpolate!(Cells, i, j, cache, true, false, false)
             vel_edge = vec_e[1]
 
             flux_edge = computeFlux(mₑ, vel_edge)
@@ -50,29 +50,13 @@ function updatePressure!(solver, p, p0, vel0, h0, caches)
             ### THICKNESS AT EDGE ###
             vars_sca[1] = h0[i]
             vars_sca[2] = h0[n]
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = true,
-            )
+            centralInterpolate!(Cells, i, j, cache, true, true, true)
             hₑ = sca_e[1]
 
             ### PRESSURE AT EDGE ###
             vars_sca[1] = p0[i]
             vars_sca[2] = p0[n]
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = true,
-            )
+            centralInterpolate!(Cells, i, j, cache, true, true, true)
             pₑ = sca_e[1]
 
             ## PRESSURE UPDATE ##

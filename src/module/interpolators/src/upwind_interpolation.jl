@@ -25,10 +25,24 @@ Perform upwind interpolation using `cache.vars_vec` if `scalar=false` and `cache
 - PARAMS_PRECOMPUTED - Skip computation of params if set `true`
 - scalar - Use `cache.vars_vec` if set to `false`, else use `cache.vars_sca`
 """
-function upwindInterpolate!(cache, flux_edge; PARAMS_PRECOMPUTED = false, scalar = true)
+@inline function upwindInterpolate!(
+    cache,
+    flux_edge,
+    PARAMS_PRECOMPUTED::Bool,
+    scalar::Bool,
+)
     @unpack ids, params_upwind, sca_e, vec_e, vars_sca, vars_vec = cache
     !PARAMS_PRECOMPUTED && upwindParams!(params_upwind, flux_edge)
     scalar && linearInterpolate!(sca_e, params_upwind, vars_sca)
     !scalar && linearInterpolate!(vec_e, params_upwind, vars_vec)
     return nothing
+end
+
+@inline function upwindInterpolate!(
+    cache,
+    flux_edge;
+    PARAMS_PRECOMPUTED::Bool = false,
+    scalar::Bool = true,
+)
+    return upwindInterpolate!(cache, flux_edge, PARAMS_PRECOMPUTED, scalar)
 end

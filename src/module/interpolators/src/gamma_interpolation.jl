@@ -9,7 +9,7 @@ Last Updated On: 11th January, 2025 22:10 UTC+5:30
     GreenGaussGradient!(cache, Cells, idx, var, vars)
 Compute the gradient using cell-based green gauss gradient scheme.
 """
-function GreenGaussGradient!(cache, Cells, idx, var, vars)
+@inline function GreenGaussGradient!(cache, Cells, idx, var, vars)
     @unpack ids, vars_sca, vars_vec, sca_e, vec_e, grad_sca, grad_vec = cache
     @inbounds area_inv = one(Cells[idx].area) / (Cells[idx].area)
     @inbounds if var == "h" || var == "pb"
@@ -26,7 +26,7 @@ function GreenGaussGradient!(cache, Cells, idx, var, vars)
                 vars_sca[1] = vars[idx]
                 vars_sca[2] = vars[n]
             end
-            centralInterpolate!(Cells, idx, j, cache, IDS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(Cells, idx, j, cache, true, false, true)
             grad_sca[1] += sca_e[1] * Lₑ * mₑ[1] * area_inv
             grad_sca[2] += sca_e[1] * Lₑ * mₑ[2] * area_inv
             grad_sca[3] += sca_e[1] * Lₑ * mₑ[3] * area_inv # Optimization. Unrolling to prevent allocations
@@ -45,14 +45,7 @@ function GreenGaussGradient!(cache, Cells, idx, var, vars)
             ## Velocity at edge
             mul!(vars_vec[1], Cells[idx].transform[j], vars_i) # Global -> Local -> Global to preserve surface tangetiality, is that a word?
             mul!(vars_vec[2], Cells[idx].transform2[j], vars_n)
-            centralInterpolate!(
-                Cells,
-                idx,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                scalar = false,
-            )
+            centralInterpolate!(Cells, idx, j, cache, true, false, false)
             vel_edge = vec_e[1]
 
             for k1 = 1:3
@@ -70,7 +63,7 @@ end
     gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
 Compute the parameters for the gamma interpolation scheme.
 """
-function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
+@inline function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars, βₘ)
     @unpack ids, params_gamma, params_central, grad_sca, grad_vec = cache
 
     @inbounds n = ids[2]
@@ -116,13 +109,39 @@ function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ =
     return nothing
 end
 
+@inline function gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5)
+    return gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars, βₘ)
+end
+
 ## GAMMA INTERPOLATION SCHEME EXPOSED TO THE SOLVER ##
 ##  Not yet used, having issues! ##
 """
     gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = 0.5, IDS_PRECOMPUTED=false)
 Perform gamma interpolation on the var given by `var` and the total array `vars`.
 """
-function gamma!(
+@inline function gamma!(
+    cache,
+    Cells,
+    idx,
+    edge_idx,
+    flux_edge,
+    var,
+    vars,
+    βₘ,
+    IDS_PRECOMPUTED::Bool,
+)
+    @unpack ids, params_gamma, vars_sca, vars_vec, sca_e, vec_e = cache
+    !IDS_PRECOMPUTED && getIds!(ids, Cells, idx, edge_idx)
+    gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars, βₘ)
+    if var == "h" || var == "pb"
+        linearInterpolate!(sca_e, params_gamma, vars_sca)
+    else
+        linearInterpolate!(vec_e, params_gamma, vars_vec)
+    end
+    return nothing
+end
+
+@inline function gamma!(
     cache,
     Cells,
     idx,
@@ -131,15 +150,7 @@ function gamma!(
     var,
     vars;
     βₘ = 0.5,
-    IDS_PRECOMPUTED = false,
+    IDS_PRECOMPUTED::Bool = false,
 )
-    @unpack ids, params_gamma, vars_sca, vars_vec, sca_e, vec_e = cache
-    !IDS_PRECOMPUTED && getIds!(ids, Cells, idx, edge_idx)
-    gammaParams!(cache, Cells, idx, edge_idx, flux_edge, var, vars; βₘ = βₘ)
-    if var == "h" || var == "pb"
-        linearInterpolate!(sca_e, params_gamma, vars_sca)
-    else
-        linearInterpolate!(vec_e, params_gamma, vars_vec)
-    end
-    return nothing
+    return gamma!(cache, Cells, idx, edge_idx, flux_edge, var, vars, βₘ, IDS_PRECOMPUTED)
 end

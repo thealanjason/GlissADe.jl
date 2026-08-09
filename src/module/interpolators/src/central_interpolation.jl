@@ -39,14 +39,14 @@ Performs central interpolation on variables stored in `cache.vars_vec` if `scala
 - PARAMS_PRECOMPUTED - Skip computation of parameters if `set` true
 - scalar - Use `cache.vars_sca` instead of `cache.vars_vec` if set `true`
 """
-function centralInterpolate!(
+@inline function centralInterpolate!(
     Cells,
     Cell_idx,
     edge_idx,
-    cache;
-    IDS_PRECOMPUTED = false,
-    PARAMS_PRECOMPUTED = false,
-    scalar = true,
+    cache,
+    IDS_PRECOMPUTED::Bool,
+    PARAMS_PRECOMPUTED::Bool,
+    scalar::Bool,
 )
     @unpack ids, params_central, sca_e, vec_e, vars_sca, vars_vec = cache
     !IDS_PRECOMPUTED && getIds!(ids, Cells, Cell_idx, edge_idx)
@@ -55,4 +55,24 @@ function centralInterpolate!(
     scalar && linearInterpolate!(sca_e, params_central, vars_sca) # Interpolate vars_sca if scalar variable
     !scalar && linearInterpolate!(vec_e, params_central, vars_vec) # Interpolate vars_vec if vector variable
     return nothing
+end
+
+@inline function centralInterpolate!(
+    Cells,
+    Cell_idx,
+    edge_idx,
+    cache;
+    IDS_PRECOMPUTED::Bool = false,
+    PARAMS_PRECOMPUTED::Bool = false,
+    scalar::Bool = true,
+)
+    return centralInterpolate!(
+        Cells,
+        Cell_idx,
+        edge_idx,
+        cache,
+        IDS_PRECOMPUTED,
+        PARAMS_PRECOMPUTED,
+        scalar,
+    )
 end

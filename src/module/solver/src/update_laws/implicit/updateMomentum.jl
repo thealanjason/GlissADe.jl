@@ -129,36 +129,20 @@ function updateMomentum!(
             ## Thickness at edge ##
             vars_sca[1] = h0[i]
             vars_sca[2] = h0[n]
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = true) # hₑ
+            centralInterpolate!(Cells, i, j, cache, true, false, true) # hₑ
             hₑ = sca_e[1]
 
             ## Pressure at edge ##
             vars_sca[1] = p[i]
             vars_sca[2] = p[n]
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = true,
-            ) # pₑ
+            centralInterpolate!(Cells, i, j, cache, true, true, true) # pₑ
             pₑ = sca_e[1]
 
             vel_n .= @view vel0[(3*n-2):(3*n)]
             ## Velocity at edge ##
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = false,
-            ) # v*
+            centralInterpolate!(Cells, i, j, cache, true, true, false) # v*
             vel_edge = vec_e[1]
 
             flux_edge = computeFlux(mₑ, vel_edge)
