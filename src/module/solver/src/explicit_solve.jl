@@ -60,6 +60,7 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     kh7 = zeros(W, N)
     ku7 = zeros(W, 3 * N)
 
+    dry_mask = BitVector(undef, N)
     # Initialize state from Cells
     @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
         h0[i] = Cells[i].h
@@ -67,6 +68,7 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
         vel0[3*i-1] = Cells[i].vel[2]
         vel0[3*i] = Cells[i].vel[3]
         p0[i] = Cells[i].pb
+        dry_mask[i] = (h0[i] <= solver.h_min)
     end
     updatePressure!(solver, p0, p0, vel0, h0, caches)
     h .= h0
@@ -85,6 +87,7 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
     stats && println("Starting explicit solve using method: :", method)
 
     dt_adaptive = zero(W)
+    err_prev = one(W)
 
     while t < tspan[2]
         # 1. Compute CFL-restricted timestep
@@ -429,27 +432,33 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
             end
             err_norm = sqrt(err_sum / (4.0 * N))
 
-            q = 0.2
+            q1 = 0.14
+            q2 = 0.08
             safety = 0.85
             fac_max = 1.5
             fac_min = 0.2
+            e1 = 1.0 / max(err_norm, 1e-6)
+            e2 = 1.0 / max(err_prev, 1e-6)
             if err_norm <= one(W) || dt <= 1e-6
                 step_accepted = true
                 h .= h_tmp
                 vel .= vel_tmp
-                fac = min(fac_max, max(fac_min, safety * (1.0 / max(err_norm, 1e-4))^q))
+                fac = min(fac_max, max(fac_min, safety * (e1^q1) * (e2^-q2)))
                 dt_adaptive = min(dt_cfl, dt * fac)
+                err_prev = max(err_norm, 1e-4)
             else
                 step_accepted = false
-                fac = min(1.0, max(fac_min, safety * (1.0 / err_norm)^q))
+                fac = min(1.0, max(fac_min, safety * (e1^q1)))
                 dt_adaptive = max(dt * fac, 1e-6)
             end
         end
 
         if step_accepted
-            # Apply cell state back to Cells
+            # Apply cell state back to Cells and update BitVector dry_mask
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
-                if h[i] <= solver.h_min
+                is_dry = (h[i] <= solver.h_min)
+                dry_mask[i] = is_dry
+                if is_dry
                     vel[3*i-2] = zero(W)
                     vel[3*i-1] = zero(W)
                     vel[3*i] = zero(W)

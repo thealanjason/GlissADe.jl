@@ -20,6 +20,16 @@ Check if the face at index `idx` and it's neighbours are dry.
     return dry
 end
 
+@inline function checkDry(dry_mask::BitVector, Cells, ids, idx)
+    @inbounds dry = dry_mask[idx]
+    @inbounds for j in eachindex(Cells[idx].neighbours)
+        (Cells[idx].neighbours[j] <= 0) && continue
+        getIds!(ids, Cells, idx, j)
+        dry = dry && dry_mask[ids[2]]
+    end
+    return dry
+end
+
 """
     _get_cache(caches)
 Thread-safe, lock-free access to pre-allocated thread cache. `INTERNAL`
