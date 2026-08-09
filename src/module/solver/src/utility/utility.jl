@@ -57,7 +57,13 @@ Compute the arithmetic mean of vector `u`
     l = one(W) / length(u)
     serial = (Threads.nthreads() == 1) || !threads
     chunks = Iterators.partition(eachindex(u), max(1, div(length(u), Threads.nthreads())))
-    return @maybe_spawn(serial, +, zero(W), chunks, chunk -> computeChunkAverage(u, chunk, l))
+    return @maybe_spawn(
+        serial,
+        +,
+        zero(W),
+        chunks,
+        chunk -> computeChunkAverage(u, chunk, l)
+    )
 end
 
 """
@@ -123,4 +129,3 @@ function saveAt(timesteps, sol, tspan, dt)
     end
     return t, sol1
 end
-

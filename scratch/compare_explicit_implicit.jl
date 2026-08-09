@@ -32,8 +32,15 @@ function run_comparison()
     initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
     init(threads = false, stats = false, plots = false, implicit = true)
     sol_obj_imp = Solution(
-        alpha = 0.5, zeta = 1.25, rho = 1500.0, h_clip = 0.0, h_min = 1e-3,
-        Cells = Cells, location = "./tmp_imp", points = points, faces = faces
+        alpha = 0.5,
+        zeta = 1.25,
+        rho = 1500.0,
+        h_clip = 0.0,
+        h_min = 1e-3,
+        Cells = Cells,
+        location = "./tmp_imp",
+        points = points,
+        faces = faces,
     )
     solver_imp = Solver(sol_obj_imp)
     t_imp, sol_imp = solve(solver_imp, tspan, saveat = saveat, Cₘ = Cₘ, rtol = 1e-4)
@@ -50,8 +57,16 @@ function run_comparison()
     wet_cells = findall(i -> h_imp[i] > 1e-3, eachindex(Cells))
 
     @printf("\nImplicit Reference Stats:\n")
-    @printf("  Final Thickness Mean: %.6f m, Max: %.6f m\n", sum(h_imp)/length(h_imp), maximum(h_imp))
-    @printf("  Mass Volume Conservation Rel Error: %.4e (%.4f%%)\n", vol_err_imp, vol_err_imp * 100)
+    @printf(
+        "  Final Thickness Mean: %.6f m, Max: %.6f m\n",
+        sum(h_imp)/length(h_imp),
+        maximum(h_imp)
+    )
+    @printf(
+        "  Mass Volume Conservation Rel Error: %.4e (%.4f%%)\n",
+        vol_err_imp,
+        vol_err_imp * 100
+    )
     @printf("  Active Wet Domain Cells: %d / %d\n", length(wet_cells), length(Cells))
     @printf("  Wet Domain norm(u_imp[wet]): %.6f m/s\n", norm(u_imp[wet_cells]))
 
@@ -67,10 +82,24 @@ function run_comparison()
             cell.pb = 0.0
         end
         initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
-        init(threads = false, stats = false, plots = false, implicit = false, explicit_method = method)
+        init(
+            threads = false,
+            stats = false,
+            plots = false,
+            implicit = false,
+            explicit_method = method,
+        )
         sol_obj_exp = Solution(
-            alpha = 0.5, zeta = 1.25, rho = 1500.0, h_clip = 0.0, h_min = 1e-3,
-            Cells = Cells, location = "./tmp_exp_$method", points = points, faces = faces, explicit_method = method
+            alpha = 0.5,
+            zeta = 1.25,
+            rho = 1500.0,
+            h_clip = 0.0,
+            h_min = 1e-3,
+            Cells = Cells,
+            location = "./tmp_exp_$method",
+            points = points,
+            faces = faces,
+            explicit_method = method,
         )
         solver_exp = Solver(sol_obj_exp)
         t_exp, sol_exp = solve(solver_exp, tspan, saveat = saveat, Cₘ = Cₘ)
@@ -86,7 +115,9 @@ function run_comparison()
 
         # Relative Differences vs Implicit Golden Reference
         rel_diff_h_l2 = norm(h_exp[wet_cells] - h_imp[wet_cells]) / norm(h_imp[wet_cells])
-        rel_diff_h_linf = maximum(abs.(h_exp[wet_cells] - h_imp[wet_cells])) / maximum(abs.(h_imp[wet_cells]))
+        rel_diff_h_linf =
+            maximum(abs.(h_exp[wet_cells] - h_imp[wet_cells])) /
+            maximum(abs.(h_imp[wet_cells]))
         rel_diff_u_wet = norm(u_exp[wet_cells] - u_imp[wet_cells]) / norm(u_imp[wet_cells])
         max_abs_diff_u = maximum(abs.(u_exp[wet_cells] - u_imp[wet_cells]))
 
@@ -97,22 +128,49 @@ function run_comparison()
             rel_diff_h_l2 = rel_diff_h_l2,
             rel_diff_h_linf = rel_diff_h_linf,
             rel_diff_u_wet = rel_diff_u_wet,
-            max_abs_diff_u = max_abs_diff_u
+            max_abs_diff_u = max_abs_diff_u,
         )
     end
 
     println("\n=========================================================================")
     println("      SUMMARY COMPARISON ON ACTIVE WET DOMAIN (h > 1e-3) VS IMPLICIT      ")
     println("=========================================================================")
-    @printf("%-12s | %-12s | %-12s | %-12s | %-14s | %-14s\n", "Method", "Vol RelErr", "L2 Diff (h)", "Linf Diff (h)", "Wet RelDiff (u)", "Max AbsDiff (u)")
-    println("--------------------------------------------------------------------------------------------------")
-    @printf("%-12s | %-12.4e | %-12s | %-12s | %-14s | %-14s\n", "Implicit", vol_err_imp, "REFERENCE", "REFERENCE", "REFERENCE", "REFERENCE")
+    @printf(
+        "%-12s | %-12s | %-12s | %-12s | %-14s | %-14s\n",
+        "Method",
+        "Vol RelErr",
+        "L2 Diff (h)",
+        "Linf Diff (h)",
+        "Wet RelDiff (u)",
+        "Max AbsDiff (u)"
+    )
+    println(
+        "--------------------------------------------------------------------------------------------------",
+    )
+    @printf(
+        "%-12s | %-12.4e | %-12s | %-12s | %-14s | %-14s\n",
+        "Implicit",
+        vol_err_imp,
+        "REFERENCE",
+        "REFERENCE",
+        "REFERENCE",
+        "REFERENCE"
+    )
     for method in methods
         res = results[method]
-        @printf("%-12s | %-12.4e | %-12.4e | %-12.4e | %-14.4e | %-14.4e m/s\n", 
-            String(method), res.vol_err, res.rel_diff_h_l2, res.rel_diff_h_linf, res.rel_diff_u_wet, res.max_abs_diff_u)
+        @printf(
+            "%-12s | %-12.4e | %-12.4e | %-12.4e | %-14.4e | %-14.4e m/s\n",
+            String(method),
+            res.vol_err,
+            res.rel_diff_h_l2,
+            res.rel_diff_h_linf,
+            res.rel_diff_u_wet,
+            res.max_abs_diff_u
+        )
     end
-    println("================================================================================------------------")
+    println(
+        "================================================================================------------------",
+    )
 end
 
 run_comparison()

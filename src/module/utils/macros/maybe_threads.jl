@@ -86,17 +86,13 @@ macro maybe_spawn(serial, reducer, init_val, chunks, worker)
                 fill!(buf, _init)
                 if backend === :polyester_core
                     Polyester.@batch per = core for k in eachindex(chunk_vec)
-                        buf[Threads.threadid()] = $(esc(reducer))(
-                            buf[Threads.threadid()],
-                            _worker(chunk_vec[k]),
-                        )
+                        buf[Threads.threadid()] =
+                            $(esc(reducer))(buf[Threads.threadid()], _worker(chunk_vec[k]))
                     end
                 else
                     Polyester.@batch per = thread for k in eachindex(chunk_vec)
-                        buf[Threads.threadid()] = $(esc(reducer))(
-                            buf[Threads.threadid()],
-                            _worker(chunk_vec[k]),
-                        )
+                        buf[Threads.threadid()] =
+                            $(esc(reducer))(buf[Threads.threadid()], _worker(chunk_vec[k]))
                     end
                 end
                 reduce($(esc(reducer)), buf; init = _init)

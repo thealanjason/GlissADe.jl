@@ -160,6 +160,7 @@ function _mean_delta(Cells)
         max(1, div(length(Cells), Threads.nthreads())),
     )
     Δₑ = @maybe_spawn(serial, +, zero(T), chunks, chunk -> _sum_meandelta(Cells, chunk))
-    count = @maybe_spawn(serial, +, zero(INT_TYPE[]), chunks, chunk -> _sum_edges(Cells, chunk))
+    count =
+        @maybe_spawn(serial, +, zero(INT_TYPE[]), chunks, chunk -> _sum_edges(Cells, chunk))
     return Δₑ / count
 end
