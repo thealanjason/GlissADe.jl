@@ -449,6 +449,11 @@ function explicit_solve(solver, tspan, Cₘ, saveat, rtol)
         if step_accepted
             # Apply cell state back to Cells
             @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i = 1:N
+                if h[i] <= solver.h_min
+                    vel[3*i-2] = zero(W)
+                    vel[3*i-1] = zero(W)
+                    vel[3*i] = zero(W)
+                end
                 Cells[i].h = h[i]
                 Cells[i].vel[1] = vel[3*i-2]
                 Cells[i].vel[2] = vel[3*i-1]

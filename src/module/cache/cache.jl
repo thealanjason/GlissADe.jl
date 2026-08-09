@@ -57,4 +57,5 @@ If `ids[2] == ids[1]` then the edge is part of boundary. Has a fixed size `2`.
     ### COMMON FOR ALL ##
     vel_i::Vector{W} = zeros(W, 3) # @view allocates vector when not previously defined. To perform inplace copy instead of allocations.
     vel_n::Vector{W} = zeros(W, 3) # @view allocates vector. To perform inplace copy instead of allocating a new vector.
+    n_e::Vector{W} = zeros(W, 3) # Pre-allocated edge normal vector for CFL calculation
 end

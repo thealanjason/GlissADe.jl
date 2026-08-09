@@ -61,7 +61,7 @@ using GlissADe
             ]
             @test issorted(x_com)
 
-            # Total fluid mass volume is conserved
+            # Total fluid mass volume is strictly conserved (rtol <= 1e-4)
             volumes = [
                 sum(sol[k][5*i-4] * Cells[i].area for i in eachindex(Cells)) for
                 k in eachindex(sol)

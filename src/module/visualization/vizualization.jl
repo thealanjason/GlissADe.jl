@@ -195,8 +195,7 @@ function saveSolution(location::String, time, time_steps, sol, iter, points_mat,
         vtk["W"] = w
         vtk_save(vtk)
     else
-        Interpolator_sol = linear_interpolation(time_steps, sol)
-        sol_t = Interpolator_sol(time)
+        sol_t = interpolate_solution(time_steps, sol, time)
         filename = location * "/time_" * String(Symbol(iter))
         vtk = vtk_grid(
             filename,
