@@ -146,3 +146,36 @@ $presentation-font-size-root: 30px !default;
 .challenge-body p {
   margin: 0.3em 0 !important;
 }
+
+.research-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -0.5em;
+}
+
+.research-sigma {
+  font-size: 2.0em;
+  padding: 0 0.3em;
+  flex: 0 0 auto;
+}
+
+.question-banner {
+  background: #eef2df;
+  font-size: 1em;
+  text-align: center;
+  padding: 0.8em 2em;
+  flex: 0 1 75%;
+  clip-path: polygon(4% 0%, 94% 0%, 100% 50%, 94% 100%, 4% 100%, 10% 50%);
+  margin: 0 0.5em;
+}
+
+.badge-pill {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 1.3em;
+  color: #fff;
+  padding: 0.4em 0.4em;
+  border-radius: 0.5em;
+  background: linear-gradient(90deg, #f0a35c, #e6a0c4, #a9c2dd);
+}

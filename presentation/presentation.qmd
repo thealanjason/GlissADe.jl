@@ -105,7 +105,7 @@ Uncertainty Informed Predictions
 Monte-Carlo (MC) Method
 :::
 ::: {.challenge-body}
-- [-]{.neg} Arbitrary input distributions
+- [+]{.pos} Arbitrary input distributions
 - [-]{.neg} Curse of dimensionality
 - [-]{.neg} Multiple simulation runs required
 - [-]{.neg} Resource and time intensive
@@ -128,6 +128,30 @@ Surrogate Model
 
 :::
 
+## Research Question
+
+::: {.problem-flow-wrap}
+![](./images/problem_flow.png){width=100% fig-align="center"}
+:::
+
+::: {.research-row}
+::: {.research-sigma}
+$\sigma^2_{\text{Inputs}}$
+:::
+
+::: {.question-banner}
+How can we propagate uncertainties in high-dimensional inputs through the computational model?
+:::
+
+::: {.research-sigma}
+$\sigma^2_{\text{Output}}$
+:::
+:::
+
+::: {style="text-align: center;" .fragment}
+[Resource Efficient]{.badge-pill}
+:::
+
 ## The gap: gradients
 
 - Sensitivity analysis, calibration, and inverse problems all come down to the same question: how does the output change if I nudge an input?
@@ -137,7 +161,6 @@ Surrogate Model
 
 ## The governing equations
 
-<img style="float: left;" width="70%" height="80%" src="./images/wolfsgrube.png">
 
 - Built on the surface-aligned, depth-integrated Savage-Hutter equations from Rauter and Tuković [@rauter2018].
 - Mass and momentum balance, written on a curved surface rather than a flat plane, so it can handle real terrain.
@@ -163,7 +186,6 @@ $$
 
 ## How the solver is built
 
-<img style="float: left;" width="500" height="500" src="./images/solverstruct.png">
 
 - A Finite Area Method, the same style OpenFOAM uses for its `faMesh`: cell-centered fields on an unstructured mesh.
 - Each time step is a segregated solve: update pressure, then momentum, then thickness, iterating until it converges.
