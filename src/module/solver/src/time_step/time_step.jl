@@ -10,11 +10,11 @@ Multithreading auxillary for computeTimeStep
 function compute_chunk_edge_velocity(solver, caches, chunk)
     global g
     cache = _get_cache(caches)
-    @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
+    @unpack ids, sca_e, vec_e, vars_sca, vars_vec, n_e = cache
     Cells = solver.Cells
     @inbounds W = typeof(Cells[1].h)
     cₑ = zero(W)
-    nₑ = zeros(W, 3)
+    nₑ = n_e
     for i in chunk
         checkDry(solver, ids, i) && continue # Skip Dry Cells
         @inbounds for j in eachindex(Cells[i].neighbours)
@@ -67,10 +67,10 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     Cells = solver.Cells
     W = typeof(Cells[1].h)
     if (Threads.nthreads() == 1) || !threads
-        cₑ = zero(W)
-        nₑ = zeros(W, 3)
         cache = _get_cache(caches)
-        @unpack ids, sca_e, vec_e, vars_sca, vars_vec = cache
+        @unpack ids, sca_e, vec_e, vars_sca, vars_vec, n_e = cache
+        cₑ = zero(W)
+        nₑ = n_e
         for i in eachindex(Cells)
             checkDry(solver, ids, i) && continue # Skip Dry Cells
             @inbounds for j in eachindex(Cells[i].neighbours)
@@ -120,10 +120,14 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     else
         chunks =
             Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-            Threads.@spawn compute_chunk_edge_velocity(solver, caches, chunk)
-        end
-        cₑ = maximum(fetch.(tasks))
+        serial = (Threads.nthreads() == 1) || !threads
+        cₑ = @maybe_spawn(
+            serial,
+            max,
+            zero(W),
+            chunks,
+            chunk -> compute_chunk_edge_velocity(solver, caches, chunk)
+        )
     end
     dt = (Cₘ * Δₑ / cₑ) * 0.4 # Some Factor to reduce the maximum time-step.
     return dt

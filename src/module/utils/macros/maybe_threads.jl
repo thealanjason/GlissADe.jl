@@ -40,3 +40,63 @@ macro maybe_threads(flag, expr)
         end
     end |> esc
 end
+
+"""
+    @maybe_spawn(serial, reducer, init, chunks, worker)
+Parallel reduction over `chunks` using `worker` as the per-chunk function and `reducer`
+as the combining function. Falls back to serial when `serial == true`.
+
+The backend is controlled by `GlissADe.THREADING_BACKEND[]` (set via `init()`):
+
+| Backend             | Mechanism                                      |
+| :------------------ | :--------------------------------------------- |
+| `:julia`            | `Threads.@spawn` + `mapreduce(fetch, ...)`     |
+| `:polyester_thread` | `Polyester.@batch per=thread` reduction        |
+| `:polyester_core`   | `Polyester.@batch per=core` reduction          |
+
+## Example Usage
+```
+julia> init(threading_backend = :polyester_thread)
+julia> chunks = Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
+julia> result = @maybe_spawn serial + zero(T) chunks chunk -> worker(chunk)
+```
+"""
+macro maybe_spawn(serial, reducer, init_val, chunks, worker)
+    quote
+        local _serial = $(esc(serial))
+        local _chunks = $(esc(chunks))
+        local _worker = $(esc(worker))
+        local _init = $(esc(init_val))
+        if _serial
+            mapreduce($(esc(reducer)), _chunks; init = _init) do chunk
+                _worker(chunk)
+            end
+        else
+            backend = GlissADe.THREADING_BACKEND[]
+            if backend === :julia
+                tasks = map(_chunks) do chunk
+                    Threads.@spawn _worker(chunk)
+                end
+                mapreduce($(esc(reducer)), tasks; init = _init) do t
+                    fetch(t)
+                end
+            else
+                chunk_vec = collect(_chunks)
+                buf = Vector{typeof(_init)}(undef, Threads.nthreads())
+                fill!(buf, _init)
+                if backend === :polyester_core
+                    Polyester.@batch per = core for k in eachindex(chunk_vec)
+                        buf[Threads.threadid()] =
+                            $(esc(reducer))(buf[Threads.threadid()], _worker(chunk_vec[k]))
+                    end
+                else
+                    Polyester.@batch per = thread for k in eachindex(chunk_vec)
+                        buf[Threads.threadid()] =
+                            $(esc(reducer))(buf[Threads.threadid()], _worker(chunk_vec[k]))
+                    end
+                end
+                reduce($(esc(reducer)), buf; init = _init)
+            end
+        end
+    end
+end

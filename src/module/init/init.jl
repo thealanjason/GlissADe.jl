@@ -62,14 +62,20 @@ function init(;
     FLOAT_TYPE[] = float_type
     INT_TYPE[] = int_type
     THREADING_BACKEND[] = threading_backend
-    # `@eval` avoids the parameter/global name collision: a plain `global threads = threads`
-    # here would make Julia treat the `threads` parameter itself as the (as yet unassigned)
-    # global throughout this function's scope, raising UndefVarError before the RHS is ever read.
+    EXPLICIT_METHOD[] = explicit_method
+    IMPLICIT[] = implicit
+    # Pin BLAS to 1 thread when Julia threads are active to prevent oversubscription
+    # (e.g. julia -t 8 + OpenBLAS default 8 threads = 64 threads competing for 8 cores).
+    # When single-threaded, let BLAS use all cores for maximum linear algebra throughput.
+    if threads && Threads.nthreads() > 1
+        BLAS.set_num_threads(1)
+    else
+        BLAS.set_num_threads(Threads.nthreads())
+    end
     @eval global threads = $threads
     @eval global stats = $stats
     @eval global plots = $plots
     @eval global implicit = $implicit
-    @eval global explicit_method = $(QuoteNode(explicit_method))
     STATS[] && println("Library Initialized!")
     return nothing
 end

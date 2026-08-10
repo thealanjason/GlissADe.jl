@@ -210,17 +210,16 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         iters = zero(INT_TYPE[])
         final = false
         if (t >= 2.0 * dt)
-            interpolator = linear_interpolation(time_steps, sol)
+            prev_solution = interpolate_solution(time_steps, sol, t - dt)
+            pprev_solution = interpolate_solution(time_steps, sol, t - 2.0 * dt)
         elseif t < 2.0 * dt && t > dt
-            interpolator = linear_interpolation(time_steps, sol)
+            prev_solution = interpolate_solution(time_steps, sol, t - dt)
         end
         while iters < MAX_ITERS && !final
             iters += 1
             updatePressure!(solver, p, p0, vel0, h0, caches)
             p0 .= p ## Update for next iteration ##
             if (t >= 2.0 * dt)
-                prev_solution = interpolator(t - dt)
-                pprev_solution = interpolator(t - 2.0 * dt)
                 if W <: Dual
                     u_resi = updateMomentum!(
                         solver,
@@ -301,7 +300,6 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
                     )
                 end
             elseif t < 2.0 * dt && t > dt
-                prev_solution = interpolator(t - dt)
                 if W <: Dual
                     u_resi = updateMomentum!(
                         solver,

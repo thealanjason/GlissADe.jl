@@ -54,20 +54,16 @@ Compute the arithmetic mean of vector `u`
 @inline function computeAverage(u)
     global threads
     W = eltype(u)
-    l = one(W) / length(u) # Precompute inverse for some speedup
-    sum = zero(W)
-    if (Threads.nthreads() == 1) || !threads
-        @inbounds for i in eachindex(u)
-            sum += u[i] * l
-        end
-    else
-        chunks = Iterators.partition(eachindex(u), div(length(u), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-            Threads.@spawn computeChunkAverage(u, chunk, l)
-        end
-        sum = mapreduce(fetch, +, tasks, init = zero(eltype(u)))
-    end
-    return sum
+    l = one(W) / length(u)
+    serial = (Threads.nthreads() == 1) || !threads
+    chunks = Iterators.partition(eachindex(u), max(1, div(length(u), Threads.nthreads())))
+    return @maybe_spawn(
+        serial,
+        +,
+        zero(W),
+        chunks,
+        chunk -> computeChunkAverage(u, chunk, l)
+    )
 end
 
 """
@@ -98,18 +94,38 @@ function repack(x::Vector{D}, dx) where {D}
 end
 
 """
-Save the solution at prescribed timesteps.
+    interpolate_solution(timesteps, sol, target_t)
+Interpolate the solution state vector `sol` at target time `target_t`.
+Safe against boundary roundoff errors, non-strictly-increasing timesteps, and works with any solution field type.
+"""
+function interpolate_solution(timesteps, sol, target_t)
+    if length(timesteps) == 0
+        return sol[1]
+    elseif length(timesteps) == 1 || target_t <= timesteps[1]
+        return copy(sol[1])
+    elseif target_t >= timesteps[end]
+        return copy(sol[end])
+    end
+    k = clamp(searchsortedlast(timesteps, target_t), 1, length(timesteps) - 1)
+    dt_k = timesteps[k+1] - timesteps[k]
+    if dt_k == zero(dt_k)
+        return copy(sol[k])
+    end
+    θ = (target_t - timesteps[k]) / dt_k
+    return (one(θ) - θ) .* sol[k] .+ θ .* sol[k+1]
+end
+
+"""
+Save the solution at prescribed timesteps `dt`.
 """
 function saveAt(timesteps, sol, tspan, dt)
-    global INT_TYPE
-    W = eltype(sol[1])
-    total_steps = INT_TYPE[](ceil((tspan[2] - tspan[1]) / dt))
-    Interpolator = linear_interpolation(timesteps, sol)
-    t = collect(range(tspan[1], tspan[2], total_steps))
-    sol1 = [zeros(W, length(sol[1])) for _ = 1:total_steps]
-    for i = 1:total_steps
-        sol_t = Interpolator(t[i])
-        sol1[i] .= sol_t
+    t = collect(range(tspan[1], tspan[2], step = dt))
+    if t[end] < tspan[2] && (tspan[2] - t[end]) > 1e-12 * (tspan[2] - tspan[1])
+        push!(t, tspan[2])
+    end
+    sol1 = Vector{typeof(sol[1])}(undef, length(t))
+    for i in eachindex(t)
+        sol1[i] = interpolate_solution(timesteps, sol, t[i])
     end
     return t, sol1
 end

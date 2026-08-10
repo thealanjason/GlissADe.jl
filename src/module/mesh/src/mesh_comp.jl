@@ -154,28 +154,13 @@ Computes mean spacing between face centroids. Uses multiple threads if `threads=
 function _mean_delta(Cells)
     global threads, INT_TYPE
     T = eltype(Cells[1].center)
-    if (Threads.nthreads() == 1) || !threads
-        Δₑ = zero(T)
-        count = zero(INT_TYPE[])
-        @inbounds for i in eachindex(Cells)
-            @inbounds for j in eachindex(Cells[i].neighbours)
-                (Cells[i].neighbours[j] <= 0) && continue
-                n = Cells[i].neighbours[j]
-                Δₑ += _mag2(Cells[i].center, Cells[n].center)
-                count += 1
-            end
-        end
-    else
-        chunks =
-            Iterators.partition(eachindex(Cells), div(length(Cells), Threads.nthreads()))
-        tasks = map(chunks) do chunk
-            Threads.@spawn _sum_meandelta(Cells, chunk)
-        end
-        Δₑ = mapreduce(fetch, +, tasks, init = zero(T))
-        tasks1 = map(chunks) do chunk
-            Threads.@spawn _sum_edges(Cells, chunk)
-        end
-        count = mapreduce(fetch, +, tasks1, init = zero(INT_TYPE[]))
-    end
+    serial = (Threads.nthreads() == 1) || !threads
+    chunks = Iterators.partition(
+        eachindex(Cells),
+        max(1, div(length(Cells), Threads.nthreads())),
+    )
+    Δₑ = @maybe_spawn(serial, +, zero(T), chunks, chunk -> _sum_meandelta(Cells, chunk))
+    count =
+        @maybe_spawn(serial, +, zero(INT_TYPE[]), chunks, chunk -> _sum_edges(Cells, chunk))
     return Δₑ / count
 end
