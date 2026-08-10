@@ -16,6 +16,11 @@ $presentation-font-size-root: 30px !default;
   font-size: 100% !important;
 }
 
+.math.display {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 .geohazard-img img {
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -178,4 +183,56 @@ $presentation-font-size-root: 30px !default;
   padding: 0.4em 0.4em;
   border-radius: 0.5em;
   background: linear-gradient(90deg, #f0a35c, #e6a0c4, #a9c2dd);
+}
+
+.solution-row {
+  font-size: 0.68em;
+}
+
+.solution-row .math.display {
+  margin: 0.1em 0;
+}
+
+.solution-row li {
+  margin: 0.1em 0;
+}
+
+.solution-row ol,
+.solution-row ul {
+  margin: 0.2em 0;
+}
+
+.solution-row p:first-child {
+  margin-bottom: 0.2em;
+}
+
+.solution-row > .column:last-child {
+  border-left: 2px solid #999;
+  padding-left: 1.5em;
+}
+
+.solution-highlight {
+  display: inline-block;
+  background: #eef2df;
+  padding: 0.15em 0.4em;
+}
+
+.reveal .slides section.title-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.title-slide h2 {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 4em;
+  color: #fff;
+}
+
+.title-slide p {
+  color: #cccccc;
+  font-size: 1.3em;
+  margin-top: 0.5em;
 }

@@ -24,12 +24,6 @@ Topographic Uncertainty
 NASA Blue Marble (left, background removed) vs. EGM2008 geoid height (right, exaggerated). Until we had a precise measurement of the geoid, the Earth's true shape was represented as a sphere plus some uncertainty around it. Once we measured it directly, that uncertainty collapsed into known geometry.
 :::
 
-## GlissADe.jl {background-color="#1a1a1a"}
-
-A differentiable shallow-flow solver for avalanches, landslides, and floods
-
-[image here: title slide graphic, e.g. an avalanche or debris flow photo]
-
 ## Modeling and Simulation for Geohazards
 
 ::: {.columns}
@@ -152,37 +146,70 @@ $\sigma^2_{\text{Output}}$
 [Resource Efficient]{.badge-pill}
 :::
 
-## The gap: gradients
+## Method
 
-- Sensitivity analysis, calibration, and inverse problems all come down to the same question: how does the output change if I nudge an input?
-- The standard way to answer that is finite differences: rerun the whole simulation once per input, perturbed a little. This gets expensive fast as the number of inputs grows.
-- Automatic differentiation answers the same question in close to the cost of one run, no matter how many inputs you're asking about.
-- GlissADe.jl adds this capability to a shallow-flow solver built on a real depth-integrated model, not a toy.
+::: {.columns .solution-row}
+
+::: {.column width="50%"}
+**First Order Second Moment Method (FOSM)**
+
+$$
+\text{Var}(F(X_1, \dots, X_N)) = \sigma_F^2 \approx \mathbf{g}^T \, \Sigma \, \mathbf{g}
+$$
+
+$$
+\Sigma = \text{Cov}(X_1, \dots, X_N)
+$$
+
+<p style="font-size: 0.55em; opacity: 0.7;">e.g., for independent, normally distributed inputs: $\Sigma = \text{diag}(\sigma_{X_1}^2, \dots, \sigma_{X_N}^2)$</p>
+
+$$
+\mathbf{g} = \left[ \frac{\partial F}{\partial \mathbb{E}(X_1)}, \dots, \frac{\partial F}{\partial \mathbb{E}(X_N)} \right]^T
+$$
+:::
+
+::: {.column width="50%"}
+**Gradient Computation**
+
+1. Finite Differencing
+    - Curse of dimensionality
+    - Inaccurate or unstable
+2. Algorithmic/Automatic Differentiation (AD)
+    - Accurate up to machine precision
+    - a) Forward Mode -- Tangent: inputs $\ll$ outputs
+    - [b) Reverse Mode -- Adjoint: inputs $\gg$ outputs]{.solution-highlight}
+:::
+
+:::
+
+## GlissADe.jl {.title-slide background-gradient="linear-gradient(135deg, #1a1a1a, #2c2440, #1a1a1a)"}
+
+Differentiable simulator for geophysical mass flow
 
 ## The governing equations
 
-
-- Built on the surface-aligned, depth-integrated Savage-Hutter equations from Rauter and Tuković [@rauter2018].
-- Mass and momentum balance, written on a curved surface rather than a flat plane, so it can handle real terrain.
-
-$$
- \scriptsize \frac{\partial h}{\partial t} + \nabla \cdot (h\bar{u}) = 0 \; (1)
-$$
-$$
-\scriptsize \frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot (h\bar{u}\bar{u}) =
-$$
+::: {.columns}
+::: {.column width="50%"}
+![](./images/fam_cell_diagram.jpg){width=55% fig-align="center"}
+:::
+::: {.column width="50%"}
+![](./images/fam_local_coords.jpg){width=55% fig-align="center"}
+:::
+:::
 
 $$
-\scriptsize -\frac{1}{\rho}\tau_b + h\textbf{g}_s -\frac{\alpha}{\rho}\;\nabla_s (hp_b) \; (2)
+\frac{\partial h}{\partial t} + \nabla \cdot (h\bar{u}) = 0 \;
 $$
 
 $$
-\scriptsize \xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\textbf{g}_n
+\frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot (h\bar{u}\bar{u}) = -\frac{1}{\rho}\tau_b + h\textbf{g}_s -\frac{\alpha}{\rho}\;\nabla_s (hp_b) \;
 $$
 
 $$
-\scriptsize  - \frac{\alpha}{\rho}\nabla_n(hp_b) - \frac{1}{\rho}\;\textbf{n}_b\;p_b \; (3)
+\xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\textbf{g}_n - \frac{\alpha}{\rho}\nabla_n(hp_b) - \frac{1}{\rho}\;\textbf{n}_b\;p_b \;
 $$
+
+<p style="font-size: 0.5em; opacity: 0.7;">Surface-aligned, depth-integrated Savage-Hutter equations [@rauter2018]</p>
 
 ## How the solver is built
 
@@ -225,15 +252,5 @@ $$
 - Reverse-mode AD via Enzyme.jl, with custom rules for the linear solve (the adjoint counterpart to what we built, see @martinsning2021 on direct vs. adjoint methods), is what would make that tractable. Reactant.jl compilation is worth exploring alongside it for further speedup, and reverse mode needs checkpointing to keep memory bounded across the time-stepping loop. This is the next direction.
 - The N sequential solves per gradient direction are independent of each other and could run in parallel, once the solver's shared workspace is refactored to allow it.
 - Topographic uncertainty quantification is the natural next step, but it raises a real question first: DEM uncertainty comes as a raster grid, while the solver's state lives on an unstructured mesh. Mapping one onto the other introduces its own error. Worth asking whether a structured-grid solver would be a better fit than sticking with the Finite Area Method.
-- A more general conservation-law form, so the solver isn't limited to this one physical model:
 
-$$
-\frac{\partial Q}{\partial t} + M_f\;\nabla\cdot f(Q) + M_g\nabla\;g(Q) = S(Q)
-$$
-
-::: {.column width="75%"}
-*   Conservative flux: $f(Q)$
-*   Gradient sources: $g(Q)$
-*   Constant sources: $S(Q)$
-*   Parameters: $M_f\;,\; M_g$
-:::
+## References
