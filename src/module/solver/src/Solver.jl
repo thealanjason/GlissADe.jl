@@ -110,7 +110,8 @@ function Solver(solution::Solution)
 
     # UNDER - RELAXATION #
     if isnothing(alpha_p)
-        alpha_p = implicit ? 0.5 * one(FLOAT_TYPE[]) : 1.0 * one(FLOAT_TYPE[])
+        is_impl = isdefined(@__MODULE__, :implicit) ? implicit : true
+        alpha_p = is_impl ? 0.5 * one(FLOAT_TYPE[]) : 1.0 * one(FLOAT_TYPE[])
     end
     if isnothing(alpha_h)
         alpha_h = 0.5 * one(FLOAT_TYPE[])

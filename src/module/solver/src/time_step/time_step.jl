@@ -28,13 +28,13 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
             # Normal at edge (geometry: always Float64 via T param)
             Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
             Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
-            frac = one(W) - Pe / Pen
-            nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
+            frac = 1.0 - Pe / Pen
+            nₑ .= @. frac * Cells[i].normal + (1.0 - frac) * Cells[n].normal
 
             # Velocity interpolation (W-typed cache, then strip via value())
             mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
             mul!(vars_vec[2], Cells[i].transform2[j], Cells[n].vel)
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false)
+            centralInterpolate!(Cells, i, j, cache; IDS_PRECOMPUTED = true, scalar = false)
             flux_edge = value(computeFlux(mₑ, vec_e[1]))  # Float64
 
             # Thickness interpolation (W-typed, then strip via value())
@@ -44,13 +44,13 @@ function compute_chunk_edge_velocity(solver, caches, chunk)
                 Cells,
                 i,
                 j,
-                cache,
+                cache;
                 IDS_PRECOMPUTED = true,
                 PARAMS_PRECOMPUTED = true,
                 scalar = true,
             )
             h_edge_f64 = value(sca_e[1])  # Float64 primal
-            g_n_f64 = max(0.0, -dot(nₑ, g))  # Float64: nₑ and g are geometry (T=Float64)
+            g_n_f64 = max(0.0, -value(dot(nₑ, g)))  # Float64: nₑ and g are geometry
             wave_speed = sqrt(max(h_edge_f64 * g_n_f64, 0.0))
             cₑ = max(cₑ, abs(flux_edge) + wave_speed)
         end
@@ -85,8 +85,8 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                 # Normal at edge
                 Pe = _mag2(Cells[i].center, Cells[i].edge_centers[j])
                 Pen = _mag2(Cells[n].center, Cells[i].edge_centers[j]) + Pe
-                frac = one(W) - Pe / Pen
-                nₑ .= @. frac * Cells[i].normal + (one(W) - frac) * Cells[n].normal
+                frac = 1.0 - Pe / Pen
+                nₑ .= @. frac * Cells[i].normal + (1.0 - frac) * Cells[n].normal
 
                 # Velocity interpolation
                 mul!(vars_vec[1], Cells[i].transform[j], Cells[i].vel)
@@ -95,7 +95,7 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                     Cells,
                     i,
                     j,
-                    cache,
+                    cache;
                     IDS_PRECOMPUTED = true,
                     scalar = false,
                 )
@@ -108,13 +108,13 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
                     Cells,
                     i,
                     j,
-                    cache,
+                    cache;
                     IDS_PRECOMPUTED = true,
                     PARAMS_PRECOMPUTED = true,
                     scalar = true,
                 )
                 h_edge_f64 = value(sca_e[1])  # Float64 primal
-                g_n_f64 = max(0.0, -dot(nₑ, g))
+                g_n_f64 = max(0.0, -value(dot(nₑ, g)))
                 wave_speed = sqrt(max(h_edge_f64 * g_n_f64, 0.0))
                 cₑ = max(cₑ, abs(flux_edge) + wave_speed)
             end
@@ -134,7 +134,7 @@ function computeTimeStep(solver, Cₘ, Δₑ, caches)
     # Fallback: if no wet edges contributed, use gravity wave speed at h_min.
     g_mag = sqrt(dot(g, g))
     if cₑ == 0.0
-        cₑ = sqrt(solver.h_min * g_mag) + 1e-6
+        cₑ = sqrt(value(solver.h_min) * g_mag) + 1e-6
     end
     return Cₘ * Δₑ / cₑ  # Always Float64
 end

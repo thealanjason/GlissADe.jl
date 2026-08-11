@@ -3,6 +3,7 @@ using GlissADe
 import LinearAlgebra: norm2
 import ForwardDiff
 import JLD2: load
+!isdefined(Main, :plane_mesh) && include("testutils.jl")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Shared mesh setup helper
@@ -157,37 +158,37 @@ end
     # ─── ForwardDiff: Implicit solver ───────────────────────────────────────
     # Verifies ∂(avgThickness)/∂h0 via AD matches central finite differences (rtol=5%)
     # Both implicit and explicit use identical testcase: tspan=0.1s, Cₘ=0.5, h0=0.15
-    # @testset "ForwardDiff gradient: implicit solver" begin
-    #     function avgThickness_implicit(x)
-    #         pts, fs = parsemesh(
-    #             "./examples/simpleslope/simpleslope/points",
-    #             "./examples/simpleslope/simpleslope/faces",
-    #             "./examples/simpleslope/simpleslope/faceLabels",
-    #         )
-    #         Cs = preprocess(pts, fs, eltype(x), comp_neighbours = true)
-    #         ci = cellsInsideBoundingPolygon(findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6), Cs)
-    #         initializeGeometry(ci, Cs, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
-    #         sol_obj = Solution(
-    #             alpha = 0.5, zeta = 1.25, rho = 1500.0,
-    #             alpha_p = 0.4, alpha_u = 0.4, alpha_h = 0.4,
-    #             p_MAX_RESIDUAL = 1e-4, h_MAX_RESIDUAL = 5e-1, u_MAX_RESIDUAL = 5e-1,
-    #             MAX_ITERS = 60, MIN_ITERS = 50, h_clip = 0.0, h_min = 1e-3,
-    #             Cells = Cs, location = "./test_diff_impl", points = pts, faces = fs,
-    #         )
-    #         _, sol = solve(Solver(sol_obj), (0.0, 0.1), saveat = 0.0, Cₘ = 0.5)
-    #         h = [sol[end][5*i-4] for i in eachindex(Cs)]
-    #         rm("./test_diff_impl", recursive = true, force = true)
-    #         return norm2(h) / sqrt(length(h))
-    #     end
+    @testset "ForwardDiff gradient: implicit solver" begin
+        function avgThickness_implicit(x)
+            pts, fs = parsemesh(
+                "./examples/simpleslope/simpleslope/points",
+                "./examples/simpleslope/simpleslope/faces",
+                "./examples/simpleslope/simpleslope/faceLabels",
+            )
+            Cs = preprocess(pts, fs, eltype(x), comp_neighbours = true)
+            ci = cellsInsideBoundingPolygon(findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6), Cs)
+            initializeGeometry(ci, Cs, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
+            sol_obj = Solution(
+                alpha = 0.5, zeta = 1.25, rho = 1500.0,
+                alpha_p = 0.4, alpha_u = 0.4, alpha_h = 0.4,
+                p_MAX_RESIDUAL = 1e-4, h_MAX_RESIDUAL = 5e-1, u_MAX_RESIDUAL = 5e-1,
+                MAX_ITERS = 60, MIN_ITERS = 50, h_clip = 0.0, h_min = 1e-3,
+                Cells = Cs, location = "./test_diff_impl", points = pts, faces = fs,
+            )
+            _, sol = solve(Solver(sol_obj), (0.0, 0.1), saveat = 0.0, Cₘ = 0.5)
+            h = [sol[end][5*i-4] for i in eachindex(Cs)]
+            rm("./test_diff_impl", recursive = true, force = true)
+            return norm2(h) / sqrt(length(h))
+        end
 
-    #     init(threads = false, stats = true, plots = false, implicit = true)
-    #     h0, ε = 0.15, 1e-4
-    #     fd = (avgThickness_implicit([h0 + ε]) - avgThickness_implicit([h0 - ε])) / (2ε)
-    #     ad = ForwardDiff.gradient(avgThickness_implicit, [h0])[1]
-    #     @test isfinite(ad)
-    #     @test isfinite(fd)
-    #     @test isapprox(ad, fd, rtol = 5e-2)
-    # end
+        init(threads = false, stats = true, plots = false, implicit = true)
+        h0, ε = 0.15, 1e-4
+        fd = (avgThickness_implicit([h0 + ε]) - avgThickness_implicit([h0 - ε])) / (2ε)
+        ad = ForwardDiff.gradient(avgThickness_implicit, [h0])[1]
+        @test isfinite(ad)
+        @test isfinite(fd)
+        @test isapprox(ad, fd, rtol = 5e-2)
+    end
 
     # ─── ForwardDiff: Explicit RK4 solver ───────────────────────────────────
     # Same testcase as implicit: tspan=0.1s, Cₘ=0.5, h0=0.15, ε=1e-4

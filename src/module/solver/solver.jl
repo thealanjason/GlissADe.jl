@@ -200,10 +200,7 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         end
 
         ### COMPUTE TIMESTEP ###
-        dt = computeTimeStep(solver, Cₘ, Δₑ, caches) * 0.4
-        # computeTimeStep reads from Cell.h (Float64), so dt is always Float64.
-        # value() is a no-op for Float64 and strips Dual if ever needed.
-        dt = value(dt)
+        dt = value(computeTimeStep(solver, Cₘ, Δₑ, caches) * 0.4)
         stats && println("dt: ", dt)
         ### INTERNAL CORRECTIONS PER TIMESTEP ###
         iters = zero(INT_TYPE[])

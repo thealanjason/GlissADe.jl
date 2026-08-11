@@ -1,6 +1,22 @@
 using Test
 using GlissADe
-using CairoMakie
+const HAS_MAKIE_BACKEND = try
+    if Base.find_package("GLMakie") !== nothing
+        @eval using GLMakie
+        true
+    elseif Base.find_package("CairoMakie") !== nothing
+        @eval using CairoMakie
+        true
+    else
+        false
+    end
+catch
+    false
+end
+
+if !HAS_MAKIE_BACKEND
+    return
+end
 
 @testset "plotmesh (Makie extension)" begin
     points, faces = plane_mesh()
@@ -167,6 +183,8 @@ end
     end
 
     @testset "live playback under a file-only backend raises" begin
-        @test_throws ArgumentError animatemesh(Cells, time_steps, sol)
+        if !(nameof(Makie.current_backend()) in (:GLMakie, :WGLMakie))
+            @test_throws ArgumentError animatemesh(Cells, time_steps, sol)
+        end
     end
 end

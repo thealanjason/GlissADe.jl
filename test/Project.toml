@@ -1,5 +1,5 @@
 [deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee31e663a"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GlissADe = "d94f865e-9be7-4415-9b4a-0e34ca8c7922"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
