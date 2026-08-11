@@ -1,13 +1,23 @@
 ---
-title: "Differentiable Free Surface Flow Solver"
+title: "GlissADe.jl: Differentiable Simulator for Geophysical Surface Flows"
 subtitle: " "
-author: ""
+author:
+  - name: Tanish Jain
+    url: https://github.com/reckylurker
+  - name: Alan Correa
+    url: https://github.com/thealanjason
 fig-cap-location: margin
 
 format:
   revealjs:
     theme: [format.scss]
     output-file: index.html
+    title-slide-attributes:
+      data-background-gradient: "linear-gradient(135deg, transparent 70%, white 97%), linear-gradient(135deg, #001d3d, #00549f, #3a7cbf)"
+    footer: "GlissADe.jl // JuliaCon2026"
+    slide-number: c/t
+    show-slide-number: all
+    logo: images/mbd_rwth_logo.png
 bibliography: references.bib
 ---
 
@@ -146,12 +156,8 @@ $\sigma^2_{\text{Output}}$
 [Resource Efficient]{.badge-pill}
 :::
 
-## Method
+## First-Order Second-Moment Method
 
-::: {.columns .solution-row}
-
-::: {.column width="50%"}
-**First Order Second Moment Method (FOSM)**
 
 $$
 \text{Var}(F(X_1, \dots, X_N)) = \sigma_F^2 \approx \mathbf{g}^T \, \Sigma \, \mathbf{g}
@@ -161,32 +167,38 @@ $$
 \Sigma = \text{Cov}(X_1, \dots, X_N)
 $$
 
-<p style="font-size: 0.55em; opacity: 0.7;">e.g., for independent, normally distributed inputs: $\Sigma = \text{diag}(\sigma_{X_1}^2, \dots, \sigma_{X_N}^2)$</p>
-
 $$
 \mathbf{g} = \left[ \frac{\partial F}{\partial \mathbb{E}(X_1)}, \dots, \frac{\partial F}{\partial \mathbb{E}(X_N)} \right]^T
 $$
-:::
 
-::: {.column width="50%"}
-**Gradient Computation**
 
-1. Finite Differencing
-    - Curse of dimensionality
-    - Inaccurate or unstable
-2. Algorithmic/Automatic Differentiation (AD)
-    - Accurate up to machine precision
-    - a) Forward Mode -- Tangent: inputs $\ll$ outputs
-    - [b) Reverse Mode -- Adjoint: inputs $\gg$ outputs]{.solution-highlight}
-:::
+::: {.columns}
+
+**Computing Gradients: $\mathbf{g}$**
+
+::: {.column width="40%"}
+
+* Finite Differencing
+  - Curse of dimensionality
+  - Inaccurate or unstable
 
 :::
+
+::: {.column width="60%"}
+
+* Algorithmic/Automatic Differentiation (AD)
+  - Accurate up to machine precision
+  - Forward Mode (Tangent): $n_{\text{inputs}} \ll n_{\text{outputs}}$
+  - Reverse Mode (Adjoint): $n_{\text{inputs}} \gg n_{\text{outputs}}$
+
+:::
+
+:::
+
 
 ## GlissADe.jl {.title-slide background-gradient="linear-gradient(135deg, #1a1a1a, #2c2440, #1a1a1a)"}
 
-Differentiable simulator for geophysical mass flow
-
-## The governing equations
+## The Mathematical Model
 
 ::: {.columns}
 ::: {.column width="50%"}
@@ -200,16 +212,14 @@ Differentiable simulator for geophysical mass flow
 $$
 \frac{\partial h}{\partial t} + \nabla \cdot (h\bar{u}) = 0 \;
 $$
-
 $$
 \frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot (h\bar{u}\bar{u}) = -\frac{1}{\rho}\tau_b + h\textbf{g}_s -\frac{\alpha}{\rho}\;\nabla_s (hp_b) \;
 $$
-
 $$
 \xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\textbf{g}_n - \frac{\alpha}{\rho}\nabla_n(hp_b) - \frac{1}{\rho}\;\textbf{n}_b\;p_b \;
 $$
-
 <p style="font-size: 0.5em; opacity: 0.7;">Surface-aligned, depth-integrated Savage-Hutter equations [@rauter2018]</p>
+
 
 ## How the solver is built
 
@@ -253,4 +263,13 @@ $$
 - The N sequential solves per gradient direction are independent of each other and could run in parallel, once the solver's shared workspace is refactored to allow it.
 - Topographic uncertainty quantification is the natural next step, but it raises a real question first: DEM uncertainty comes as a raster grid, while the solver's state lives on an unstructured mesh. Mapping one onto the other introduces its own error. Worth asking whether a structured-grid solver would be a better fit than sticking with the Finite Area Method.
 
-## References
+##
+
+### References
+
+::: {#refs}
+:::
+
+### Acknowledgements
+
+Financial support from the Deutsche Forschungsgemeinschaft (DFG) through grant IRTG-2379 is gratefully acknowledged.
