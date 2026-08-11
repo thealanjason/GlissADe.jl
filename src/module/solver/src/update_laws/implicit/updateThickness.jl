@@ -74,7 +74,7 @@ function updateThickness!(
             ## Velocity at edge ##
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = false) # v*
+            centralInterpolate!(Cells, i, j, cache, true, false, false) # v*
             vel_edge = vec_e[1]
 
             flux_edge = computeFlux(mₑ, vel_edge)
