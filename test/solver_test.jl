@@ -44,7 +44,7 @@ end
 
     # ─── Implicit SIMPLE end-to-end + golden regression ─────────────────────
     @testset "implicit SIMPLE: end-to-end + golden regression" begin
-        init(threads = false, stats = true, plots = false, implicit = true)
+        init(threads = false, stats = false, plots = false, implicit = true)
         points, faces, Cells, cells_inside = _load_simpleslope()
         initializeGeometry(cells_inside, Cells, 1500.0, h0 = 0.2, u0 = [0.0, 0.0, 0.0])
         solution = Solution(
@@ -95,7 +95,7 @@ end
     @testset "explicit RK4: end-to-end + golden regression" begin
         init(
             threads = false,
-            stats = true,
+            stats = false,
             plots = false,
             implicit = false,
             explicit_method = :rk4,
@@ -196,7 +196,7 @@ end
             return norm2(h) / sqrt(length(h))
         end
 
-        init(threads = false, stats = true, plots = false, implicit = true)
+        init(threads = false, stats = false, plots = false, implicit = true)
         h0, ε = 0.15, 1e-4
         fd = (avgThickness_implicit([h0 + ε]) - avgThickness_implicit([h0 - ε])) / (2ε)
         ad = ForwardDiff.gradient(avgThickness_implicit, [h0])[1]
@@ -241,7 +241,7 @@ end
 
         init(
             threads = false,
-            stats = true,
+            stats = false,
             plots = false,
             implicit = false,
             explicit_method = :rk4,
