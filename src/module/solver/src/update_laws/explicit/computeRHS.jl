@@ -88,7 +88,7 @@ function computeRHS!(
         F_press2 = zero(W)
         F_press3 = zero(W)
 
-        @inbounds for j in eachindex(Cells[i].neighbours)
+        @fastmath @inbounds for j in eachindex(Cells[i].neighbours)
             Lₑ = Cells[i].edge_lengths[j]
             mₑ = Cells[i].edge_binormals[j]
             getIds!(ids, Cells, i, j)
