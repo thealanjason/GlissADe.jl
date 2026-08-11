@@ -176,7 +176,7 @@ $$
 
 **Computing Gradients: $\mathbf{g}$**
 
-::: {.column width="40%"}
+::: {.column width="38%"}
 
 * Finite Differencing
   - Curse of dimensionality
@@ -184,7 +184,7 @@ $$
 
 :::
 
-::: {.column width="60%"}
+::: {.column width="62%"}
 
 * Algorithmic/Automatic Differentiation (AD)
   - Accurate up to machine precision
@@ -221,47 +221,113 @@ $$
 <p style="font-size: 0.5em; opacity: 0.7;">Surface-aligned, depth-integrated Savage-Hutter equations [@rauter2018]</p>
 
 
-## How the solver is built
+## Implementaiton
 
+::: {.columns .challenge-row}
 
-- A Finite Area Method, the same style OpenFOAM uses for its `faMesh`: cell-centered fields on an unstructured mesh.
-- Each time step is a segregated solve: update pressure, then momentum, then thickness, iterating until it converges.
-- Every implicit update boils down to solving a sparse linear system.
-- An explicit Runge-Kutta path (`:rk4`, `:rk45`, and others) has since been added as a cheaper-per-step alternative to the implicit solve. It's generically typed the same way, so we expect it to work with AD out of the box, but that's still under testing, not yet validated against finite differences like the implicit path.
+::: {.column width="33%"}
 
-## How we made it differentiable
+::: {.challenge-header .header-blue}
+Spatial Discretization
+:::
 
-- Every field in the solver (thickness, velocity, pressure) is generically typed, so when you hand it a `Dual` number, the whole solve just works. No rewrite needed.
-- The one place that doesn't come for free, in the implicit solve: the linear solve. Running dual numbers through an iterative solver like GMRES is wasteful and can be numerically shaky.
-- Instead, we differentiate the equation $Au = b$ directly: $A\,du/dx = db/dx - (dA/dx)\,u$, and solve that using the factorization we already computed for the primal solve. This is a known technique (see @martinsning2021, the "AD shortcuts for matrix operations" section), and it's the part of the code we're proudest of.
+![](./images/fam_spatial_discretization.jpg){width=95% fig-align="center"}
 
-## Handling the awkward parts
+<p style="font-size: 0.5em; opacity: 0.7;">[@rauter2018]</p>
 
-- Real solvers have kinks that autodiff is supposed to hate: switching between upwind and central differencing depending on flow direction.
-- It turns out fine here: dual numbers pick the branch by the sign of their value, same as a plain float would, so the derivative comes out right without any special-casing.
-- In-place updates (`.=`, `+=`) on the state arrays are no problem either, since it's all just operator overloading under the hood.
-- We check this isn't just a nice theory: every gradient we compute is validated against finite differences in the test suite.
+::: {style="font-size: 0.65em;"}
+- Cell-centered fields on an unstructured mesh
+- Edge values are computed from neighbouring cells, upwind or central
+:::
+
+:::
+
+::: {.column width="40%"}
+
+::: {.challenge-header .header-purple}
+Time Stepping: Implicit
+:::
+
+```{mermaid}
+%%{init: {'theme':'neutral', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart TD
+    Init[Solver Initialization]
+    P[Solve Pressure Constraint]
+    M[Solve Momentum Equation]
+    H[Solve Thickness Equation]
+    R{residual < tol?}
+    Init --> P --> M --> H --> R
+    R -->|No| P
+    R -->|Yes, next timestep| Init
+```
+
+:::
+
+::: {.column width="32%"}
+
+::: {.challenge-header .header-gray}
+Time Stepping: Explicit
+:::
+
+```{mermaid}
+%%{init: {'theme':'neutral', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart TD
+    Init[Solver Initialization]
+    S[Evaluate Stage Derivatives]
+    C[Combine Stages, Update State]
+    Init --> S --> C
+    C -->|Next timestep| Init
+```
+
+:::
+
+:::
+
+## Making it differentiable
+
+- Generic typing throughout &rarr; `Dual` numbers flow through the whole solve, no rewrite.
+- Linear solve is the exception: differentiate $Au=b$ directly, $A\,du/dx = db/dx - (dA/dx)\,u$, reusing the primal factorization [@martinsning2021].
+- Upwind/central switching, in-place updates (`.=`, `+=`): all just work, no special-casing.
+- Every gradient validated against finite differences in the test suite.
 
 ## Demo: sensitivity analysis
 
-![](./images/sensi.png)
+::: {.columns}
 
+::: {.column width="50%"}
+![](./images/sensi.png)
+:::
+
+::: {.column width="50%"}
 - Example: maximum flow velocity as a function of the basal friction coefficient, computed on the simpleslope case.
 - To be clear about scope: this is a sensitivity study of a physical parameter, not a full uncertainty quantification of terrain. That's further out, see the last slide.
+:::
 
-## Where this stands today
+:::
 
-- Forward-mode only. Cost grows with the number of things you differentiate with respect to, so this is great for a handful of parameters, not for thousands of mesh nodes.
-- The linear solve runs on a single core. The Krylov iteration is inherently sequential, and the ILU preconditioner's triangular solves have a row-by-row dependency chain that isn't parallelized here.
-- Only planar mesh elements are supported, so sharp terrain curvature isn't handled yet.
-- This started as a research internship project. It's a working prototype that proves the idea, not a production tool yet.
+## Roadmap
 
-## Where this could go
+::: {.columns}
 
-- ForwardDiff's cost scales with the number of inputs, so it's fine for a handful of parameters but far too slow once the input space is the full terrain geometry, thousands of mesh points.
-- Reverse-mode AD via Enzyme.jl, with custom rules for the linear solve (the adjoint counterpart to what we built, see @martinsning2021 on direct vs. adjoint methods), is what would make that tractable. Reactant.jl compilation is worth exploring alongside it for further speedup, and reverse mode needs checkpointing to keep memory bounded across the time-stepping loop. This is the next direction.
-- The N sequential solves per gradient direction are independent of each other and could run in parallel, once the solver's shared workspace is refactored to allow it.
-- Topographic uncertainty quantification is the natural next step, but it raises a real question first: DEM uncertainty comes as a raster grid, while the solver's state lives on an unstructured mesh. Mapping one onto the other introduces its own error. Worth asking whether a structured-grid solver would be a better fit than sticking with the Finite Area Method.
+::: {.column width="50%"}
+**Today**
+
+- Forward-mode only, scales with # parameters, not for thousands of mesh nodes
+- Linear solve: single core, sequential Krylov + ILU
+- Planar mesh elements only, no sharp terrain curvature
+- Working prototype, not production
+:::
+
+::: {.column width="50%"}
+**Next**
+
+- Reverse-mode AD (Enzyme.jl) + adjoint linear solve [@martinsning2021], checkpointed
+- Reactant.jl compilation for speedup
+- Parallelize the N independent gradient-direction solves
+- Terrain UQ: reconcile raster DEM vs. unstructured mesh
+:::
+
+:::
 
 ##
 
