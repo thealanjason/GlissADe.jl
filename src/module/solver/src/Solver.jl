@@ -36,9 +36,9 @@ export Solver
     # Solution Properties
     basal_stress
     # UNDER-RELAXATION #
-    alpha_p # Under relaxation coefficient for pressure
-    alpha_u # Under relaxation coefficient for momentum equations (velocity)
-    alpha_h # Under relaxation coefficient for thickness equations (thickness)
+    alpha_p::W # Under relaxation coefficient for pressure
+    alpha_u::W # Under relaxation coefficient for momentum equations (velocity)
+    alpha_h::W # Under relaxation coefficient for thickness equations (thickness)
 
     # CONTROL FLOW #
     MIN_ITERS::S # Minimum corrections per timestep

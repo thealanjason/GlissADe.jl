@@ -60,15 +60,16 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
         F_grav1 = zero(W)
         F_grav2 = zero(W)
         F_grav3 = zero(W)
-        for i2 = 1:3
+        @fastmath @inbounds for i2 = 1:3
             g_i2 = g[i2]
-            F_grav1 += Iₛ[1, i2] * g_i2
-            F_grav2 += Iₛ[2, i2] * g_i2
-            F_grav3 += Iₛ[3, i2] * g_i2
+            F_grav1 = muladd(Iₛ[1, i2], g_i2, F_grav1)
+            F_grav2 = muladd(Iₛ[2, i2], g_i2, F_grav2)
+            F_grav3 = muladd(Iₛ[3, i2], g_i2, F_grav3)
         end
-        F_grav1 *= h[i] * area
-        F_grav2 *= h[i] * area
-        F_grav3 *= h[i] * area
+        h_area = h[i] * area
+        F_grav1 *= h_area
+        F_grav2 *= h_area
+        F_grav3 *= h_area
 
         # Basal Stress component
         tau_b = solver.basal_stress(Cells[i], h[i], vel_i, p[i], alpha, zeta, rho)
@@ -84,7 +85,7 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
         F_press2 = zero(W)
         F_press3 = zero(W)
 
-        @inbounds for j in eachindex(Cells[i].neighbours)
+        @fastmath @inbounds for j in eachindex(Cells[i].neighbours)
             Lₑ = Cells[i].edge_lengths[j]
             mₑ = Cells[i].edge_binormals[j]
             getIds!(ids, Cells, i, j)
@@ -93,72 +94,69 @@ function computeRHS!(solver, dh_dt, du_dt, h, vel, p, caches)
             # Edge thickness
             vars_sca[1] = h[i]
             vars_sca[2] = h[n]
-            centralInterpolate!(Cells, i, j, cache, IDS_PRECOMPUTED = true, scalar = true)
+            centralInterpolate!(Cells, i, j, cache, true, false, true)
             hₑ = sca_e[1]
 
             # Edge pressure
             vars_sca[1] = p[i]
             vars_sca[2] = p[n]
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = true,
-            )
+            centralInterpolate!(Cells, i, j, cache, true, true, true)
             pₑ = sca_e[1]
 
             # Edge velocity
             vel_n .= @view vel[(3*n-2):(3*n)]
             mul!(vars_vec[1], Cells[i].transform[j], vel_i)
             mul!(vars_vec[2], Cells[i].transform2[j], vel_n)
-            centralInterpolate!(
-                Cells,
-                i,
-                j,
-                cache,
-                IDS_PRECOMPUTED = true,
-                PARAMS_PRECOMPUTED = true,
-                scalar = false,
-            )
+            centralInterpolate!(Cells, i, j, cache, true, true, false)
             vel_edge = vec_e[1]
             flux_edge = computeFlux(mₑ, vel_edge)
 
             # Continuity flux: h_edge * flux_edge * L_e
-            flux_sum_h += flux_edge * hₑ * Lₑ
+            flux_sum_h = muladd(flux_edge * hₑ, Lₑ, flux_sum_h)
 
             # Momentum advection flux (using global upwind velocity)
             vel_adv = (flux_edge >= zero(W)) ? vel_i : vel_n
-            adv_contrib1 =
-                Iₛ[1, 1] * vel_adv[1] + Iₛ[1, 2] * vel_adv[2] + Iₛ[1, 3] * vel_adv[3]
-            adv_contrib2 =
-                Iₛ[2, 1] * vel_adv[1] + Iₛ[2, 2] * vel_adv[2] + Iₛ[2, 3] * vel_adv[3]
-            adv_contrib3 =
-                Iₛ[3, 1] * vel_adv[1] + Iₛ[3, 2] * vel_adv[2] + Iₛ[3, 3] * vel_adv[3]
+            adv_contrib1 = muladd(
+                Iₛ[1, 1],
+                vel_adv[1],
+                muladd(Iₛ[1, 2], vel_adv[2], Iₛ[1, 3] * vel_adv[3]),
+            )
+            adv_contrib2 = muladd(
+                Iₛ[2, 1],
+                vel_adv[1],
+                muladd(Iₛ[2, 2], vel_adv[2], Iₛ[2, 3] * vel_adv[3]),
+            )
+            adv_contrib3 = muladd(
+                Iₛ[3, 1],
+                vel_adv[1],
+                muladd(Iₛ[3, 2], vel_adv[2], Iₛ[3, 3] * vel_adv[3]),
+            )
             factor_adv = zeta * flux_edge * hₑ * Lₑ
-            F_adv1 -= factor_adv * adv_contrib1
-            F_adv2 -= factor_adv * adv_contrib2
-            F_adv3 -= factor_adv * adv_contrib3
+            F_adv1 = muladd(-factor_adv, adv_contrib1, F_adv1)
+            F_adv2 = muladd(-factor_adv, adv_contrib2, F_adv2)
+            F_adv3 = muladd(-factor_adv, adv_contrib3, F_adv3)
 
             # Momentum pressure gradient contribution
-            press_contrib1 = Iₛ[1, 1] * mₑ[1] + Iₛ[1, 2] * mₑ[2] + Iₛ[1, 3] * mₑ[3]
-            press_contrib2 = Iₛ[2, 1] * mₑ[1] + Iₛ[2, 2] * mₑ[2] + Iₛ[2, 3] * mₑ[3]
-            press_contrib3 = Iₛ[3, 1] * mₑ[1] + Iₛ[3, 2] * mₑ[2] + Iₛ[3, 3] * mₑ[3]
+            press_contrib1 =
+                muladd(Iₛ[1, 1], mₑ[1], muladd(Iₛ[1, 2], mₑ[2], Iₛ[1, 3] * mₑ[3]))
+            press_contrib2 =
+                muladd(Iₛ[2, 1], mₑ[1], muladd(Iₛ[2, 2], mₑ[2], Iₛ[2, 3] * mₑ[3]))
+            press_contrib3 =
+                muladd(Iₛ[3, 1], mₑ[1], muladd(Iₛ[3, 2], mₑ[2], Iₛ[3, 3] * mₑ[3]))
             factor_press = rho_inv * alpha * hₑ * pₑ * Lₑ
-            F_press1 -= factor_press * press_contrib1
-            F_press2 -= factor_press * press_contrib2
-            F_press3 -= factor_press * press_contrib3
+            F_press1 = muladd(-factor_press, press_contrib1, F_press1)
+            F_press2 = muladd(-factor_press, press_contrib2, F_press2)
+            F_press3 = muladd(-factor_press, press_contrib3, F_press3)
         end
 
         # Final rates
         dh_dt[i] = -flux_sum_h * area_inv
 
         # dvel/dt = (F_adv + F_press + F_grav + F_basal) / (h_i * area)
-        du_dt[3*i-2] = (F_adv1 + F_press1 + F_grav1 + F_basal1) * h_i_inv * area_inv
-        du_dt[3*i-1] = (F_adv2 + F_press2 + F_grav2 + F_basal2) * h_i_inv * area_inv
-        du_dt[3*i] = (F_adv3 + F_press3 + F_grav3 + F_basal3) * h_i_inv * area_inv
+        inv_denom = h_i_inv * area_inv
+        du_dt[3*i-2] = (F_adv1 + F_press1 + F_grav1 + F_basal1) * inv_denom
+        du_dt[3*i-1] = (F_adv2 + F_press2 + F_grav2 + F_basal2) * inv_denom
+        du_dt[3*i] = (F_adv3 + F_press3 + F_grav3 + F_basal3) * inv_denom
     end
 
     return nothing

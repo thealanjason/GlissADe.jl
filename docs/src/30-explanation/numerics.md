@@ -259,6 +259,17 @@ The `location` field is the location of the directory the files need to be store
 
 Before moving further with the formulation of the differencing scheme used, it is better to understand some physical properties of the system. The governing equations for the flow show that it is convection dominated. Irrespective of the distribution of velocity in the domain, the convection term always remains within the bounds specified by the initial conditions. If, for example, the initial distribution has ``0 \leq h(0) \leq 0.5``, then the solution at any time ``h(t)`` always maintains ``0 \leq h(t) \leq 0.5``, i.e. the convection term will never yield values lower than zero or higher than ``0.5``. Therefore, it is essential to preserve this property in the discretized form as well.
 
+## Performance Micro-Optimizations & Lock-Free Architecture
+
+GlissADe.jl incorporates state-of-the-art CPU performance micro-optimizations to maximize simulation throughput and minimize memory allocation:
+
+1. **Lock-Free Thread-Local Caching**: Replaced dynamic `Channel{Cache}` thread locks with thread-indexed `caches[Threads.threadid()]` workspace arrays, eliminating synchronization locks during parallel solves.
+2. **Positional `@inline` Interpolation Stencils**: Spatial interpolators (`centralInterpolate!`, `upwindInterpolate!`, `gamma!`, `GreenGaussGradient!`) utilize `@inline` annotations and positional argument dispatch to eliminate keyword-tuple packing in tight face loops.
+3. **Gustafsson PID Step Size Control**: Adaptive Runge-Kutta 5(4) (`:rk45`) employs a PI step size controller ($q_1=0.14$, $q_2=0.08$ with historical error tracking) to eliminate timestep chattering and step rejections near sharp flow fronts.
+4. **SIMD Vectorization & Hardware FMA Inlining**: Spatial RHS flux loops in `computeRHS!` are annotated with `@fastmath @inbounds` and utilize fused multiply-add `muladd(a, b, c)` hardware primitives for SIMD execution on x86 AVX2/AVX-512 and ARM NEON architectures.
+5. **Compact BitVector Dry-Cell Masking**: Maintains a 1-bit-per-cell `BitVector` dry-cell status mask for bitwise SIMD evaluation during stage sync loops.
+6. **Concrete Type Stability**: All solver structs (`Cache`, `Cell`, `Solver`) are fully concretely typed (`T, S, W`), avoiding hidden `Any` type boxing.
+
 The role of a differencing scheme is to determine the value at edges from the values available at face centers. For the arbitrarily unstructured mesh used in the solver, it is efficient to only use values of the face and its immediate neighbours, as this removes the overhead of storing additional information.
 
 The simplest differencing scheme is the one which follows the linear profile, known as linear or central differencing:
