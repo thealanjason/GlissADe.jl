@@ -40,6 +40,7 @@ using JLD2
                 implicit = false,
                 explicit_method = method,
             )
+            test_dir = mktempdir()
             sol_obj_exp = Solution(
                 alpha = 0.5,
                 zeta = 1.25,
@@ -47,14 +48,14 @@ using JLD2
                 h_clip = 0.0,
                 h_min = 1e-3,
                 Cells = Cells,
-                location = "./test_exp_gold_$method",
+                location = test_dir,
                 points = points,
                 faces = faces,
                 explicit_method = method,
             )
             solver_exp = Solver(sol_obj_exp)
             t_exp, sol_exp = solve(solver_exp, tspan, saveat = saveat, Cₘ = Cₘ)
-            rm("./test_exp_gold_$method", recursive = true, force = true)
+            rm(test_dir, recursive = true, force = true)
 
             h_exp = [sol_exp[end][5*i-4] for i in eachindex(Cells)]
             u_exp = [sol_exp[end][5*i-3] for i in eachindex(Cells)]
