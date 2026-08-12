@@ -1,11 +1,11 @@
 using Test
 using GlissADe
 const HAS_MAKIE_BACKEND = try
-    if Base.find_package("GLMakie") !== nothing
-        @eval using GLMakie
-        true
-    elseif Base.find_package("CairoMakie") !== nothing
+    if Base.find_package("CairoMakie") !== nothing
         @eval using CairoMakie
+        true
+    elseif Base.find_package("GLMakie") !== nothing
+        @eval using GLMakie
         true
     else
         false
