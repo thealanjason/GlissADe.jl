@@ -200,12 +200,8 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
         end
 
         ### COMPUTE TIMESTEP ###
-        dt = computeTimeStep(solver, Cₘ, Δₑ, caches)
-        if typeof(dt) <: FLOAT_TYPE[]
-            stats && println("dt: ", dt)
-        else
-            stats && println("dt: ", dt.value)
-        end
+        dt = value(computeTimeStep(solver, Cₘ, Δₑ, caches) * 0.4)
+        stats && println("dt: ", dt)
         ### INTERNAL CORRECTIONS PER TIMESTEP ###
         iters = zero(INT_TYPE[])
         final = false
@@ -485,11 +481,8 @@ function implicit_solve(solver, tspan, Cₘ, saveat, rtol)
             Cells[i].pb = alpha_p * p[i] + (1.0 - alpha_p) * Cells[i].pb
             Cells[i].vel .= @. alpha_u * vel[(3*i-2):(3*i)] + (1.0 - alpha_u) * Cells[i].vel
         end
-        if (typeof(dt) <: Dual)
-            t += dt.value
-        else
-            t += dt
-        end
+        # t is always Float64: dt is Float64 (from computeTimeStep on Cell.h primal)
+        t += dt
         push!(time_steps, t)
         if (plots)
             push!(residuals, resi_scaled)

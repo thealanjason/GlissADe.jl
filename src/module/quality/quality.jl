@@ -22,13 +22,13 @@ function MeshQuality(Cells)
             n = (Cells[i].neighbours[j] <= 0) ? i : Cells[i].neighbours[j]
             localY = Cells[i].edge_binormals[j]
             if n == i
-                c = normalize(Cells[i].edge_centers[j] - Cells[i].center)
+                c = _normalize(Cells[i].edge_centers[j] - Cells[i].center)
                 dC = round(dot(c, localY), digits = 6)
                 quality[i] += πᵢ * acos(dC) * lᵢ
             else
-                c = normalize(Cells[i].edge_centers[j] - Cells[i].center)
+                c = _normalize(Cells[i].edge_centers[j] - Cells[i].center)
                 dC = round(dot(c, localY), digits = 6)
-                d = normalize(Cells[n].center - Cells[i].center)
+                d = _normalize(Cells[n].center - Cells[i].center)
                 dD = round(dot(d, localY), digits = 6)
                 quality[i] += πᵢ * max(acos(dC), acos(dD)) * lᵢ
             end

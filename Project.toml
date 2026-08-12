@@ -7,6 +7,7 @@ authors = ["Tanish Jain", "Alan Correa"]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -30,11 +31,13 @@ GlissADeMakieExt = "Makie"
 [compat]
 BenchmarkTools = "1.8.0"
 ExtendableSparse = "1"
+ILUZero = "0.2.0"
 JLD2 = "0.5.10"
 Makie = "0.24.13"
 Meshes = "0.57.25"
 MonteCarloMeasurements = "1.4.0"
 Polyester = "0.7.19"
+SparseArrays = "1.12.0"
 julia = "1.12"
 
 [extras]

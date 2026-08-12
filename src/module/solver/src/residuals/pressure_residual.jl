@@ -78,7 +78,9 @@ function computePressureResidual(Cells, h, pb, vel, caches; threads = true)
         res += res1 * res1
         res1 = zero(W)
     end
-    return sqrt(res)
+    # Residuals are convergence-control scalars: strip Dual before sqrt to avoid
+    # NaN in dual parts near zero, and to keep return type always Float64.
+    return sqrt(max(value(res), 0.0))
 end
 
 """

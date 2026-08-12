@@ -20,6 +20,7 @@ import LinearAlgebra.mul!
 import LinearAlgebra.I as identity
 import LinearAlgebra: norm2, dot, BLAS
 import Interpolations: linear_interpolation
+import ILUZero
 import ExtendableSparse: ExtendableSparseMatrix, ILUZeroPreconditioner, factorize!, flush!
 import SparseArrays: SparseMatrixCSC
 import LinearSolve as LinSolv

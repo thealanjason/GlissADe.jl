@@ -69,10 +69,13 @@ function solveLinearSystem(Cells, A, B, precon_x, cache_x, x, Axf, Bxf, dAx, dBx
         @inbounds @maybe_threads Threads.nthreads() == 1 || !threads for i in
                                                                          eachindex(Cells)
             for i1 = (3*i-2):(3*i)
+                for N = 1:chunksize
+                    dBx[N][i1] = B[i1].partials[N]
+                end
                 for i2 = (3*i-2):(3*i)
                     for N = 1:chunksize
                         dAx[N][i1, i2] = A[i1, i2].partials[N]
-                        dBx[N][i1] = B[i1].partials[N] - dAx[N][i1, i2] * solu.u[i2]
+                        dBx[N][i1] -= dAx[N][i1, i2] * solu.u[i2]
                     end
                 end
             end

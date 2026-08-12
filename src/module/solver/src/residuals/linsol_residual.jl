@@ -37,5 +37,6 @@ function computeResidual(solver, u, u_avg, A, B, res)
     mul!(B, A, res, -1.0, 1.0)
     B .= abs.(B)
     sum!(res3, B)
-    return res1[1] / (res2[1] + res3[1] + 1.0e-10)
+    # Residual is a convergence-control scalar: always return Float64, not Dual.
+    return value(res1[1]) / (value(res2[1]) + value(res3[1]) + 1.0e-10)
 end
