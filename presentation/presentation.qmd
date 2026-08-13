@@ -397,19 +397,24 @@ sigma_Y = g' * sigma_x * g
 Computed gradients were checked against central finite differences.
 :::
 
-## Demo: sensitivity analysis
+## Showcase
 
 ::: {.columns}
 
 ::: {.column width="50%"}
-![](./images/sensi.png)
+<!-- TODO: simpleslope simulation snapshot, release area matching findRegularPolygon([5.0, 10.0, -6.0, 6.0]) -->
+![](./images/simpleslope_sim.png)
 :::
 
 ::: {.column width="50%"}
-- Example: maximum flow velocity as a function of the basal friction coefficient, computed on the simpleslope case.
-- To be clear about scope: this is a sensitivity study of a physical parameter, not a full uncertainty quantification of terrain. That's further out, see the roadmap.
+<!-- TODO: replace with sweep over h0 (initial release height) on the simpleslope case, average thickness at t = 15s, plus AD tangent line -->
+![](./images/sensi.png)
 :::
 
+:::
+
+::: {.notes}
+Left: a run of the simpleslope case, this is what we're actually simulating. Right: sweep the initial release height h0 and track average thickness at t = 15s. Overlay the AD gradient at nominal h0 as a tangent line to show it matches the sweep locally, that's the payoff of forward-mode AD: one solve gives you the exact local sensitivity instead of needing the whole sweep. To be clear about scope: this is a sensitivity study of an initial condition, not a full uncertainty quantification of terrain. That's further out, see the roadmap.
 :::
 
 ## Roadmap
