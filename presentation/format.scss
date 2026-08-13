@@ -366,6 +366,34 @@ $presentation-font-size-root: 30px !default;
   font-size: 1.2em;
 }
 
+#title-slide .quarto-title-institute {
+  color: #cccccc;
+  font-size: 0.9em;
+  text-align: center;
+  margin-top: 0.5em;
+}
+
+#title-slide .quarto-title-institute + .quarto-title-institute {
+  margin-top: 0.1em;
+}
+
+#title-slide .date,
+#title-slide .subtitle {
+  color: #cccccc;
+}
+
+#title-slide .subtitle {
+  margin-top: 3em;
+}
+
+#title-slide .quarto-title-conference {
+  color: #ffffff;
+  font-size: 1.8em;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0.75em;
+}
+
 #title-slide .quarto-title-author-name a {
   color: #cccccc;
   text-decoration: none;

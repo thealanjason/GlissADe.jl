@@ -6,14 +6,20 @@ author:
     url: https://github.com/reckylurker
   - name: Alan Correa
     url: https://github.com/thealanjason
+institute:
+  - "Methods for Model-based Development in Computational Engineering"
+  - "RWTH Aachen University"
 fig-cap-location: margin
 
 format:
   revealjs:
     theme: [format.scss]
     output-file: index.html
+    template-partials:
+      - title-slide.html
     title-slide-attributes:
       data-background-gradient: "linear-gradient(135deg, transparent 70%, white 97%), linear-gradient(135deg, #001d3d, #00549f, #3a7cbf)"
+      data-footer: "false"
     footer: "GlissADe.jl // JuliaCon2026"
     slide-number: c/t
     show-slide-number: all
@@ -417,7 +423,6 @@ Computed gradients were checked against central finite differences.
 
 - Forward-mode only, scales with # parameters, not for thousands of mesh nodes
 - Linear solve: single core, sequential Krylov + ILU
-- Planar mesh elements only, no sharp terrain curvature
 - Working prototype, not production
 :::
 
@@ -426,7 +431,6 @@ Computed gradients were checked against central finite differences.
 
 - Reverse-mode AD (Enzyme.jl) + adjoint linear solve [@martinsning2021], checkpointed
 - Reactant.jl compilation for speedup
-- Parallelize the N independent gradient-direction solves
 - Terrain UQ: reconcile raster DEM vs. unstructured mesh
 :::
 
