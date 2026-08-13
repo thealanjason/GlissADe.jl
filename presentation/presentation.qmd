@@ -307,9 +307,11 @@ Mechanism
 ::: {.diff-code}
 ```julia
 struct Cell{T,S,W}
-    center::Vector{T}       # geometry
-    neighbours::Vector{S}   # mesh connectivity
-    h::W                    # state
+    center::Vector{T}
+    neighbours::Vector{S}
+    h::W
+    vel::Vector{W}
+    pb::W
 end
 ```
 :::
@@ -322,24 +324,20 @@ end
 
 ::: {.diff-code}
 ```julia
-preprocess(points, faces, Float64)       # simulate
-preprocess(points, faces, eltype(x))     # differentiate
+preprocess(points, faces, Float64)
+preprocess(points, faces, ForwardDiff.Dual)
 ```
 :::
 :::
 
 ::: {.fragment}
 ::: {.diff-body}
-- Each implicit step solves a linear system. We use a custom rule, derived via the chain rule, that reuses one factorization per direction:
+- Custom chain-rule for the linear solve, reusing one factorization per direction [@martinsning2021]:
 :::
 
 $$
 A\,\dot{x} = \dot{b} - \dot{A}\,x
 $$
-
-::: {.diff-aside}
-[@martinsning2021]
-:::
 :::
 
 :::
@@ -374,7 +372,7 @@ ForwardDiff.gradient(avgThickness, vertex_coords)
 :::
 
 ::: {.diff-aside}
-Caveat: differentiating w.r.t. vertex coordinates is slow, one direction per vertex.
+Caveat: differentiating w.r.t. vertex coordinates is slow due to ForwardDiff.
 :::
 :::
 
@@ -386,7 +384,7 @@ Caveat: differentiating w.r.t. vertex coordinates is slow, one direction per ver
 ::: {.diff-code}
 ```julia
 g = ForwardDiff.gradient(avgThickness, [h0])
-sigma_Y = g' * sigma_x * g   # Var(F) ≈ g^T Σ g
+sigma_Y = g' * sigma_x * g
 ```
 :::
 :::
@@ -409,29 +407,86 @@ Computed gradients were checked against central finite differences.
 
 ::: {.column width="50%"}
 - Example: maximum flow velocity as a function of the basal friction coefficient, computed on the simpleslope case.
-- To be clear about scope: this is a sensitivity study of a physical parameter, not a full uncertainty quantification of terrain. That's further out, see the last slide.
+- To be clear about scope: this is a sensitivity study of a physical parameter, not a full uncertainty quantification of terrain. That's further out, see the roadmap.
 :::
 
 :::
 
 ## Roadmap
 
-::: {.columns}
+::: {.columns .challenge-row}
 
 ::: {.column width="50%"}
-**Today**
 
-- Forward-mode only, scales with # parameters, not for thousands of mesh nodes
+::: {.fragment}
+::: {.challenge-header .header-blue}
+Today
+:::
+::: {.diff-body}
+- Forward-mode only, feasible only for a small number of parameters, not for thousands of mesh nodes
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
 - Linear solve: single core, sequential Krylov + ILU
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
 - Working prototype, not production
+:::
+:::
+
 :::
 
 ::: {.column width="50%"}
-**Next**
 
-- Reverse-mode AD (Enzyme.jl) + adjoint linear solve [@martinsning2021], checkpointed
-- Reactant.jl compilation for speedup
-- Terrain UQ: reconcile raster DEM vs. unstructured mesh
+::: {.fragment}
+::: {.challenge-header .header-purple}
+Next
+:::
+::: {.diff-body}
+- Geometric UQ: raster DEM vs. unstructured mesh
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Reverse-mode AD via `Enzyme.jl`, checkpointed with `Checkpointing.jl` [@moses2026dj4earth]
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- `Reactant.jl` compilation for acceleration
+:::
+:::
+
+:::
+
+:::
+
+::: {.columns .fragment style="margin-top: 0.3em; display: flex; align-items: center;"}
+
+::: {.column width="75%"}
+![](./images/dj4earth_paper.png){width=100%}
+:::
+
+::: {.column width="25%"}
+---
+
+`Oceananigans.jl`
+
+`ShallowWaters.jl`
+
+`SpeedyWeather.jl`
+
+`DJUICE.jl`
+
+---
+
 :::
 
 :::
@@ -457,11 +512,11 @@ GlissADe.jl
 
 :::
 
+::: {.acknowledgements}
+Financial support from the Deutsche Forschungsgemeinschaft (DFG) through grant IRTG-2379 is gratefully acknowledged.
+:::
+
 ### References
 
 ::: {#refs}
-:::
-
-::: {.acknowledgements}
-Financial support from the Deutsche Forschungsgemeinschaft (DFG) through grant IRTG-2379 is gratefully acknowledged.
 :::
