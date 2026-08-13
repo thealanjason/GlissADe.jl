@@ -1,6 +1,6 @@
 ---
 title: "GlissADe.jl: Differentiable Simulator for Geophysical Surface Flows"
-subtitle: " "
+subtitle: "Differentiable Computational Models and their Applications"
 author:
   - name: Tanish Jain
     url: https://github.com/reckylurker
@@ -225,7 +225,7 @@ $$
 
 ::: {.columns .challenge-row}
 
-::: {.column width="33%"}
+::: {.column width="33%" .fragment}
 
 ::: {.challenge-header .header-blue}
 Spatial Discretization
@@ -242,10 +242,10 @@ Spatial Discretization
 
 :::
 
-::: {.column width="40%"}
+::: {.column width="40%" .fragment}
 
 ::: {.challenge-header .header-purple}
-Time Stepping: Implicit
+Implicit Time Stepping
 :::
 
 ```{mermaid}
@@ -263,10 +263,10 @@ flowchart TD
 
 :::
 
-::: {.column width="32%"}
+::: {.column width="32%" .fragment}
 
 ::: {.challenge-header .header-purple}
-Time Stepping: Explicit
+Explicit Time Stepping
 :::
 
 ```{mermaid}
@@ -283,12 +283,115 @@ flowchart TD
 
 :::
 
-## Making it differentiable
+## Differentiability
 
-- Generic typing throughout &rarr; `Dual` numbers flow through the whole solve, no rewrite.
-- Linear solve is the exception: differentiate $Au=b$ directly, $A\,du/dx = db/dx - (dA/dx)\,u$, reusing the primal factorization [@martinsning2021].
-- Upwind/central switching, in-place updates (`.=`, `+=`): all just work, no special-casing.
-- Every gradient validated against finite differences in the test suite.
+::: {.columns .challenge-row}
+
+::: {.column width="50%"}
+
+::: {.fragment}
+::: {.challenge-header .header-blue}
+Mechanism
+:::
+
+::: {.diff-body}
+- Geometry and state each carry their own type:
+:::
+
+::: {.diff-code}
+```julia
+struct Cell{T,S,W}
+    center::Vector{T}       # geometry
+    neighbours::Vector{S}   # mesh connectivity
+    h::W                    # state
+end
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Swap `Float64` for `ForwardDiff.Dual` in `T` or `W`:
+:::
+
+::: {.diff-code}
+```julia
+preprocess(points, faces, Float64)       # simulate
+preprocess(points, faces, eltype(x))     # differentiate
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Each implicit step solves a linear system. We use a custom rule, derived via the chain rule, that reuses one factorization per direction:
+:::
+
+$$
+A\,\dot{x} = \dot{b} - \dot{A}\,x
+$$
+
+::: {.diff-aside}
+[@martinsning2021]
+:::
+:::
+
+:::
+
+::: {.column width="50%"}
+
+::: {.fragment}
+::: {.challenge-header .header-purple}
+Capability
+:::
+
+::: {.diff-body}
+- Sensitivity to initial conditions or model parameters:
+:::
+
+::: {.diff-code}
+```julia
+ForwardDiff.gradient(avgThickness, [h0])
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Sensitivity to the mesh itself, one vertex at a time:
+:::
+
+::: {.diff-code}
+```julia
+ForwardDiff.gradient(avgThickness, vertex_coords)
+```
+:::
+
+::: {.diff-aside}
+Caveat: differentiating w.r.t. vertex coordinates is slow, one direction per vertex.
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Plug $\mathbf{g}$ into FOSM for forward uncertainty propagation:
+:::
+
+::: {.diff-code}
+```julia
+g = ForwardDiff.gradient(avgThickness, [h0])
+sigma_Y = g' * sigma_x * g   # Var(F) ≈ g^T Σ g
+```
+:::
+:::
+
+:::
+
+:::
+
+::: {.diff-callout .fragment}
+Computed gradients were checked against central finite differences.
+:::
 
 ## Demo: sensitivity analysis
 
@@ -331,11 +434,30 @@ flowchart TD
 
 ##
 
+::: {.thank-you-row}
+
+::: {.thank-you-faces}
+![](./images/tanish_avatar.png)
+![](./images/alan_avatar.png)
+:::
+
+::: {.thank-you}
+Thank You!
+:::
+
+::: {.qr-code}
+![](./images/glissade_qr.svg)
+
+GlissADe.jl
+:::
+
+:::
+
 ### References
 
 ::: {#refs}
 :::
 
-### Acknowledgements
-
+::: {.acknowledgements}
 Financial support from the Deutsche Forschungsgemeinschaft (DFG) through grant IRTG-2379 is gratefully acknowledged.
+:::

@@ -113,21 +113,30 @@ $presentation-font-size-root: 30px !default;
   flex: 1;
 }
 
-.challenge-body ul {
-  list-style: none;
+.challenge-body ul,
+.challenge-body ul li {
+  list-style: none !important;
+  list-style-type: none !important;
   padding-left: 0.2em;
 }
 
-.pos {
-  color: #2e7d32;
-  font-weight: bold;
+.challenge-body ul li::marker {
+  content: "" !important;
+}
+
+.pos,
+.neg {
+  font-size: 0.8em !important;
+  font-weight: bold !important;
   margin-right: 0.4em;
 }
 
+.pos {
+  color: #2e7d32 !important;
+}
+
 .neg {
-  color: #c62828;
-  font-weight: bold;
-  margin-right: 0.4em;
+  color: #c62828 !important;
 }
 
 .challenge-header {
@@ -154,6 +163,86 @@ $presentation-font-size-root: 30px !default;
 
 .header-purple {
   background: #e2c9ee;
+}
+
+.diff-body {
+  font-size: 0.7em;
+  text-align: left;
+}
+
+.diff-aside {
+  font-size: 0.5em;
+  opacity: 0.7;
+}
+
+.acknowledgements {
+  position: absolute;
+  bottom: 0.6em;
+  left: 0.6em;
+  right: 0.6em;
+  background: #ececec;
+  font-size: 0.9em;
+  text-align: center;
+  padding: 0.5em 1em;
+}
+
+.thank-you-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.thank-you-faces {
+  display: flex;
+  gap: 0.5em;
+}
+
+.reveal .slides section .thank-you-faces img {
+  width: 8em;
+  height: 8em;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block !important;
+}
+
+.qr-code {
+  width: 12em;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.qr-code p {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.2em;
+  margin-top: 0.3em !important;
+}
+
+.qr-code img {
+  width: 100%;
+  display: block;
+}
+
+.thank-you {
+  font-size: 3em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.diff-code {
+  font-size: 0.75em;
+}
+
+.diff-code pre {
+  margin: 0.3em 0;
+  width: 100%;
+}
+
+.diff-callout {
+  text-align: center;
+  font-size: 0.6em;
+  opacity: 0.8;
 }
 
 .challenge-body {
