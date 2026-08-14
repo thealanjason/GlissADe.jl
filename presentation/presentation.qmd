@@ -402,12 +402,12 @@ Computed gradients were checked against central finite differences.
 ::: {.columns}
 
 ::: {.column width="50%"}
-<!-- TODO: simpleslope simulation snapshot, release area matching findRegularPolygon([5.0, 10.0, -6.0, 6.0]) -->
+<!-- TODO: simpleslope simulation snapshot at nominal h0 = 0.20 (reuse VTK output from the sweep run below, release area matching findRegularPolygon([5.0, 10.0, -6.0, 6.0])) -->
 ![](./images/simpleslope_sim.png)
 :::
 
 ::: {.column width="50%"}
-<!-- TODO: replace with sweep over h0 (initial release height) on the simpleslope case, average thickness at t = 15s, plus AD tangent line -->
+<!-- TODO: sweep h0 = 0.15, 0.20, 0.25, 0.30 on the simpleslope case, average thickness at t = 15s, plus AD tangent line from the ForwardDiff run at h0 = 0.20 -->
 ![](./images/sensi.png)
 :::
 
