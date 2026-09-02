@@ -14,6 +14,13 @@ Differentiable simulators enable uncertainty quantification (UQ) for reliable pr
 - Want to understand the numerics and theory behind the simulator? See the [theory](30-theory/background.md) page.
 - Looking for function-level documentation? See the [reference](95-reference.md) page.
 
+## Installation
+
+1. [Install Julia](https://julialang.org/downloads/)
+2. Clone the [GlissADe.jl repository](https://github.com/thealanjason/GlissADe.jl)
+3. Change directory to the cloned folder
+4. Set up the environment using `julia setup.jl`
+
 ## Current implementation
 
 The numerical core is implemented following the finite area method (FAM) on unstructured grids, similar to the approach used in the [OpenFOAM avalanche](https://develop.openfoam.com/Community/avalanche) module. GlissADe.jl uses [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) for forward-mode automatic differentiation.
