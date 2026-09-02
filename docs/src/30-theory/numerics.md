@@ -239,7 +239,7 @@ The [`preprocess`](@ref) function performs the necessary precomputations and mes
 
 ## Defining the Release Area
 
-The release area is the region initialized with a nonzero thickness `h` at the start of a simulation. It can be given in two ways. Given a rectangular region defined by ``\lbrack x_{min}, x_{max}, y_{min}, y_{max} \rbrack``, a regular polygon is found lying completely inside it, and every face inside that polygon is initialized with a single user-defined thickness. Alternatively, a depth raster (an ESRI ASCII grid) can be conservatively remapped onto the mesh, giving each face its own thickness derived from the raster instead of one uniform value. See [Defining a Release Area](../20-how-to/defining-a-release-area.md) for both.
+The release area is the region initialized with a nonzero thickness `h` at the start of a simulation. It can be given in two ways. Given a rectangular region defined by ``\lbrack x_{min}, x_{max}, y_{min}, y_{max} \rbrack``, a regular polygon is found lying completely inside it, and every face inside that polygon is initialized with a single user-defined thickness. Alternatively, a depth raster (an ESRI ASCII grid) can be conservatively remapped onto the mesh, giving each face its own thickness derived from the raster instead of one uniform value. See [Defining a Release Area](../20-tutorials/defining-a-release-area.md) for both.
 
 The [source code](https://github.com/thealanjason/GlissADe.jl/blob/main/src/module/initialConditions/initialConditions.jl) contains all the related functions.
 

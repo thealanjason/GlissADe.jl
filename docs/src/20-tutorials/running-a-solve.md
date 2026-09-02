@@ -74,4 +74,4 @@ solution = Solution(
 )
 ```
 
-See [How does the library work?](../30-explanation/numerics.md#Solving-the-equations) for how the solution process handles pressure, momentum, and thickness, and [Getting Started](../10-tutorials/getting-started.md#Using-custom-rheology-models) for how to supply a custom `basal_stress` rheology model.
+See [How does the library work?](../30-theory/numerics.md#Solving-the-equations) for how the solution process handles pressure, momentum, and thickness, and [Getting Started](../10-getting-started.md#Using-custom-rheology-models) for how to supply a custom `basal_stress` rheology model.
