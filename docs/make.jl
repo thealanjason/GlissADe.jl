@@ -57,7 +57,7 @@ function list_pages()
     root_dir = joinpath(@__DIR__, "src")
     pages_list = recursively_list_pages(root_dir)
 
-    return ["index.md"; pages_list]
+    return ["Home" => "index.md"; pages_list]
 end
 
 makedocs(;
