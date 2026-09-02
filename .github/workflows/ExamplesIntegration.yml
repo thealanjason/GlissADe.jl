@@ -15,12 +15,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+      JULIA_NUM_THREADS: "auto"
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
-      - uses: julia-actions/cache@v3
+      - name: Cache Julia environment and precompiled packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.julia/artifacts
+            ~/.julia/compiled
+            ~/.julia/packages
+            ~/.julia/registries
+          key: ${{ runner.os }}-x64-julia-1-examples-${{ hashFiles('**/Project.toml', '**/Manifest.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-x64-julia-1-examples-
+            ${{ runner.os }}-x64-julia-1-
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run plane.jl
         run: julia --project examples/plane_sample/plane.jl
@@ -30,12 +44,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+      JULIA_NUM_THREADS: "auto"
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
-      - uses: julia-actions/cache@v3
+      - name: Cache Julia environment and precompiled packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.julia/artifacts
+            ~/.julia/compiled
+            ~/.julia/packages
+            ~/.julia/registries
+          key: ${{ runner.os }}-x64-julia-1-examples-${{ hashFiles('**/Project.toml', '**/Manifest.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-x64-julia-1-examples-
+            ${{ runner.os }}-x64-julia-1-
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run simpleslope_diff.jl
         run: julia --project examples/simpleslope/simpleslope_diff.jl

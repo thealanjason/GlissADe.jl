@@ -34,16 +34,29 @@ jobs:
     continue-on-error: ${{ inputs.allow_failure }}
     env:
       JULIA_PKG_SERVER: "" # avoid transient pkg.julialang.org registry-snapshot 404s
+      JULIA_NUM_THREADS: "auto"
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ inputs.version }}
           arch: ${{ inputs.arch }}
           force-arch: ${{ inputs.os == 'macOS-latest' && inputs.arch == 'x64' }}
-      - name: Use Julia cache
-        uses: julia-actions/cache@v3
+      - name: Cache Julia environment and precompiled packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.julia/artifacts
+            ~/.julia/compiled
+            ~/.julia/packages
+            ~/.julia/registries
+          key: ${{ runner.os }}-${{ inputs.arch }}-julia-${{ inputs.version }}-${{ hashFiles('**/Project.toml', '**/Manifest.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ inputs.arch }}-julia-${{ inputs.version }}-
+            ${{ runner.os }}-${{ inputs.arch }}-julia-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
