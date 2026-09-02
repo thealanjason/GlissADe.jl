@@ -5,9 +5,9 @@ DocMeta.setdocmeta!(GlissADe, :DocTestSetup, :(using GlissADe); recursive = true
 
 # Add titles of sections and overrides page titles
 const titles = Dict(
-    "10-tutorials" => "Tutorials",
-    "20-how-to" => "How-to Guides",
-    "30-explanation" => "Explanation",
+    "10-getting-started.md" => "Getting Started",
+    "20-tutorials" => "Tutorials",
+    "30-theory" => "Theory",
     "91-developer.md" => "Developer docs",
 )
 

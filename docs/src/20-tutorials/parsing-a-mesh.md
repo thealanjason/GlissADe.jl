@@ -18,4 +18,4 @@ points, faces = parsemesh(
 
 `parsemesh` reads the OpenFOAM ASCII files, filters them down to the faces listed in `faceLabels`, and reorders the result. `points` and `faces` are the arrays to pass on to [`preprocess`](@ref) for geometry precomputation.
 
-See [How does the library work?](../30-explanation/numerics.md) for details on the file format and the filtering algorithm.
+See [How does the library work?](../30-theory/numerics.md) for details on the file format and the filtering algorithm.

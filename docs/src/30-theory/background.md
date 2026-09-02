@@ -56,7 +56,7 @@ A factor ``u_0`` is added for regularization to prevent "divide-by-zero" errors 
 \mu_s = 0.38, \; \mu_f = 0.65, \; I_0 = 0.3, \; \gamma = 2.5
 ```
 
-To begin using the solver, please have a look at the [Getting Started](../10-tutorials/getting-started.md) tutorial. Further details on implementation can be found in [Numerics](numerics.md).
+To begin using the solver, please have a look at the [Getting Started](../10-getting-started.md) page. Further details on implementation can be found in [Numerics](numerics.md).
 
 ## Limitations
 
