@@ -30,7 +30,7 @@ GlissADeMakieExt = "Makie"
 
 [compat]
 BenchmarkTools = "1.8.0"
-ExtendableSparse = "1"
+ExtendableSparse = "1, 2.5"
 ILUZero = "0.2.0"
 Interpolations = "0.16.3"
 JLD2 = "0.5.10"
