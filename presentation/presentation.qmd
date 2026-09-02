@@ -1,112 +1,527 @@
 ---
-title: "Differentiable Free Surface Flow Solver"
-subtitle: " "
-author: ""
+title: "GlissADe.jl: Differentiable Simulator for Geophysical Surface Flows"
+subtitle: "Differentiable Computational Models and their Applications"
+author:
+  - name: Tanish Jain
+    url: https://github.com/reckylurker
+  - name: Alan Correa
+    url: https://github.com/thealanjason
+institute:
+  - "Methods for Model-based Development in Computational Engineering"
+  - "RWTH Aachen University"
 fig-cap-location: margin
 
 format:
   revealjs:
     theme: [format.scss]
     output-file: index.html
+    template-partials:
+      - title-slide.html
+    title-slide-attributes:
+      data-background-gradient: "linear-gradient(135deg, transparent 70%, white 97%), linear-gradient(135deg, #001d3d, #00549f, #3a7cbf)"
+      data-footer: "false"
+    footer: "GlissADe.jl // JuliaCon2026"
+    slide-number: c/t
+    show-slide-number: all
+    logo: images/mbd_rwth_logo.png
 bibliography: references.bib
 ---
 
-## GlissADe.jl {background-color="#1a1a1a"}
+## How Spherical is the Earth?
 
-A differentiable shallow-flow solver for avalanches, landslides, and floods
+Topographic Uncertainty
 
-[image here: title slide graphic, e.g. an avalanche or debris flow photo]
+<img style="width: 44%; display: inline-block; vertical-align: middle;" src="./images/earth_blue_marble.png">
+<img style="width: 55%; display: inline-block; vertical-align: middle;" src="./images/earth_geoid.png">
 
-## Why this matters
+<p style="font-size: 0.5em; opacity: 0.7;">Left: NASA Blue Marble, Wikimedia Commons. Right: Geoid height (EGM2008, nmax=500), P. Bezděk, Astronomical Institute, Czech Academy of Sciences.</p>
 
+::: {.notes}
+NASA Blue Marble (left, background removed) vs. EGM2008 geoid height (right, exaggerated). Until we had a precise measurement of the geoid, the Earth's true shape was represented as a sphere plus some uncertainty around it. Once we measured it directly, that uncertainty collapsed into known geometry.
+:::
+
+## Modeling and Simulation for Geohazards
+
+::: {.columns}
+
+::: {.column width="33%"}
+::: {.geohazard-source}
+https://www.theuiaa.org/
+:::
+::: {.geohazard-img}
+![](./images/geohazard_avalanche.png)
+:::
+::: {.geohazard-caption}
+Avalanches
+:::
+:::
+
+::: {.column width="33%"}
+::: {.geohazard-source}
+https://www.bgs.ac.uk/
+:::
+::: {.geohazard-img}
+![](./images/geohazard_landslide.png)
+:::
+::: {.geohazard-caption}
+Landslides
+:::
+:::
+
+::: {.column width="33%"}
+::: {.geohazard-source}
+https://www.thenationalherald.com/
+:::
+::: {.geohazard-img}
+![](./images/geohazard_flashflood.png)
+:::
+::: {.geohazard-caption}
+Flash Floods
+:::
+:::
+
+:::
+
+::: {.fragment style="text-align: center;"}
+![](./images/computational_models_uncertainty.svg){width=90%}
+
+<p style="font-size: 0.5em; opacity: 0.7; text-align: right;">Hazard-map result: [@zhao2020]</p>
+:::
+
+::: {.notes}
 - Avalanches, landslides, and floods threaten infrastructure and lives. Hazard maps and inundation forecasts guide where we build and how we evacuate.
 - Simulators like OpenFOAM-Avalanche, AvaFrame, and r.avaflow already produce these forecasts, and they're solid tools.
 - What they can't do well: tell you how sensitive their prediction is to a parameter you're unsure about, or fit that parameter to observed data, without brute-forcing it one run at a time.
+:::
 
-[image here: hazard map or inundation zone example]
+## The Challenge
 
-## The gap: gradients
+Uncertainty Informed Predictions
 
-- Sensitivity analysis, calibration, and inverse problems all come down to the same question: how does the output change if I nudge an input?
-- The standard way to answer that is finite differences: rerun the whole simulation once per input, perturbed a little. This gets expensive fast as the number of inputs grows.
-- Automatic differentiation answers the same question in close to the cost of one run, no matter how many inputs you're asking about.
-- GlissADe.jl adds this capability to a shallow-flow solver built on a real depth-integrated model, not a toy.
+::: {.columns .challenge-row}
 
-## The governing equations
+::: {.column width="45%"}
+::: {.challenge-flow}
+<img src="./images/challenge_flow.gif">
+<img class="challenge-house" src="./images/house_icon.svg">
+:::
+<p style="font-size: 0.5em; opacity: 0.7;">OpenFOAM-Avalanche [@rauter2018]</p>
+:::
 
-<img style="float: left;" width="70%" height="80%" src="./images/wolfsgrube.png">
+::: {.column width="55%"}
+::: {.challenge-box-flex}
+::: {.challenge-box .fragment}
+::: {.challenge-header .header-blue}
+Monte-Carlo (MC) Method
+:::
+::: {.challenge-body}
+- [+]{.pos} Arbitrary input distributions
+- [-]{.neg} Curse of dimensionality
+- [-]{.neg} Multiple simulation runs required
+- [-]{.neg} Resource and time intensive
+:::
+:::
 
-- Built on the surface-aligned, depth-integrated Savage-Hutter equations from Rauter and Tuković [@rauter2018].
-- Mass and momentum balance, written on a curved surface rather than a flat plane, so it can handle real terrain.
+::: {.challenge-box .fragment}
+::: {.challenge-header .header-purple}
+Surrogate Model
+:::
+::: {.challenge-body}
+- [+]{.pos} Reduced resource usage & time
+- [-]{.neg} Parametrized by few inputs
+- [-]{.neg} New geometry requires retraining
+- [-]{.neg} Infeasible to fully parametrize
+:::
+:::
+:::
+:::
+
+:::
+
+## Research Question
+
+::: {.problem-flow-wrap}
+![](./images/problem_flow.png){width=100% fig-align="center"}
+:::
+
+::: {.research-row}
+::: {.research-sigma}
+$\sigma^2_{\text{Inputs}}$
+:::
+
+::: {.question-banner}
+How can we propagate uncertainties in high-dimensional inputs through the computational model?
+:::
+
+::: {.research-sigma}
+$\sigma^2_{\text{Output}}$
+:::
+:::
+
+::: {style="text-align: center;" .fragment}
+[Resource Efficient]{.badge-pill}
+:::
+
+## First-Order Second-Moment Method
+
 
 $$
- \scriptsize \frac{\partial h}{\partial t} + \nabla \cdot (h\bar{u}) = 0 \; (1)
-$$
-$$
-\scriptsize \frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot (h\bar{u}\bar{u}) =
+\text{Var}(F(X_1, \dots, X_N)) = \sigma_F^2 \approx \mathbf{g}^T \, \Sigma \, \mathbf{g}
 $$
 
 $$
-\scriptsize -\frac{1}{\rho}\tau_b + h\textbf{g}_s -\frac{\alpha}{\rho}\;\nabla_s (hp_b) \; (2)
+\Sigma = \text{Cov}(X_1, \dots, X_N)
 $$
 
 $$
-\scriptsize \xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\textbf{g}_n
+\mathbf{g} = \left[ \frac{\partial F}{\partial \mathbb{E}(X_1)}, \dots, \frac{\partial F}{\partial \mathbb{E}(X_N)} \right]^T
 $$
 
+
+::: {.columns}
+
+**Computing Gradients: $\mathbf{g}$**
+
+::: {.column width="38%"}
+
+* Finite Differencing
+  - Curse of dimensionality
+  - Inaccurate or unstable
+
+:::
+
+::: {.column width="62%"}
+
+* Algorithmic/Automatic Differentiation (AD)
+  - Accurate up to machine precision
+  - Forward Mode (Tangent): $n_{\text{inputs}} \ll n_{\text{outputs}}$
+  - Reverse Mode (Adjoint): $n_{\text{inputs}} \gg n_{\text{outputs}}$
+
+:::
+
+:::
+
+
+## GlissADe.jl {.title-slide background-gradient="linear-gradient(135deg, #1a1a1a, #2c2440, #1a1a1a)"}
+
+## The Mathematical Model
+
+::: {.columns}
+::: {.column width="50%"}
+![](./images/fam_cell_diagram.jpg){width=55% fig-align="center"}
+:::
+::: {.column width="50%"}
+![](./images/fam_local_coords.jpg){width=55% fig-align="center"}
+:::
+:::
+
 $$
-\scriptsize  - \frac{\alpha}{\rho}\nabla_n(hp_b) - \frac{1}{\rho}\;\textbf{n}_b\;p_b \; (3)
+\frac{\partial h}{\partial t} + \nabla \cdot (h\bar{u}) = 0 \;
 $$
+$$
+\frac{\partial h\bar{u}}{\partial t} + \xi\;\nabla_s\cdot (h\bar{u}\bar{u}) = -\frac{1}{\rho}\tau_b + h\textbf{g}_s -\frac{\alpha}{\rho}\;\nabla_s (hp_b) \;
+$$
+$$
+\xi\;\nabla_n\cdot(h\bar{u}\bar{u}) = h\textbf{g}_n - \frac{\alpha}{\rho}\nabla_n(hp_b) - \frac{1}{\rho}\;\textbf{n}_b\;p_b \;
+$$
+<p style="font-size: 0.5em; opacity: 0.7;">Surface-aligned, depth-integrated Savage-Hutter equations [@rauter2018]</p>
 
-## How the solver is built
 
-<img style="float: left;" width="500" height="500" src="./images/solverstruct.png">
+## Implementation
 
-- A Finite Area Method, the same style OpenFOAM uses for its `faMesh`: cell-centered fields on an unstructured mesh.
-- Each time step is a segregated solve: update pressure, then momentum, then thickness, iterating until it converges.
-- Every implicit update boils down to solving a sparse linear system.
+::: {.columns .challenge-row}
 
-## How we made it differentiable
+::: {.column width="33%" .fragment}
 
-- Every field in the solver (thickness, velocity, pressure) is generically typed, so when you hand it a `Dual` number, the whole solve just works. No rewrite needed.
-- The one place that doesn't come for free: the linear solve. Running dual numbers through an iterative solver like GMRES is wasteful and can be numerically shaky.
-- Instead, we differentiate the equation $Au = b$ directly: $A\,du/dx = db/dx - (dA/dx)\,u$, and solve that using the factorization we already computed for the primal solve. This is a known technique (see @martinsning2021, the "AD shortcuts for matrix operations" section), and it's the part of the code we're proudest of.
+::: {.challenge-header .header-blue}
+Spatial Discretization
+:::
 
-## Handling the awkward parts
+![](./images/fam_spatial_discretization.jpg){width=95% fig-align="center"}
 
-- Real solvers have kinks that autodiff is supposed to hate: switching between upwind and central differencing depending on flow direction.
-- It turns out fine here: dual numbers pick the branch by the sign of their value, same as a plain float would, so the derivative comes out right without any special-casing.
-- In-place updates (`.=`, `+=`) on the state arrays are no problem either, since it's all just operator overloading under the hood.
-- We check this isn't just a nice theory: every gradient we compute is validated against finite differences in the test suite.
+<p style="font-size: 0.5em; opacity: 0.7;">[@rauter2018]</p>
 
-## Demo: sensitivity analysis
+::: {style="font-size: 0.65em;"}
+- Cell-centered fields on an unstructured mesh
+- Edge values are computed from neighbouring cells, upwind or central
+:::
 
+:::
+
+::: {.column width="40%" .fragment}
+
+::: {.challenge-header .header-purple}
+Implicit Time Stepping
+:::
+
+```{mermaid}
+%%{init: {'theme':'neutral', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart TD
+    Init[Solver Initialization]
+    P[Solve Pressure Constraint]
+    M[Solve Momentum Equation]
+    H[Solve Thickness Equation]
+    R{residual < tol?}
+    Init --> P --> M --> H --> R
+    R -->|No| P
+    R -->|Yes, next timestep| Init
+```
+
+:::
+
+::: {.column width="32%" .fragment}
+
+::: {.challenge-header .header-purple}
+Explicit Time Stepping
+:::
+
+```{mermaid}
+%%{init: {'theme':'neutral', 'themeVariables': {'fontSize': '13px'}}}%%
+flowchart TD
+    Init[Solver Initialization]
+    S[Evaluate Stage Derivatives]
+    C[Combine Stages, Update State]
+    Init --> S --> C
+    C -->|Next timestep| Init
+```
+
+:::
+
+:::
+
+## Differentiability
+
+::: {.columns .challenge-row}
+
+::: {.column width="50%"}
+
+::: {.fragment}
+::: {.challenge-header .header-blue}
+Mechanism
+:::
+
+::: {.diff-body}
+- Geometry and state each carry their own type:
+:::
+
+::: {.diff-code}
+```julia
+struct Cell{T,S,W}
+    center::Vector{T}
+    neighbours::Vector{S}
+    h::W
+    vel::Vector{W}
+    pb::W
+end
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Swap `Float64` for `ForwardDiff.Dual` in `T` or `W`:
+:::
+
+::: {.diff-code}
+```julia
+preprocess(points, faces, Float64)
+preprocess(points, faces, ForwardDiff.Dual)
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Custom chain-rule for the linear solve, reusing one factorization per direction [@martinsning2021]:
+:::
+
+$$
+A\,\dot{x} = \dot{b} - \dot{A}\,x
+$$
+:::
+
+:::
+
+::: {.column width="50%"}
+
+::: {.fragment}
+::: {.challenge-header .header-purple}
+Capability
+:::
+
+::: {.diff-body}
+- Sensitivity to initial conditions or model parameters:
+:::
+
+::: {.diff-code}
+```julia
+ForwardDiff.gradient(avgThickness, [h0])
+```
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Sensitivity to the mesh itself, one vertex at a time:
+:::
+
+::: {.diff-code}
+```julia
+ForwardDiff.gradient(avgThickness, vertex_coords)
+```
+:::
+
+::: {.diff-aside}
+Caveat: differentiating w.r.t. vertex coordinates is slow due to ForwardDiff.
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Plug $\mathbf{g}$ into FOSM for forward uncertainty propagation:
+:::
+
+::: {.diff-code}
+```julia
+g = ForwardDiff.gradient(avgThickness, [h0])
+sigma_Y = g' * sigma_x * g
+```
+:::
+:::
+
+:::
+
+:::
+
+::: {.diff-callout .fragment}
+Computed gradients were checked against central finite differences.
+:::
+
+## Showcase
+
+::: {.columns}
+
+::: {.column width="50%"}
+<!-- TODO: simpleslope simulation snapshot at nominal h0 = 0.20 (reuse VTK output from the sweep run below, release area matching findRegularPolygon([5.0, 10.0, -6.0, 6.0])) -->
+![](./images/simpleslope_sim.png)
+:::
+
+::: {.column width="50%"}
+<!-- TODO: sweep h0 = 0.15, 0.20, 0.25, 0.30 on the simpleslope case, average thickness at t = 15s, plus AD tangent line from the ForwardDiff run at h0 = 0.20 -->
 ![](./images/sensi.png)
+:::
 
-- Example: maximum flow velocity as a function of the basal friction coefficient, computed on the simpleslope case.
-- To be clear about scope: this is a sensitivity study of a physical parameter, not a full uncertainty quantification of terrain. That's further out, see the last slide.
+:::
 
-## Where this stands today
+::: {.notes}
+Left: a run of the simpleslope case, this is what we're actually simulating. Right: sweep the initial release height h0 and track average thickness at t = 15s. Overlay the AD gradient at nominal h0 as a tangent line to show it matches the sweep locally, that's the payoff of forward-mode AD: one solve gives you the exact local sensitivity instead of needing the whole sweep. To be clear about scope: this is a sensitivity study of an initial condition, not a full uncertainty quantification of terrain. That's further out, see the roadmap.
+:::
 
-- Forward-mode only. Cost grows with the number of things you differentiate with respect to, so this is great for a handful of parameters, not for thousands of mesh nodes.
-- The linear solve runs on a single core. The Krylov iteration is inherently sequential, and the ILU preconditioner's triangular solves have a row-by-row dependency chain that isn't parallelized here.
-- Only planar mesh elements are supported, so sharp terrain curvature isn't handled yet.
-- This started as a research internship project. It's a working prototype that proves the idea, not a production tool yet.
+## Roadmap
 
-## Where this could go
+::: {.columns .challenge-row}
 
-- Reverse-mode AD via Enzyme.jl, with custom rules for the linear solve (the adjoint counterpart to what we built, see @martinsning2021 on direct vs. adjoint methods). This is what would make differentiating w.r.t. thousands of terrain points tractable.
-- The N sequential solves per gradient direction are independent of each other and could run in parallel, once the solver's shared workspace is refactored to allow it.
-- Topographic uncertainty quantification is the natural next step, but it raises a real question first: DEM uncertainty comes as a raster grid, while the solver's state lives on an unstructured mesh. Mapping one onto the other introduces its own error. Worth asking whether a structured-grid solver would be a better fit than sticking with the Finite Area Method.
-- A more general conservation-law form, so the solver isn't limited to this one physical model:
+::: {.column width="50%"}
 
-$$
-\frac{\partial Q}{\partial t} + M_f\;\nabla\cdot f(Q) + M_g\nabla\;g(Q) = S(Q)
-$$
+::: {.fragment}
+::: {.challenge-header .header-blue}
+Today
+:::
+::: {.diff-body}
+- Forward-mode only, feasible only for a small number of parameters, not for thousands of mesh nodes
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Linear solve: single core, sequential Krylov + ILU
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Working prototype, not production
+:::
+:::
+
+:::
+
+::: {.column width="50%"}
+
+::: {.fragment}
+::: {.challenge-header .header-purple}
+Next
+:::
+::: {.diff-body}
+- Geometric UQ: raster DEM vs. unstructured mesh
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- Reverse-mode AD via `Enzyme.jl`, checkpointed with `Checkpointing.jl` [@moses2026dj4earth]
+:::
+:::
+
+::: {.fragment}
+::: {.diff-body}
+- `Reactant.jl` compilation for acceleration
+:::
+:::
+
+:::
+
+:::
+
+::: {.columns .fragment style="margin-top: 0.3em; display: flex; align-items: center;"}
 
 ::: {.column width="75%"}
-*   Conservative flux: $f(Q)$
-*   Gradient sources: $g(Q)$
-*   Constant sources: $S(Q)$
-*   Parameters: $M_f\;,\; M_g$
+![](./images/dj4earth_paper.png){width=100%}
+:::
+
+::: {.column width="25%"}
+---
+
+`Oceananigans.jl`
+
+`ShallowWaters.jl`
+
+`SpeedyWeather.jl`
+
+`DJUICE.jl`
+
+---
+
+:::
+
+:::
+
+##
+
+::: {.thank-you-row}
+
+::: {.thank-you-faces}
+![](./images/tanish_avatar.png)
+![](./images/alan_avatar.png)
+:::
+
+::: {.thank-you}
+Thank You!
+:::
+
+::: {.qr-code}
+![](./images/glissade_qr.svg)
+
+GlissADe.jl
+:::
+
+:::
+
+::: {.acknowledgements}
+Financial support from the Deutsche Forschungsgemeinschaft (DFG) through grant IRTG-2379 is gratefully acknowledged.
+:::
+
+### References
+
+::: {#refs}
 :::

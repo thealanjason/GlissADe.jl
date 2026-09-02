@@ -8,10 +8,414 @@ $presentation-font-size-root: 30px !default;
 
 /*-- scss:rules --*/
 
+.reveal .slide-logo {
+  max-height: 60px !important;
+  height: 60px !important;
+  width: auto !important;
+}
+
+.reveal .slide-number {
+  top: 0.5em;
+  bottom: auto;
+  right: 0.5em;
+  left: auto;
+}
+
 .math.inline {
   font-size: 100% !important;
 }
 
 .math.display .MathJax {
   font-size: 100% !important;
+}
+
+.math.display {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.geohazard-img img {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  width: 100%;
+}
+
+.geohazard-source p {
+  text-align: center;
+  font-size: 1rem !important;
+  opacity: 0.7;
+  margin-bottom: 0 !important;
+}
+
+.geohazard-img p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.geohazard-caption p {
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 0 !important;
+}
+
+.challenge-flow {
+  position: relative;
+}
+
+.challenge-flow img:not(.challenge-house) {
+  width: 100%;
+  display: block;
+}
+
+.challenge-flow .challenge-house {
+  position: absolute;
+  width: 14%;
+  left: 45%;
+  top: 72%;
+  transform: translate(-50%, -50%);
+}
+
+.reveal .slides section .challenge-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  flex-wrap: nowrap !important;
+}
+
+.reveal .slides section .challenge-row > .column {
+  display: block !important;
+}
+
+.challenge-box-flex {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 420px;
+  width: 95%;
+  margin: 0 auto;
+}
+
+.challenge-box {
+  background: #ececec;
+  margin-bottom: 0.6em;
+  font-size: 0.8em !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.challenge-box li,
+.challenge-box p {
+  font-size: 1em !important;
+}
+
+.challenge-box .challenge-body {
+  flex: 1;
+}
+
+.challenge-body ul,
+.challenge-body ul li {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0.2em;
+}
+
+.challenge-body ul li::marker {
+  content: "" !important;
+}
+
+.pos,
+.neg {
+  font-size: 0.8em !important;
+  font-weight: bold !important;
+  margin-right: 0.4em;
+}
+
+.pos {
+  color: #2e7d32 !important;
+}
+
+.neg {
+  color: #c62828 !important;
+}
+
+.challenge-header {
+  font-weight: bold;
+  text-align: center;
+  padding: 0.3em 0;
+}
+
+.challenge-header p {
+  margin: 0 !important;
+}
+
+.header-pink {
+  background: #f3c9d8;
+}
+
+.header-blue {
+  background: #a9c2dd;
+}
+
+.header-gray {
+  background: #d3d3d3;
+}
+
+.header-purple {
+  background: #e2c9ee;
+}
+
+.diff-body {
+  font-size: 0.7em;
+  text-align: left;
+}
+
+.diff-aside {
+  font-size: 0.5em;
+  opacity: 0.7;
+}
+
+.acknowledgements {
+  position: absolute;
+  bottom: 1.2em;
+  left: 0.6em;
+  right: 0.6em;
+  background: #ececec;
+  font-size: 1.4rem;
+  text-align: center;
+  padding: 0.15em 1em;
+}
+
+.thank-you-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.thank-you-faces {
+  display: flex;
+  gap: 0.5em;
+}
+
+.reveal .slides section .thank-you-faces img {
+  width: 8em;
+  height: 8em;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block !important;
+}
+
+.qr-code {
+  width: 8em;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.qr-code p {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.2em;
+  margin-top: 0.3em !important;
+}
+
+.qr-code img {
+  width: 100%;
+  display: block;
+}
+
+.thank-you {
+  font-size: 3em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.diff-code {
+  font-size: 0.9em;
+}
+
+.diff-code pre {
+  margin: 0.3em 0;
+  width: 100%;
+}
+
+.diff-callout {
+  text-align: center;
+  font-size: 1.4rem;
+  opacity: 0.8;
+  background: #ececec;
+  padding: 0.3em 1em;
+  width: fit-content;
+  margin: -0.3em auto 0;
+}
+
+.challenge-body {
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+
+.challenge-body ul {
+  margin: 0.3em 0;
+}
+
+.challenge-body p {
+  margin: 0.3em 0 !important;
+}
+
+.research-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -0.5em;
+}
+
+.research-sigma {
+  font-size: 2.0em;
+  padding: 0 0.3em;
+  flex: 0 0 auto;
+}
+
+.question-banner {
+  background: #eef2df;
+  font-size: 1em;
+  text-align: center;
+  padding: 0.8em 2em;
+  flex: 0 1 75%;
+  clip-path: polygon(4% 0%, 94% 0%, 100% 50%, 94% 100%, 4% 100%, 10% 50%);
+  margin: 0 0.5em;
+}
+
+.badge-pill {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 1.3em;
+  color: #fff;
+  padding: 0.4em 0.4em;
+  border-radius: 0.5em;
+  background: linear-gradient(90deg, #f0a35c, #e6a0c4, #a9c2dd);
+}
+
+.solution-row {
+  font-size: 0.68em;
+}
+
+.solution-row .math.display {
+  margin: 0.1em 0;
+}
+
+.solution-row li {
+  margin: 0.1em 0;
+}
+
+.solution-row ol,
+.solution-row ul {
+  margin: 0.2em 0;
+}
+
+.solution-row p:first-child {
+  margin-bottom: 0.2em;
+}
+
+.solution-row > .column:last-child {
+  border-left: 2px solid #999;
+  padding-left: 1.5em;
+}
+
+.reveal .slides section.title-slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.title-slide h2 {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 4em;
+  color: #fff;
+}
+
+.title-slide p {
+  color: #cccccc;
+  font-size: 1.3em;
+  margin-top: 0.5em;
+}
+
+#title-slide.quarto-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#title-slide .title {
+  font-size: 2em;
+  color: #fff;
+}
+
+#title-slide .quarto-title-authors {
+  display: flex;
+  justify-content: center;
+  gap: 2em;
+  margin-top: 1em;
+}
+
+#title-slide .quarto-title-authors .quarto-title-author {
+  color: #cccccc;
+  font-size: 1em;
+}
+
+#title-slide .quarto-title-author-name {
+  font-size: 1.2em;
+}
+
+#title-slide .quarto-title-institute {
+  color: #cccccc;
+  font-size: 0.9em;
+  text-align: center;
+  margin-top: 0.5em;
+}
+
+#title-slide .quarto-title-institute + .quarto-title-institute {
+  margin-top: 0.1em;
+}
+
+#title-slide .date,
+#title-slide .subtitle {
+  color: #cccccc;
+}
+
+#title-slide .subtitle {
+  margin-top: 3em;
+}
+
+#title-slide .quarto-title-conference {
+  color: #ffffff;
+  font-size: 1.8em;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0.75em;
+}
+
+#title-slide .quarto-title-author-name a {
+  color: #cccccc;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+#title-slide .quarto-title-author-name a::before {
+  content: "";
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  background-color: #cccccc;
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>');
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
 }

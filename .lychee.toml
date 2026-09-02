@@ -17,5 +17,6 @@ exclude = [
 exclude_path = [
   "docs/build",
   "_docs",
-  "_freeze"
+  "_freeze",
+  "presentation/title-slide.html" # Quarto pandoc template partial, not rendered HTML
 ]

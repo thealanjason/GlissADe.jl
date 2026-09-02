@@ -1,0 +1,29 @@
+<section id="$idprefix$title-slide"$for(title-slide-attributes/pairs)$ $it.key$="$it.value$"$endfor$ class="quarto-title-block">
+  <h1 class="title">$title$</h1>
+
+<div class="quarto-title-authors">
+$for(by-author)$
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+$if(by-author.url)$<a href="$by-author.url$">$endif$$if(by-author.name.literal)$$by-author.name.literal$$endif$$if(by-author.url)$</a>$endif$
+</div>
+$if(by-author.email)$
+<div class="quarto-title-author-email">
+<a href="mailto:$by-author.email$">$by-author.email$</a>
+</div>
+$endif$
+</div>
+$endfor$
+</div>
+
+$for(institute)$
+  <p class="quarto-title-institute">$institute$</p>
+$endfor$
+$if(date)$
+  <p class="date">$date$</p>
+$endif$
+$if(subtitle)$
+  <p class="subtitle">$subtitle$</p>
+$endif$
+  <p class="quarto-title-conference">JuliaCon2026</p>
+</section>
