@@ -12,7 +12,7 @@
 [![All Contributors](https://img.shields.io/github/all-contributors/thealanjason/GlissADe.jl?labelColor=5e1ec7&color=c0ffee&style=flat-square)](#contributors)
 [![BestieTemplate](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JuliaBesties/BestieTemplate.jl/main/docs/src/assets/badge.json)](https://github.com/JuliaBesties/BestieTemplate.jl)
 
-A differentiable free-surface flow solver, originally developed by Tanish Jain as a Research Internship project at the Chair of Methods for Model-based Development in Computational Engineering, RWTH Aachen University.
+GlissADe.jl is a differentiable simulator for surface flow over complex geometry, developed at the Chair of Methods for Model-based Development in Computational Engineering, RWTH Aachen University. The goal is an efficient simulator that is fully differentiable with respect to all model inputs, from low-dimensional parameters, such as constitutive model parameters, to high-dimensional fields, such as the underlying geometry.
 
 ## Getting Started
 
