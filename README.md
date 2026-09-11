@@ -23,7 +23,15 @@ GlissADe.jl is a differentiable simulator for surface flow over complex geometry
 
 ## How to Cite
 
-If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff).
+If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff), or the BibTeX entry below.
+
+```bibtex
+@software{Tanish_Jain_and_Alan_Correa_GlissADe_jl,
+  author = {Tanish Jain and Alan Correa},
+  title = {{GlissADe.jl: Differentiable Simulator for Surface Flow over Complex Geometry}},
+  year = {2024},
+}
+```
 
 ## Contributing
 

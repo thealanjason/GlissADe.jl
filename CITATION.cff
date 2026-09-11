@@ -1,10 +1,22 @@
-# Go to https://citation-file-format.github.io/cff-initializer-javascript/#/ to finish this
 cff-version: 1.2.0
-title: GlissADe.jl
+title: "GlissADe.jl: Differentiable Simulator for Surface Flow over Complex Geometry"
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
 authors:
-  - given-names: Tanish Jain
-  - given-names: Alan Correa
+  - given-names: Tanish
+    family-names: Jain
+  - given-names: Alan
+    family-names: Correa
+    affiliation: >-
+      Chair of Methods for Model-based Development in Computational
+      Engineering, RWTH Aachen University
+abstract: >-
+  A differentiable simulator for surface flow over complex geometry,
+  developed at the Chair of Methods for Model-based Development in
+  Computational Engineering, RWTH Aachen University.
+repository-code: "https://github.com/thealanjason/GlissADe.jl"
+url: "https://thealanjason.github.io/GlissADe.jl"
+license: MIT
+version: 0.0.1
