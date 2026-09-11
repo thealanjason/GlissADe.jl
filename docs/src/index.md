@@ -9,17 +9,22 @@ The numerical core implements the depth-integrated shallow water equations. The 
 
 Differentiable simulators enable uncertainty quantification (UQ) for reliable predictions. Forward uncertainty propagation, using first-order second-moment (FOSM) methods combined with automatic differentiation, estimates the uncertainty in a quantity of interest given uncertain inputs. The same gradients also support inverse methods, such as gradient-based calibration, to fit model parameters against observed data.
 
+## Installation
+
+1. [Install Julia](https://julialang.org/downloads/) (v1.12 or later).
+2. Start a `julia` session, enter the package manager with `]`, and add the package:
+
+   ```julia-repl
+   julia> ]
+   pkg> add https://github.com/thealanjason/GlissADe.jl
+   ```
+
+## Next steps
+
 - New to GlissADe.jl? Start with the [Getting Started](10-getting-started.md) page.
 - Looking for a specific capability? See the [tutorials](20-tutorials/parsing-a-mesh.md).
 - Want to understand the numerics and theory behind the simulator? See the [theory](30-theory/background.md) page.
 - Looking for function-level documentation? See the [reference](95-reference.md) page.
-
-## Installation
-
-1. [Install Julia](https://julialang.org/downloads/)
-2. Clone the [GlissADe.jl repository](https://github.com/thealanjason/GlissADe.jl)
-3. Change directory to the cloned folder
-4. Set up the environment using `julia setup.jl`
 
 ## Current implementation
 

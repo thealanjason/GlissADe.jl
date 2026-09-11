@@ -16,10 +16,13 @@ GlissADe.jl is a differentiable simulator for surface flow over complex geometry
 
 ## Getting Started
 
-1. [Install Julia](https://julialang.org/downloads/)
-2. Clone this repository
-3. Change directory to the cloned folder
-4. Setup the environment using `julia setup.jl`
+1. [Install Julia](https://julialang.org/downloads/) (v1.12 or later)
+2. Start a `julia` session, enter the package manager with `]`, and add the package:
+
+   ```julia-repl
+   julia> ]
+   pkg> add https://github.com/thealanjason/GlissADe.jl
+   ```
 
 ## How to Cite
 
