@@ -24,6 +24,8 @@ GlissADe.jl is a differentiable simulator for surface flow over complex geometry
    pkg> add https://github.com/thealanjason/GlissADe.jl
    ```
 
+3. Follow the [Getting Started](https://thealanjason.github.io/GlissADe.jl/dev/10-getting-started/) page to run your first simulation.
+
 ## How to Cite
 
 If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff), or the BibTeX entry below.
