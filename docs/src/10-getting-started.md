@@ -6,9 +6,7 @@ CurrentModule = GlissADe
 
 *First steps are always small.*
 
-This walkthrough runs a full simulation end to end: we release a mass of material on a slope and watch it slide downhill and come to rest as it spreads out. We use the "synthetic slope" example bundled with the repository (`examples/synthetic_slope/`), so everything below can be copied and run as is.
-
-The mesh and release raster we use are already generated and sitting in `examples/synthetic_slope/`, so we don't need to build them ourselves.
+This walkthrough runs a full simulation end to end: we release a mass of material on a slope and watch it slide downhill and come to rest as it spreads out. We use the "synthetic slope" example bundled with the repository (`examples/synthetic_slope/`), so all code below can be copied and run as is.
 
 ## Initializing the library
 
