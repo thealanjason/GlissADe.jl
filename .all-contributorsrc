@@ -1,5 +1,36 @@
 {
-  "projectName": "GlissADe",
+  "projectName": "GlissADe.jl",
   "projectOwner": "thealanjason",
-  "files": ["README.md", "docs/src/index.md"]
+  "files": [
+    "README.md",
+    "docs/src/index.md"
+  ],
+  "repoType": "github",
+  "contributors": [
+    {
+      "login": "thealanjason",
+      "name": "Alan Correa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40885942?v=4",
+      "profile": "https://github.com/thealanjason",
+      "contributions": [
+        "code",
+        "doc",
+        "infra",
+        "projectManagement",
+        "maintenance",
+        "ideas"
+      ]
+    },
+    {
+      "login": "reckylurker",
+      "name": "Tanish Jain",
+      "avatar_url": "https://avatars.githubusercontent.com/u/102153509?v=4",
+      "profile": "https://github.com/reckylurker",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    }
+  ]
 }
