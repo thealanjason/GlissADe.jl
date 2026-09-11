@@ -123,10 +123,13 @@ resetCells(Cells) # Reset all cells to zero thickness and velocity, ready for an
 !!! note
     `writeToVTK` deletes the contents of the given directory before saving the new files. It's recommended to use an empty directory to avoid losing other data.
 
-Or, to skip ParaView entirely, we can render the final state directly in Julia with [`plotmesh`](@ref). This needs a Makie backend, for example `CairoMakie`, installed in our own **global** Julia environment (kept separate from the project's own environment, so the base package stays light):
+Or, to skip ParaView entirely, we can render the final state directly in Julia with [`plotmesh`](@ref). This needs a Makie backend, for example `CairoMakie`, installed in our own base Julia environment rather than the project's own. We only need to do this once, and we can do it in our current Julia session by switching to the base environment, adding the package, then switching back to the project:
 
-```shell
-julia -e 'import Pkg; Pkg.add("CairoMakie")'
+```julia
+import Pkg
+Pkg.activate() # our base environment
+Pkg.add("CairoMakie")
+Pkg.activate(".") # back to the GlissADe.jl project
 ```
 
 ```julia
