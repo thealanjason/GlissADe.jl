@@ -38,6 +38,14 @@ The numerical core is implemented following the finite area method (FAM) on unst
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/thealanjason"><img src="https://avatars.githubusercontent.com/u/40885942?v=4?s=100" width="100px;" alt="Alan Correa"/><br /><sub><b>Alan Correa</b></sub></a><br /><a href="https://github.com/thealanjason/GlissADe.jl/commits?author=thealanjason" title="Code">💻</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=thealanjason" title="Documentation">📖</a> <a href="#infra-thealanjason" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#projectManagement-thealanjason" title="Project Management">📆</a> <a href="#maintenance-thealanjason" title="Maintenance">🚧</a> <a href="#ideas-thealanjason" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/reckylurker"><img src="https://avatars.githubusercontent.com/u/102153509?v=4?s=100" width="100px;" alt="Tanish Jain"/><br /><sub><b>Tanish Jain</b></sub></a><br /><a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Code">💻</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Documentation">📖</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Tests">⚠️</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->

@@ -23,7 +23,15 @@ GlissADe.jl is a differentiable simulator for surface flow over complex geometry
 
 ## How to Cite
 
-If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff).
+If you use GlissADe.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/thealanjason/GlissADe.jl/blob/main/CITATION.cff), or the BibTeX entry below.
+
+```bibtex
+@software{Tanish_Jain_and_Alan_Correa_GlissADe_jl,
+  author = {Tanish Jain and Alan Correa},
+  title = {{GlissADe.jl: Differentiable Simulator for Surface Flow over Complex Geometry}},
+  year = {2024},
+}
+```
 
 ## Contributing
 
@@ -36,6 +44,14 @@ If you want to make contributions of any kind, please first take a look into our
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/thealanjason"><img src="https://avatars.githubusercontent.com/u/40885942?v=4?s=100" width="100px;" alt="Alan Correa"/><br /><sub><b>Alan Correa</b></sub></a><br /><a href="https://github.com/thealanjason/GlissADe.jl/commits?author=thealanjason" title="Code">💻</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=thealanjason" title="Documentation">📖</a> <a href="#infra-thealanjason" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#projectManagement-thealanjason" title="Project Management">📆</a> <a href="#maintenance-thealanjason" title="Maintenance">🚧</a> <a href="#ideas-thealanjason" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/reckylurker"><img src="https://avatars.githubusercontent.com/u/102153509?v=4?s=100" width="100px;" alt="Tanish Jain"/><br /><sub><b>Tanish Jain</b></sub></a><br /><a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Code">💻</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Documentation">📖</a> <a href="https://github.com/thealanjason/GlissADe.jl/commits?author=reckylurker" title="Tests">⚠️</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->

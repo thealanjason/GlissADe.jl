@@ -1,0 +1,72 @@
+name: All Contributors
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  add-contributor:
+    if: contains(github.event.comment.body, '@all-contributors please add')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse contributor request
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.comment.body;
+            const match = body.match(/@all-contributors please add @?(\S+) for (.+?)[.!]?\s*$/im);
+            if (!match) {
+              core.setFailed(
+                "Could not parse the request. Use: @all-contributors please add @username for code, doc"
+              );
+              return;
+            }
+            core.setOutput("login", match[1].replace(/^@/, ""));
+            core.setOutput(
+              "contributions",
+              match[2]
+                .split(/,|\band\b/i)
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .join(",")
+            );
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Add contributor and regenerate tables
+        run: |
+          npx --yes all-contributors-cli add "${{ steps.parse.outputs.login }}" "${{ steps.parse.outputs.contributions }}"
+          npx --yes all-contributors-cli generate
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "docs: add @${{ steps.parse.outputs.login }} as a contributor"
+          title: "docs: add @${{ steps.parse.outputs.login }} as a contributor"
+          body: |
+            Adds @${{ steps.parse.outputs.login }} to the contributors list for: ${{ steps.parse.outputs.contributions }}.
+
+            Requested in #${{ github.event.issue.number }} by @${{ github.event.comment.user.login }}.
+          branch: all-contributors/add-${{ steps.parse.outputs.login }}
+          labels: documentation
+
+      - name: React to comment
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: "rocket",
+            });
