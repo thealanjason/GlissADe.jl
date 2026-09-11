@@ -6,220 +6,149 @@ CurrentModule = GlissADe
 
 *First steps are always small.*
 
-Here's a walkthrough of how to perform a simulation using this library.
+This walkthrough runs a full simulation end to end: we release a mass of material on a slope and watch it slide downhill and come to rest as it spreads out. We use the "synthetic slope" example bundled with the repository (`examples/synthetic_slope/`), so everything below can be copied and run as is.
 
-## Mesh definition and precomputations
+The mesh and release raster we use are already generated and sitting in `examples/synthetic_slope/`, so we don't need to build them ourselves.
 
-GlissADe was built to provide differentiability for a specific use case: sensitivity analyses of gravity-driven shallow flows with respect to topography, initial conditions, and model parameters. As such, meshes are expected in OpenFOAM's finite area mesh format. For general support with any 3D model, generate the mesh using OpenFOAM's [avalanche](https://develop.openfoam.com/Community/avalanche) module. Once the files are generated, look into `constant/polyMesh` and `constant/faMesh` for the `points`, `faces`, and `faceLabels` files. From there, here's how to proceed.
-
-Initialize the library:
+## Initializing the library
 
 ```julia
 using GlissADe
 
-init(threads = true, stats = true, plots = false, int_type = Int64)
+init(threads = true, stats = false, plots = false, implicit = true)
 ```
 
-Setting `threads = true` allows the library to use multiple threads if available. `stats = true` will print intermediate state information and also acts as a progress bar. `plots = true` will enable side-by-side plotting while the solver is running. `int_type` defines the type used for integers throughout.
+`threads = true` lets us use multiple threads if we start Julia with more than one (`julia --project -t 8 ...`). `implicit = true` selects the implicit (SIMPLE) solver, the one we use throughout this walkthrough.
 
-After that, parse the mesh and precompute geometrical information:
+## Parsing and precomputing the mesh
 
 ```julia
 points, faces = parsemesh(
-    "./examples/simpleslope/simpleslope/points",
-    "./examples/simpleslope/simpleslope/faces",
-    "./examples/simpleslope/simpleslope/faceLabels",
+    "./examples/synthetic_slope/geometry/points",
+    "./examples/synthetic_slope/geometry/faces",
+    "./examples/synthetic_slope/geometry/faceLabels",
 )
-Cells = preprocess(points, faces, Float64, comp_neighbours = true) # Precompute geometrical information.
-# If comp_neighbours=true, neighbours will be recomputed even if already stored.
+Cells = preprocess(points, faces, Float64, comp_neighbours = true)
 ```
 
-## Defining initial and boundary conditions
+`preprocess` computes each cell's geometry (centers, areas, normals, neighbours) once and caches it. See [Precomputing Geometry](20-tutorials/precomputing-geometry.md) for what's computed and when it's safe to skip recomputation.
 
-The free surface flow equations of the Savage-Hutter model typically don't require boundary conditions. To handle the boundary, the solver uses a zero-gradient (Neumann) scheme. User-defined boundary conditions are not yet supported. Boundary conditions can help simulate inflow and outflow; zero-gradient, being the easiest to realize in code, was chosen to represent the boundary. The solver is therefore currently limited to flows without external inflow and outflow.
+## Setting the release area
 
-Initial conditions are given using a polygonal release area. Spherical release areas are not directly supported. But, remember, a polygon with infinite vertices approaches a circle. Here's how initial conditions are defined:
+We set the release from a depth raster, a grid of thickness values covering the domain. We parse it, remap it onto the mesh, and convert it to the mesh-normal thickness the solver expects:
 
 ```julia
-meshbounds(Cells)
-polygon = findRegularPolygon([5.0, 10.0, -3.0, 3.0], npoints = 6)
-cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
-initializeGeometry(cells_inside, Cells, rho, h0 = 0.5, u0 = [0.0, 0.0, 0.0])
+raster = parseEsriAscii("./examples/synthetic_slope/release_depth.asc")
+h0_vertical = remapRasterToMesh(raster, Cells)
+h0_normal = verticalToNormalThickness(h0_vertical, Cells)
+initializeGeometry(Cells, 1500.0, h0 = h0_normal, u0 = [0.0, 0.0, 0.0])
 ```
 
-`meshbounds` gives the bounding region of the surface, i.e., the limits of the **x** and **y** coordinates when the surface is projected onto the **xy** plane. This information can be used to assign different initial conditions in different parts of the mesh. `findRegularPolygon` finds a regular polygon inside a given rectangular region defined as `[x_min, x_max, y_min, y_max]`. The supporting function `cellsInsideBoundingPolygon` finds all cells which lie inside the polygon. This is then passed to `initializeGeometry`, which assigns the given thickness `h` and velocity vector `u` (in global coordinates) as specified.
+This assigns the raster's thickness, a material density of 1500 kg/m³, and zero initial velocity to every cell. See [Defining a Release Area from a Depth Raster](20-tutorials/defining-a-release-area.md#Defining-a-release-area-from-a-depth-raster) for how the raster is read and remapped.
 
-For a composition of initial conditions, it's possible to have multiple bounding polygons with different initial conditions, or to iterate over the `Cells` vector directly for more complex cases:
+## Using custom rheology models
+
+We now define a rheology model for the friction. GlissADe supports swapping in any model whose basal stress term ``\tau_b`` is orthogonal to the flow velocity, i.e. ``\tau_b \cdot \bar{u} = 0`` (in practice, this means non-entraining models). We use the Voellmy model:
+
+```math
+\tau_b = \mu\;p_b\;\frac{\bar{u}}{\bar{u} + u_0} + \frac{\rho g}{\zeta}\lvert \bar{u}\rvert \bar{u}
+```
+
+The library treats basal friction implicitly, so a custom model is a function returning the implicit coefficient ``\mathcal{A}`` such that ``\tau_b = \mathcal{A}\bar{u}``, with a fixed signature. We give the model's two free parameters, the dry-friction coefficient ``\mu`` and the turbulent-drag coefficient ``\xi``, their own names within the function body, so they're clear rather than being magic numbers:
 
 ```julia
-for i in eachindex(Cells)
-    Cells[i].h = h_initial[i] # h_initial is defined beforehand
-    Cells[i].vel = vel_initial[i] # vel_initial is defined beforehand
+import LinearAlgebra: norm2
+
+function voellmy_basal_stress(Cell, h, vel, pb, alpha, zeta, rho)
+    mu = 0.16 # dry-friction coefficient
+    xi = 1150.0 # turbulent-drag coefficient
+    vel_mag = norm2(vel)
+    vel_inv = 1.0 / (vel_mag + 1e-4)
+    return vel_inv * mu * pb + rho * 9.81 * vel_mag / xi
 end
 ```
 
-If the initial polygons intersect, the maximum of all the values is chosen as the value at the cell:
+`h`, `vel`, and `pb` are the values of the variables at a given face, and `Cell` gives us that face's full precomputed data (its geometry along with its current thickness, velocity, and basal pressure). `alpha`, `zeta`, and `rho` are passed in from the `Solution` we build next.
 
-```julia
-# First polygon
-polygon1 = findRegularPolygon([5.0, 10.0, -3.0, 3.0], npoints = 6)
-cells_inside1 = cellsInsideBoundingPolygon(polygon1, Cells)
-initializeGeometry(cells_inside1, Cells, rho, h0 = 0.5, u0 = [0.0, 0.0, 0.0])
-
-# Second polygon
-polygon2 = findRegularPolygon([15.0, 10.0, -5.0, 15.0], npoints = 5)
-cells_inside2 = cellsInsideBoundingPolygon(polygon2, Cells)
-initializeGeometry(cells_inside2, Cells, rho, h0 = 0.3, u0 = [0.0, 0.0, 1e-2]) # Different initial conditions
-```
-
-!!! note
-    Choose the initial polygon carefully. If the polygon is too large, the solver might require stabilization through an appropriate choice of parameters. This isn't always straightforward and might take several iterations to get right.
+Pass the function to `Solution` as `basal_stress`, as shown next.
 
 ## Setting up the solver and running a simulation
 
-Once the initial conditions are set up, setting up the solver is simple. Create a [`Solution`](@ref) structure and pass it to [`Solver`](@ref) to create a solver object. The solver object contains the precomputed geometry and user choices for controlling the solution (relaxation factors, tolerances, iteration limits, etc.):
+We collect the model parameters and solver settings into a [`Solution`](@ref), then build a [`Solver`](@ref) from it:
 
 ```julia
 solution = Solution(
-    alpha = 0.5, # Coefficient for pressure terms
-    zeta = 1.25, # Coefficient for momentum terms
+    alpha = 0.5, # Coefficient for pressure thickness-averaging
+    zeta = 1.25, # Coefficient for velocity thickness-averaging
     rho = 1500.0, # Material density
     alpha_p = 0.5, # Under-relaxation for pressure
     alpha_u = 0.5, # Under-relaxation for velocity
     alpha_h = 0.5, # Under-relaxation for thickness
-    p_MAX_RESIDUAL = 1e-4, # Maximum allowed residual for the pressure constraint
+    p_MAX_RESIDUAL = 1e-5, # Maximum allowed residual for the pressure constraint
     h_MAX_RESIDUAL = 5e-1, # Maximum allowed residual for the thickness equation
     u_MAX_RESIDUAL = 5e-1, # Maximum allowed residual for the momentum equation
-    MAX_ITERS = 150, # Maximum iterations per timestep
-    MIN_ITERS = 100, # Minimum iterations per timestep
+    MAX_ITERS = 250, # Maximum iterations per timestep
+    MIN_ITERS = 200, # Minimum iterations per timestep
     h_clip = 0.0, # Clip the thickness to 0 if h < h_clip
     h_min = 1e-3, # Minimum height to be considered wet
     Cells = Cells, # Precomputed geometry and initial conditions
     location = "./solution", # Folder to store the intermediate VTK files
     points = points, # Vertices of the mesh
     faces = faces, # Connectivity list of the mesh
+    basal_stress = voellmy_basal_stress, # Custom rheology model, defined above
 )
 
 solver = Solver(solution)
 ```
 
-Finally, it's time to solve. [`solve`](@ref) takes the `solver` and starts the iteration process:
+`alpha` and `zeta` here are unrelated to `mu` and `xi` from the rheology model above: they set how pressure and velocity are averaged through the flow's thickness, not how friction behaves.
+
+Then we [`solve`](@ref):
 
 ```julia
-time_steps, sol = solve(solver, (0.0, 30.0), saveat = 0.2, Cₘ = 0.9) # Simulate!
-writeToVTK(solution.location, sol, points, faces) # Write the solution to VTK
-resetCells(Cells) # Reset all cells to zero thickness and velocity
+time_steps, sol = solve(solver, (0.0, 4000.0), saveat = 2.0, Cₘ = 4.5, rtol = 1e-4)
 ```
 
-The second argument to `solve` is the time span over which the flow should be simulated. The solver uses adaptive timestepping based on the Courant number; to have the solution saved at uniform timesteps, use the `saveat` argument to denote that uniform interval. The optional `Cₘ` parameter defines the maximum Courant number and can be used to control step sizes for timestepping.
+The second argument is the time span we simulate, in seconds. The solver uses adaptive timestepping based on the Courant number; `saveat` sets the uniform interval at which we save the solution regardless, and `Cₘ` caps the Courant number allowed per step.
 
 ## Post-processing
 
-The library writes the solution at intermediate timesteps to VTK files. `writeToVTK` produces a uniform-timestep solution and removes the intermediates:
+We write the solution to VTK files, ready to open in ParaView, with [`writeToVTK`](@ref):
 
 ```julia
-writeToVTK("./solution/", sol, points, faces)
+writeToVTK(solution.location, sol, points, faces)
+resetCells(Cells) # Reset all cells to zero thickness and velocity, ready for another run
 ```
 
 !!! note
-    To avoid overwriting issues, `writeToVTK` deletes the contents of the given directory before saving the new VTK files. It's recommended to use an empty directory for the solution to avoid losing other files.
+    `writeToVTK` deletes the contents of the given directory before saving the new files. It's recommended to use an empty directory to avoid losing other data.
 
-And that's it. You've solved the free surface flow equations and simulated a gravity-driven shallow flow on your geometry!
+Or, to skip ParaView entirely, we can render the final state directly in Julia with [`plotmesh`](@ref). This needs a Makie backend, for example `CairoMakie`, installed in our own base Julia environment rather than the project's own. We only need to do this once, and we can do it in our current Julia session by switching to the base environment, adding the package, then switching back to the project:
+
+```julia
+import Pkg
+Pkg.activate() # our base environment
+Pkg.add("CairoMakie")
+Pkg.activate(".") # back to the GlissADe.jl project
+```
+
+```julia
+using CairoMakie
+
+h_final = [sol[end][5 * i - 4] for i in eachindex(Cells)]
+plotmesh(Cells; field = h_final)
+```
+
+See [Visualizing a Mesh](20-tutorials/visualizing-a-mesh.md) and [Animating Mass Flow](20-tutorials/animating-mass-flow.md) for more. Here's what we get from a full run, the mass's maximum extent over the whole simulation and where it finally comes to rest:
+
+![Maximum flow height reached at each cell over the simulation.](assets/synthetic_slope_h_max.png)
+
+![Deposit height at the end of the simulation.](assets/synthetic_slope_h_deposit.png)
+
+`examples/synthetic_slope/synthetic_slope_example.jl` renders these two images itself, with a top-down camera and thin flow masked out for a cleaner picture.
+
+And that's it. We've solved the free surface flow equations and simulated a gravity-driven shallow flow on our geometry!
 
 ## Differentiation
 
-Computing derivatives using automatic differentiation is straightforward: wrap the simulation logic in a function. [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) requires a single array argument, so the function signature should reflect that. Here's an example differentiating with respect to the initial thickness:
-
-```julia
-using ForwardDiff
-using LinearAlgebra: norm2
-
-function averageThicknessAt(x)
-    init(threads = true, stats = true, plots = false, int_type = Int64)
-    points, faces = parsemesh(
-        "./examples/simpleslope/simpleslope/points",
-        "./examples/simpleslope/simpleslope/faces",
-        "./examples/simpleslope/simpleslope/faceLabels",
-    )
-    Cells = preprocess(points, faces, eltype(x), comp_neighbours = false)
-    meshbounds(Cells)
-    polygon = findRegularPolygon([5.0, 10.0, -6.0, 6.0], npoints = 6)
-    cells_inside = cellsInsideBoundingPolygon(polygon, Cells)
-    initializeGeometry(cells_inside, Cells, 1500.0, h0 = x[1], u0 = [0.0, 0.0, 0.0])
-
-    solution = Solution(
-        alpha = 0.5,
-        zeta = 1.25,
-        rho = 1500.0,
-        alpha_p = 0.5,
-        alpha_u = 0.5,
-        alpha_h = 0.5,
-        p_MAX_RESIDUAL = 1e-4,
-        h_MAX_RESIDUAL = 5e-1,
-        u_MAX_RESIDUAL = 5e-1,
-        MAX_ITERS = 60,
-        MIN_ITERS = 50,
-        h_clip = 0.0,
-        h_min = 1e-3,
-        Cells = Cells,
-        location = "./solution",
-        points = points,
-        faces = faces,
-    )
-    solver = Solver(solution)
-    time_steps, sol = solve(solver, (0.0, 15.0), saveat = 0.2, Cₘ = 0.9)
-    writeToVTK(solution.location, sol, points, faces)
-    resetCells(Cells)
-
-    h = [sol[end][5 * i - 4] for i in eachindex(Cells)]
-    return norm2(h) / sqrt(length(h)) # Average thickness at t = 15.0
-end
-
-# Gradient via central finite differences (second order: u' ≈ (u_{k+1} - u_{k-1})/2h)
-p_backward = averageThicknessAt([0.49998])
-p_forward = averageThicknessAt([0.50002])
-finitediff = (p_forward - p_backward) / (0.50002 - 0.49998)
-
-# Gradient via automatic differentiation (accurate to machine precision)
-autodiff = ForwardDiff.gradient(averageThicknessAt, [0.50])
-```
-
-## Using custom rheology models
-
-The default ``\mu(I)`` rheology model might not be suitable for all flow types. GlissADe supports customization: any rheology model whose basal stress term ``\tau_b`` is orthogonal to the flow velocity ``\bar{u}``, i.e. ``\tau_b \cdot \bar{u} = 0``, is compatible. In empirical terms, the current implementation is valid for non-entraining models.
-
-For example, the Voellmy model:
-
-```math
-\tau_b = \mu\;p_b\;\frac{\bar{u}}{\bar{u} + u_0} + \frac{\rho g}{\zeta}\lvert \bar{u}\rvert \bar{u}
-```
-
-The library treats the basal friction term implicitly, so it needs the coefficient in the implicit discretization, i.e., given ``\tau_b = \mathcal{A}\bar{u}``, write a function returning ``\mathcal{A}``. The function must have the fixed signature:
-
-```julia
-function myBasalStress(Cell, h, vel, pb, alpha, zeta, rho)
-```
-
-`h`, `vel`, and `pb` are the values of the variables at a given face. `alpha`, `zeta`, and `rho` are the model parameters, and `Cell` is a data structure containing geometrical information for the face, if required.
-
-Here's a sample implementation of the Voellmy model above, using ``\mu = 0.38``, ``u_0 = 10^{-7}``, ``\zeta = 10^{4}``, ``g = 9.81``:
-
-```julia
-function voellmy(Cell, h, vel, pb, alpha, zeta, rho)
-    vel_mag = norm2(vel)
-    vel_inv = 1.0 / (vel_mag + 1e-7)
-    xi_inv = 1.0 / 10000.0 # 1/zeta
-    return vel_inv * pb * 0.38 + rho * 9.81 * xi_inv * vel_mag
-end
-```
-
-Once that's done, pass it to `Solution` as `basal_stress`:
-
-```julia
-solution = Solution(
-    # ... other keyword arguments ...
-    basal_stress = voellmy,
-)
-```
-
-and run the simulation as before. To differentiate with respect to a rheology parameter (e.g. ``\zeta``), close over it in the wrapping function just as with initial conditions above, and pass the array element in place of the literal constant.
+We can wrap every step above in a function and differentiate it with respect to any of its inputs, such as the release thickness, material density, or a rheology parameter, using automatic differentiation. See [Differentiating a Simulation](20-tutorials/differentiating-a-simulation.md) for a worked example.
