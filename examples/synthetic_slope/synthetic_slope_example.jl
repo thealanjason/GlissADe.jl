@@ -108,11 +108,30 @@ top_down_axis = (
     aspect = (5000, NORTHING_CROP[2] - NORTHING_CROP[1], 1),
     xlabel = "Easting [m]",
     ylabel = "Northing [m]",
+    xlabeloffset = 60,
+    ylabeloffset = 100,
     zspinesvisible = false,
     zticksvisible = false,
     zticklabelsvisible = false,
     zlabelvisible = false,
 )
+
+"""
+    trim_whitespace(figure; pad = 15)
+`Axis3` reserves room for a full 3D view even when looking straight down, leaving a wide
+background margin around the actual top-down map. Crop it away by cutting rows/columns of solid
+background color from the rendered image, keeping `pad` pixels of breathing room.
+"""
+function trim_whitespace(figure; pad = 15)
+    img = Makie.colorbuffer(figure)
+    bg = img[1, 1]
+    mask = img .!= bg
+    rows = findall(any(mask, dims = 2)[:, 1])
+    cols = findall(any(mask, dims = 1)[1, :])
+    r0, r1 = max(1, first(rows) - pad), min(size(img, 1), last(rows) + pad)
+    c0, c1 = max(1, first(cols) - pad), min(size(img, 2), last(cols) + pad)
+    return img[r0:r1, c0:c1]
+end
 
 """
     masked_colors(values; threshold, colormap)
@@ -132,11 +151,29 @@ function masked_colors(values; threshold = DRY_THRESHOLD, colormap = :viridis)
 end
 
 fig_max = plotmesh(Cells; field = masked_colors(h_max), axis = top_down_axis)
-save("./examples/synthetic_slope/synthetic_slope_h_max.png", fig_max)
+Colorbar(
+    fig_max.figure[1, 2];
+    colormap = :viridis,
+    colorrange = (DRY_THRESHOLD, maximum(h_max)),
+    label = "Max flow height [m]",
+)
+save(
+    "./examples/synthetic_slope/synthetic_slope_h_max.png",
+    trim_whitespace(fig_max.figure),
+)
 println("  Saved max flow-height map -> synthetic_slope_h_max.png")
 
 fig_deposit = plotmesh(Cells; field = masked_colors(h_deposit), axis = top_down_axis)
-save("./examples/synthetic_slope/synthetic_slope_h_deposit.png", fig_deposit)
+Colorbar(
+    fig_deposit.figure[1, 2];
+    colormap = :viridis,
+    colorrange = (DRY_THRESHOLD, maximum(h_deposit)),
+    label = "Deposit height [m]",
+)
+save(
+    "./examples/synthetic_slope/synthetic_slope_h_deposit.png",
+    trim_whitespace(fig_deposit.figure),
+)
 println("  Saved deposit-height map -> synthetic_slope_h_deposit.png")
 
 println("\nSynthetic slope example complete!")
