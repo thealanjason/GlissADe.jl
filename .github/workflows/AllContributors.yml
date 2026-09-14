@@ -48,7 +48,7 @@ jobs:
           npx --yes all-contributors-cli generate
 
       - name: Open pull request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "docs: add @${{ steps.parse.outputs.login }} as a contributor"
           title: "docs: add @${{ steps.parse.outputs.login }} as a contributor"
