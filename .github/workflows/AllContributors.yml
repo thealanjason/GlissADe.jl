@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Parse contributor request
         id: parse
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const body = context.payload.comment.body;
@@ -61,7 +61,7 @@ jobs:
 
       - name: React to comment
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
